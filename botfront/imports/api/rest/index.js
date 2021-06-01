@@ -37,8 +37,6 @@ app.put('/api/users', restService.fetchBodyMW, async(req, res, next) => {
     return;
   }
 
-  console.log("req ", req.body);
-
   const inputs = JSON.parse(req.body);
 
   if (inputs.email == null || inputs.password == null) {
