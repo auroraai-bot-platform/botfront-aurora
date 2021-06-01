@@ -1,11 +1,6 @@
 
 import { Accounts } from 'meteor/accounts-base';
-import {
-  setScopes
-} from '../../lib/scopes';
-import {
-  getAppLoggerForMethod, getAppLoggerForFile, addLoggingInterceptors, auditLog,
-} from '../../../server/logger';
+import { setScopes } from '../../lib/scopes';
 
 export function createUser(user, password) {
   return new Promise(async (resolve, reject) => {
