@@ -3,6 +3,7 @@ import express from 'express';
 import restService from './rest.service';
 
 const app = express();
+const restApiToken = process.env.REST_API_TOKEN || 'auroraBOTtoken';
 
 app.get('/api', (req, res, next) => {
   res.sendStatus(200);
@@ -30,7 +31,12 @@ app.get('/api', (req, res, next) => {
         }
  *     
 */
-app.put('/api/users', fetchBody, async(req, res, next) => {
+app.put('/api/users', restService.fetchBodyMW, async(req, res, next) => {
+  if (req.headers.authorization !== restApiToken) {
+    res.sendStatus(403);
+    return;
+  }
+
   console.log("req ", req.body);
 
   const inputs = JSON.parse(req.body);
@@ -48,11 +54,8 @@ app.put('/api/users', fetchBody, async(req, res, next) => {
   const user = {
     email: inputs.email,
     roles: inputs.roles ?? [{roles: ['global-admin'], project: 'GLOBAL'}],
-    project: inputs.project ?? 'GLOBAL',
     profile: inputs.profile ?? {firstName: 'generated', 'lastName': 'generated', preferredLanguage: 'en'}
   };
-
-  console.log({inputs});
 
   try {
     const success = await restService.createUser(user, inputs.password);
@@ -64,15 +67,3 @@ app.put('/api/users', fetchBody, async(req, res, next) => {
 
 WebApp.rawConnectHandlers.use(app);
 
-function fetchBody(req, res, next) {
-  let body = "";
-
-  req.on('data', Meteor.bindEnvironment(function (data) {
-    body += data;
-  }));
-
-  req.on('end', Meteor.bindEnvironment(function () {
-    req.body = body;
-    next();
-  }));
-}
