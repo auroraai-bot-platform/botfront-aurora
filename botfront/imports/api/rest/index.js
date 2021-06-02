@@ -56,7 +56,7 @@ app.put('/api/users', restService.fetchBodyMW, async(req, res, next) => {
     return;
   }
 
-  if (inputs.roles != null && typeof !Array.isArray(inputs.roles) && inputs.roles.length < 1) {
+  if (inputs.roles != null && (!Array.isArray(inputs.roles) || inputs.roles.length < 1)) {
     res.status(400).send('Malformed or missing roles');
     return;
   }
