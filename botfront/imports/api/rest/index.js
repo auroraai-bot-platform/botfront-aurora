@@ -9,11 +9,11 @@ const adminEmail = process.env.ADMIN_USER;
 const adminPassword = process.env.ADMIN_PASSWORD;
 
 // create admin on startup
-if (adminEmail !== null) {
+if (adminEmail != null && adminPassword != null) {
   restService.createUser({
     email: adminEmail,
     roles: [{roles: ['global-admin'], project: 'GLOBAL'}],
-    profile: {firstName: 'admin', 'lastName': 'admin', preferredLanguage: 'en'}
+    profile: {firstName: 'admin', lastName: 'admin', preferredLanguage: 'en'}
   }, adminPassword);
 }
 
@@ -71,6 +71,7 @@ app.put('/api/users', restService.fetchBodyMW, async(req, res, next) => {
     const success = await restService.createUser(user, inputs.password);
     res.send(success);
   } catch (error) {
+    console.log({error});
     res.status(500).send(error);
   }
 });
