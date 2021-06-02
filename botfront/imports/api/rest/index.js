@@ -5,6 +5,18 @@ import restService from './rest.service';
 const app = express();
 const restApiToken = process.env.REST_API_TOKEN || 'auroraBOTtoken';
 
+const adminEmail = process.env.ADMIN_USER;
+const adminPassword = process.env.ADMIN_PASSWORD;
+
+// create admin on startup
+if (adminEmail !== null) {
+  restService.createUser({
+    email: adminEmail,
+    roles: [{roles: ['global-admin'], project: 'GLOBAL'}],
+    profile: {firstName: 'admin', 'lastName': 'admin', preferredLanguage: 'en'}
+  }, adminPassword);
+}
+
 app.get('/api', (req, res, next) => {
   res.sendStatus(200);
 })
