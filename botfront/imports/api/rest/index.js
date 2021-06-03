@@ -3,7 +3,7 @@ import express from 'express';
 import restService from './rest.service';
 
 const app = express();
-const restApiToken = process.env.REST_API_TOKEN || 'auroraBOTtoken';
+const restApiToken = process.env.REST_API_TOKEN;
 
 const adminEmail = process.env.ADMIN_USER;
 const adminPassword = process.env.ADMIN_PASSWORD;
