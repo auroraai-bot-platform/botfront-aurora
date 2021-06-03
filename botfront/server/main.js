@@ -38,6 +38,8 @@ import '../imports/api/graphql/forms/forms.model';
 import '../imports/api/roles/roles.publication';
 import '../imports/api/roles/roles';
 
+import '../imports/api/rest';
+
 if (!Meteor.isTest) {
     import './migrations';
 }
