@@ -1,107 +1,3 @@
-
-<p align="center">
-<a href="(https://github.com/botfront/botfront/actions">
-    <img src="https://github.com/botfront/botfront/workflows/build/badge.svg" />
-</a>
-<a href="https://www.npmjs.com/package/botfront">
-    <img alt="npm" src="https://img.shields.io/npm/v/botfront.svg">
-</a>
-<a href='https://github.com/botfront/botfront/blob/master/LICENSE'>
-    <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg">
-</a>
-<a href='https://github.com/botfront/botfront/discussions'>
-    <img alt="Github discussions link" src="https://img.shields.io/badge/Community%20support-Start%20a%20discussion-green">
-</a>
-</p>
-<br />
-
-<H1 align="center">
-    This project is not maintained anymore and will not receive further updates.
-</H1>
-
-<p align="center">
-  <a href="#highlights">Highlights</a> •
-  <a href="#features">Features</a> •
-  <a href="#quick-start">Quick start</a> •
-  <a href="#development">Development</a>
-</p>
-<p align="center">
-  <a href="./CHANGELOG.md">Release Notes</a> •
-</p>
-
-<br/>
-<h2 align="center">What is it</h2>
-
-Botfront is an open-source enterprise-grade conversational platform built with Rasa. 
-It provides super intuitive interfaces and collaborative features to domain experts, conversational designers and engineers. 
-
-<br/>
-<h2 name="highlights" align="center">Highlights</h2>
-
-<center>
-<table>
-  <tr>
-    <th><h2>😎</h2><h3>Easy to use</h3></th>
-    <th><h2>🎓</h2><h3>Powerful</h3></th>
-    <th><h2>💻️</h2><h3>Developer friendly</h3></th>
-  </tr>
-    <tr>
-    <td width="33%">Our main goal is to lower the technical barrier to entry in conversational AI. Implementing context-aware conversations should be as easy as chatting.</td>
-    <td width="33%">Botfront uses <strong><a href="https://github.com/rasaHQ/rasa" target="_blank">Rasa</a></strong>, a powerful and production ready conversational AI library. Botfront exposes all Rasa functionalities and abstracts its complexity.</td>
-    <td width="33%">Botfront's intuitive CLI orchestrates all Botfront's services on your development machine.<br/>Authoring, training, auto reloading actions code, it just works!</td>
-  </tr>
-
-</table>
-</center>
-
-<br/>
-<h2 name="features" align="center">Features</h2>
-<table>
-
-<tr>
-    <td width="33%"><h4>An intuitive interface for stories and rules</h4></td>
-    <td width="67%">Botfront provides a <a href="https://botfront.io/docs/rasa/conversation-builder">unique and natural conversation authoring experience</a>. You can create complex dialog flows in minutes</td>
-</tr>
-<tr>
-    <td width="33%"><h4>A flow chart editor for forms</h4></td>
-    <td width="67%">A super intuitive <a href="https://botfront.io/docs/rasa/forms-slot-filling/">flow chart editor</a> for conversations that do not require machine learning
-</tr>
-<tr>
-    <td width="33%"><h4>Automated tests</h4></td>
-    <td width="67%">Create <a href="https://botfront.io/docs/rasa/testing/">automated tests in one click</a> from conversations, get detailed reports and deploy in confidence.
-</tr>
-<tr>
-    <td width="33%"><h4>Git integration</h4></td>
-    <td width="67%">Version your work on a repository with the new <a href="https://botfront.io//docs/rasa/git-integration">Git integration</a>.
-</tr>
-<tr>
-    <td width="33%"><h4>Train & evaluate NLU models</h4></td>
-    <td width="67%">Botfront comes with a complete NLU toolbox. You can tag vast amounts of data efficiently, train and evaluate models. <a href="https://botfront.io/docs/rasa/nlu/evaluation/#evaluation-methods">Several evaluation methods</a> are available depending on the development stage of your model, and you can annotate incoming NLU data</td>
-</tr>
-<tr>
-    <td width="33%"><h4>Rasa integration</h4></td>
-    <td width="67%">Botfront exposes all Rasa features and concepts and and makes them accessible at a higher level for faster development. You can <a href="https://botfront.io/docs/import-export/">export a Botfront project and use it with Rasa</a> at any time.</td>
-</tr>
-<tr>
-    <td width="33%"><h4>Enterprise ready</h4></td>
-    <td width="67%">Scale your conversational AI practice with enterprise grade projects and user management, RBAC and flexible deployment options.
-</tr>
-</table>
-<br/>
-<h2 name="quick-start" align="center">Quick Start</h2>
-
-Botfront only requires a recent version of Docker. You can install the CLI with the following:
-
-```bash
-npm install -g botfront
-```
-
-Then just run `botfront`to get started.
-
-<!-- broken image. commented out as I'm not sure it should be deleted -->
-<!-- <img src="/botfront/docs/terminalizer/botfront-setup.gif?raw=true" width="100%"> -->
-
-<br/>
 <h2 name="documentation" align="center">Documentation</h2>
 
 The [official documentation](https://botfront.io/docs/getting-started/setup) of Botfront is hosted on [botfront.io](https://botfront.io/docs/getting-started/setup). It is automatically built and updated on every new release. Once you've installed the cli you can also use `botfront docs` to open it.
@@ -112,16 +8,18 @@ The [official documentation](https://botfront.io/docs/getting-started/setup) of 
 
 ### Installation
 
+**!!Development version of Botfront doesn't seem to run on Windows so continue the process below with Linux or Mac!!**
+
 1. Botfront is a Meteor app, so the first step is to [install Meteor](https://www.meteor.com/install)
 2. Then clone this repo and install the dependencies:
 ```bash
-git clone https://github.com/botfront/botfront
+git clone git@github.com:auroraai-bot-platform/botfront-private.git
 cd botfront/botfront
 meteor npm install
 ```
 3. Install the CLI from the source code:
 ```bash
-# if you installed Botfront from npm uninstall it.
+# if you installed Botfront CLI from npm uninstall it.
 npm uninstall -g botfront
 # Install the cli from the source code
 cd cli && npm link
