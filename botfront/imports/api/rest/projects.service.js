@@ -49,9 +49,19 @@ export async function createProject(name, nameSpace, baseUrl) {
 }
 
 function insertProject(item) {
+  auditLog('Created project', {
+    user: getUser(),
+    type: 'created',
+    operation: 'project-created',
+    after: { project: item },
+    resType: 'project',
+    resId: item.id,
+  });
+
+  console.log({item});
   const projectId = Projects.insert({
     ...item,
-    defaultDomain: { content: getDefaultDefaultDomain() },
+    defaultDomain: { content: 'slots:\n  disambiguation_message:\n    type: unfeaturized\nactions:\n  - action_botfront_disambiguation\n  - action_botfront_disambiguation_followup\n  - action_botfront_fallback\n  - action_botfront_mapping' },
     chatWidgetSettings: {
       title: item.name,
       subtitle: 'Happy to help',
@@ -114,7 +124,7 @@ function createStoryGroup(projectId, storyGroup) {
         { _id: projectId },
         { $push: { storyGroups: { $each: [id], $position } } },
     );
-    auditLogIfOnServer('Created a story group', {
+    auditLog('Created a story group', {
         resId: id,
         user: getUser(),
         projectId: storyGroup.projectId,

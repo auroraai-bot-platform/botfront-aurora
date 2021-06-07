@@ -11,6 +11,7 @@ import {
     checkIfScope,
 } from '../../lib/scopes';
 import { auditLogIfOnServer } from '../../lib/utils';
+import { getUser } from '../rest/utilities.service';
 
 export const Projects = new Mongo.Collection('projects');
 
@@ -38,7 +39,7 @@ export const getDefaultDefaultDomain = () => {
 export const createProject = (item) => {
     checkIfCan('projects:w');
     auditLogIfOnServer('Created project', {
-        user: Meteor.user(),
+        user: getUser(),
         type: 'created',
         operation: 'project-created',
         after: { project: item },
