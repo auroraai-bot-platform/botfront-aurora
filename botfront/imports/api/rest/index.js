@@ -99,9 +99,9 @@ app.put('/api/projects', utilitiesService.fetchBodyMW, (req, res, next) => {
 
   const inputs = JSON.parse(req.body);
   
-  if (inputs.name == null || typeof inputs.name !== 'string'
-    || inputs.nameSpace == null || typeof inputs.nameSpace !== 'string'
-    || inputs.baseUrl == null || typeof inputs.baseUrl !== 'string'
+  if (inputs.name == null || typeof inputs.name !== 'string' || /^[a-zA-Z0-9]+$/.match(inputs.name) == null
+    || inputs.nameSpace == null || typeof inputs.nameSpace !== 'string' || /^bf-[a-zA-Z0-9-]+$/.match(inputs.nameSpace) == null
+    || inputs.baseUrl == null || typeof inputs.baseUrl !== 'string' || /^(http|https):\/\//.match(inputs.baseUrl)
   ) {
     res.status(400).send('Malformed or missing inputs');
     return;
