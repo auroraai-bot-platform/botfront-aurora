@@ -58,7 +58,6 @@ function insertProject(item) {
     resId: item.id,
   });
 
-  console.log({item});
   const projectId = Projects.insert({
     ...item,
     defaultDomain: { content: 'slots:\n  disambiguation_message:\n    type: unfeaturized\nactions:\n  - action_botfront_disambiguation\n  - action_botfront_disambiguation_followup\n  - action_botfront_fallback\n  - action_botfront_mapping' },
