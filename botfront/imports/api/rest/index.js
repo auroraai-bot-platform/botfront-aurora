@@ -45,12 +45,7 @@ app.get('/api', (req, res, next) => {
         }
  *     
 */
-app.put('/api/users', utilitiesService.fetchBodyMW, async(req, res, next) => {
-  if (req.headers.authorization !== restApiToken) {
-    res.sendStatus(403);
-    return;
-  }
-
+app.put('/api/users', utilitiesService.fetchBodyMW, utilitiesService.authMW, async(req, res, next) => {
   const inputs = JSON.parse(req.body);
 
   if (inputs.email == null || inputs.password == null) {
@@ -91,12 +86,7 @@ app.put('/api/users', utilitiesService.fetchBodyMW, async(req, res, next) => {
         }
  *     
 */
-app.put('/api/projects', utilitiesService.fetchBodyMW, (req, res, next) => {
-  if (req.headers.authorization !== restApiToken) {
-    res.sendStatus(403);
-    return;
-  }
-
+app.put('/api/projects', utilitiesService.fetchBodyMW, utilitiesService.authMW, (req, res, next) => {
   const inputs = JSON.parse(req.body);
   
   if (inputs.name == null || typeof inputs.name !== 'string' || inputs.name.match(/^[a-zA-Z0-9]+$/) == null

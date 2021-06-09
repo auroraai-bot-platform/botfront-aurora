@@ -1,6 +1,6 @@
 
 import { auditLog } from '../../../server/logger';
-import { getDefaultDefaultDomain, Projects } from '../project/project.collection';
+import { Projects } from '../project/project.collection';
 
 import { createEndpoints } from '../endpoints/endpoints.methods';
 import { Credentials } from '../credentials';
