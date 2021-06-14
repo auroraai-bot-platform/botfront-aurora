@@ -24,14 +24,16 @@ export function fetchBodyMW(req, res, next) {
   }));
 }
 
-export function authMW(req, res, next) {
-  if (restApiToken == null || restApiToken.length < 1) {
-    res.status(500).send('Token configuration missing');
-    return;
-  }
+export function authMW(token) {
+  return (function (req, res, next) {
+    if (token == null || restApiToken.length < 1) {
+      res.status(500).send('Token configuration missing');
+      return;
+    }
 
-  if (req.headers.authorization !== restApiToken) {
-    res.sendStatus(403);
-    return;
-  }
+    if (req.headers.authorization !== restApiToken) {
+      res.sendStatus(403);
+      return;
+    }
+  });
 }
