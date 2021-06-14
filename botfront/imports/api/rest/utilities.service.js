@@ -26,12 +26,12 @@ export function fetchBodyMW(req, res, next) {
 
 export function authMW(token) {
   return (function (req, res, next) {
-    if (token == null || restApiToken.length < 1) {
+    if (token == null || token.length < 1) {
       res.status(500).send('Token configuration missing');
       return;
     }
 
-    if (req.headers.authorization !== restApiToken) {
+    if (req.headers.authorization !== token) {
       res.sendStatus(403);
       return;
     }
