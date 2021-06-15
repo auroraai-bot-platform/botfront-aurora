@@ -61,25 +61,6 @@ Well done! Once a PR gets merged, here are the things happened next:
 - all Docker images tagged with `branch-master` will be automatically updated in an hour. You may check the status on the [Actions](https://github.com/botfront/botfront/actions) tab.
 - your contribution and commits will be included in [our release note](https://github.com/botfront/botfront/blob/master/CHANGELOG.md).
 
-### Testing
-
-End to end tests are using the Cypress testing framework.
-
-To manually run the Cypress tests, you need to have Botfront running in development mode. Some tests also require Rasa to be available.
-
-Once you are at the root of the repo, you can enter the following.
-
-```bash
-cd botfront
-# if you want to open Cypress' graphical interface
-npx cypress open
-# If you want to run the whole suite in headless mode
-# This could take up to an hour depending on your computer
-npx cypress run
-# If you want to run a specific test
-npx cypress run --spec "cypress/integration/02_training/training.spec.js"
-```
-
 ### Commit messages naming convention
 
 To help everyone with understanding the commit history of Botfront, we employ [`commitlint`](https://commitlint.js.org/#/) to enforce the commit styles:
@@ -110,6 +91,41 @@ As an example, a commit that improved the documentation:
 ```text
 docs(conversation builder): update slots manager screenshot.
 ```
+
+<h2 name="testing" align="center">Testing</h2>
+End to end tests are using the Cypress testing framework.
+The first test case `01_initial_setup_dont_change_name/initial_setup.spec.js` drops the mongo database on startup and creates own test user.
+The test user is necessary to run the e2e tests.
+
+```shell
+email: test@test.com
+password: aaaaaaaa00
+```
+
+### Installation
+* install `mongo` client as the first testc ase will drop the whole database via the mongo client
+* run `meteor npm install` inside `botfront/cypress` to install the cypress plugins
+
+
+
+### Run all tests
+* run `meteor npm run start:docker-compose.dev` to run botfront in dev mode
+* run `meteor npx cypress run`
+
+### Run single test file with existing database
+* create the aforementioned test user inside the system
+* run `npx cypress run --spec cypress/<path_to_spec.js>`
+
+### Run single test file with a clean database
+* run `npx cypress run --spec cypress/01_initial_setup_dont_change_name/initial_setup.spec.js` to drop the database and create test user one time
+* run `npx cypress run --spec cypress/<path_to_spec.js>`
+
+### Run tests from the Cypress UI
+* create the test user via hand or via the first test case
+* run `npx cypress open
+
+**Some tests also require Rasa to be available.**
+
 <br/>
 <h2 align="center">License</h2>
 
