@@ -28,7 +28,7 @@ export function createUser(user, password) {
         resType: 'user',
       });
 
-      return resolve(`Created user: ${user.email}`);
+      return resolve({email: user.email});
     } catch (error) {
       return reject(error);
     }

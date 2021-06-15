@@ -46,7 +46,15 @@ app.get('/api', (req, res, next) => {
  *     
 */
 app.put('/api/users', utilitiesService.fetchBodyMW, utilitiesService.authMW(restApiToken), async(req, res, next) => {
-  const inputs = JSON.parse(req.body);
+  let inputs;
+  
+  try {
+    inputs = JSON.parse(req.body);
+  } catch (error) {
+    console.log({error});
+    res.status(400).send('Invalid JSON');
+    return;
+  }
 
   if (inputs.email == null || inputs.password == null) {
     res.status(400).send('Missing email or password');
@@ -87,7 +95,14 @@ app.put('/api/users', utilitiesService.fetchBodyMW, utilitiesService.authMW(rest
  *     
 */
 app.put('/api/projects', utilitiesService.fetchBodyMW, utilitiesService.authMW(restApiToken), (req, res, next) => {
-  const inputs = JSON.parse(req.body);
+  let inputs;
+  try {
+    inputs = JSON.parse(req.body);
+  } catch (error) {
+    console.log({error});
+    res.status(400).send('Invalid JSON');
+    return;
+  }
   
   if (inputs.name == null || typeof inputs.name !== 'string' || inputs.name.match(/^[a-zA-Z0-9]+$/) == null
     || inputs.nameSpace == null || typeof inputs.nameSpace !== 'string' || inputs.nameSpace.match(/^bf-[a-zA-Z0-9-]+$/) == null
