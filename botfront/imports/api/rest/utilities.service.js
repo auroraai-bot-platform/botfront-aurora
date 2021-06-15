@@ -35,5 +35,7 @@ export function authMW(token) {
       res.sendStatus(403);
       return;
     }
+
+    next();
   });
 }
