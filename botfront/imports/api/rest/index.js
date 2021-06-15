@@ -1,6 +1,8 @@
 import { WebApp } from 'meteor/webapp'; 
 import express from 'express';
-import restService from './rest.service';
+import utilitiesService from './utilities.service';
+import usersService from './users.service';
+import projectsService from './projects.service';
 
 const app = express();
 const restApiToken = process.env.REST_API_TOKEN;
@@ -43,13 +45,16 @@ app.get('/api', (req, res, next) => {
         }
  *     
 */
-app.put('/api/users', restService.fetchBodyMW, async(req, res, next) => {
-  if (req.headers.authorization !== restApiToken) {
-    res.sendStatus(403);
+app.put('/api/users', utilitiesService.fetchBodyMW, utilitiesService.authMW(restApiToken), async(req, res, next) => {
+  let inputs;
+  
+  try {
+    inputs = JSON.parse(req.body);
+  } catch (error) {
+    console.log({error});
+    res.status(400).send('Invalid JSON');
     return;
   }
-
-  const inputs = JSON.parse(req.body);
 
   if (inputs.email == null || inputs.password == null) {
     res.status(400).send('Missing email or password');
@@ -68,7 +73,7 @@ app.put('/api/users', restService.fetchBodyMW, async(req, res, next) => {
   };
 
   try {
-    const success = await restService.createUser(user, inputs.password);
+    const success = await usersService.createUser(user, inputs.password);
     res.send(success);
   } catch (error) {
     console.log({error});
@@ -76,5 +81,45 @@ app.put('/api/users', restService.fetchBodyMW, async(req, res, next) => {
   }
 });
 
-WebApp.rawConnectHandlers.use(app);
+
+/**
+ * @swagger
+ *  /api/projects:
+ *    put:
+ *      create a new project
+        Interface {
+          name: string;
+          nameSpace: string; // MUST START with `bf-`
+          baseUrl: string; // the url under which the rasa bot instance is reachable
+        }
+ *     
+*/
+app.put('/api/projects', utilitiesService.fetchBodyMW, utilitiesService.authMW(restApiToken), (req, res, next) => {
+  let inputs;
+  try {
+    inputs = JSON.parse(req.body);
+  } catch (error) {
+    console.log({error});
+    res.status(400).send('Invalid JSON');
+    return;
+  }
+  
+  if (inputs.name == null || typeof inputs.name !== 'string' || inputs.name.match(/^[a-zA-Z0-9]+$/) == null
+    || inputs.nameSpace == null || typeof inputs.nameSpace !== 'string' || inputs.nameSpace.match(/^bf-[a-zA-Z0-9-]+$/) == null
+    || inputs.baseUrl == null || typeof inputs.baseUrl !== 'string' || inputs.baseUrl.match(/^(http|https):\/\//) == null
+  ) {
+    res.status(400).send('Malformed or missing inputs');
+    return;
+  }
+
+  try {
+    const projectId = projectsService.createProject(inputs.name, inputs.nameSpace, inputs.baseUrl);
+    res.send({projectId});
+  } catch (error) {
+    console.log({error});
+    res.status(500).send(error);
+  }
+});
+
+WebApp.connectHandlers.use(app);
 

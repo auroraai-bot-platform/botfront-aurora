@@ -1,7 +1,6 @@
 
 import { Accounts } from 'meteor/accounts-base';
 import { setScopes } from '../../lib/scopes';
-
 import { auditLog } from '../../../server/logger';
 
 export function createUser(user, password) {
@@ -29,23 +28,9 @@ export function createUser(user, password) {
         resType: 'user',
       });
 
-      return resolve(`Created user: ${user.email}`);
+      return resolve({email: user.email});
     } catch (error) {
       return reject(error);
     }
   });
-}
-
-
-export function fetchBodyMW(req, res, next) {
-  let body = "";
-
-  req.on('data', Meteor.bindEnvironment(function (data) {
-    body += data;
-  }));
-
-  req.on('end', Meteor.bindEnvironment(function () {
-    req.body = body;
-    next();
-  }));
 }
