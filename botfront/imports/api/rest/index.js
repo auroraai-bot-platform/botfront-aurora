@@ -113,11 +113,11 @@ app.put('/api/projects', utilitiesService.fetchBodyMW, utilitiesService.authMW(r
   }
 
   try {
-    projectsService.createProject(inputs.name, inputs.nameSpace, inputs.baseUrl);
-    res.sendStatus(200);
+    const projectId = projectsService.createProject(inputs.name, inputs.nameSpace, inputs.baseUrl);
+    res.send({projectId});
   } catch (error) {
     console.log({error});
-    res.send(error);
+    res.status(500).send(error);
   }
 });
 
