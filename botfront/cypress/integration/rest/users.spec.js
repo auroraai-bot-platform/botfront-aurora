@@ -6,7 +6,7 @@ const email = 'test@example.org';
 const password = 'Aaaaaaaa00';
 
 
-describe('user endpoint basic functionality', () => {
+describe('users endpoint basic functionality', () => {
   before(() => {
     cy.deleteUser(email);
   });
@@ -59,7 +59,7 @@ describe('user endpoint basic functionality', () => {
   });
 });
 
-describe('user endpoint fails on duplicate', () => {
+describe('users endpoint fails on duplicate', () => {
 
   before(() => {
     cy.deleteUser(email);
