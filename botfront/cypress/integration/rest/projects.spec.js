@@ -8,7 +8,6 @@ const name = 'testproject';
 const nameSpace = 'bf-test'
 const baseUrl = 'http://test';
 
-
 describe('projects endpoint basic functionality', () => {
 
   it('it should respond with error missing token', () => {
@@ -127,7 +126,7 @@ describe('projects endpoint basic functionality', () => {
     });
   });
 
-  it('Create valid project', () => {
+  it('Create valid project with generated id', () => {
     cy.request({
       url: endpoint,
       method: 'PUT',
@@ -140,6 +139,23 @@ describe('projects endpoint basic functionality', () => {
     cy.get('@projects').should((res) => {
       expect(res.status).to.eq(200);
       expect(res.body).to.have.property('projectId');
+    });
+  });
+
+  it('Create valid project with fixed id', () => {
+    cy.request({
+      url: endpoint,
+      method: 'PUT',
+      headers: { Authorization: token },
+      body: { name, nameSpace, baseUrl, id: 'test-id-fixed-1' },
+      failOnStatusCode: false
+    })
+    .as('projects');
+
+    cy.get('@projects').should((res) => {
+      expect(res.status).to.eq(200);
+      expect(res.body).to.have.property('projectId');
+      expect(res.body.projectId).to.eq('test-id-fixed-1');
     });
   });
 });
