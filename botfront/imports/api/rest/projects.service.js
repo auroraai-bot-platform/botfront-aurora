@@ -18,14 +18,14 @@ import { ENVIRONMENT_OPTIONS } from '../../ui/components/constants.json';
 
 export async function createProject(name, nameSpace, baseUrl, id) {
 
-  item = {
+  const item = {
     disabled: false,
     name: name,
     namespace: nameSpace,
     defaultLanguage: 'en'
   };
 
-  if (id) {
+  if (id != null) {
     item._id = id;
   }
 

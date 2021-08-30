@@ -91,10 +91,11 @@ app.put('/api/users', utilitiesService.fetchBodyMW, utilitiesService.authMW(rest
           name: string;
           nameSpace: string; // MUST START with `bf-`
           baseUrl: string; // the url under which the rasa bot instance is reachable
+          projectId?: string // OPTIONAL, the projectId  used for creating the project
         }
  *     
 */
-app.put('/api/projects', utilitiesService.fetchBodyMW, utilitiesService.authMW(restApiToken), (req, res, next) => {
+app.put('/api/projects', utilitiesService.fetchBodyMW, utilitiesService.authMW(restApiToken), async (req, res, next) => {
   let inputs;
   try {
     inputs = JSON.parse(req.body);
@@ -107,16 +108,20 @@ app.put('/api/projects', utilitiesService.fetchBodyMW, utilitiesService.authMW(r
   if (inputs.name == null || typeof inputs.name !== 'string' || inputs.name.match(/^[a-zA-Z0-9]+$/) == null
     || inputs.nameSpace == null || typeof inputs.nameSpace !== 'string' || inputs.nameSpace.match(/^bf-[a-zA-Z0-9-]+$/) == null
     || inputs.baseUrl == null || typeof inputs.baseUrl !== 'string' || inputs.baseUrl.match(/^(http|https):\/\//) == null
+    || (inputs.projectId != null && (typeof inputs.projectId !== 'string' || inputs.projectId.length < 1))
   ) {
     res.status(400).send('Malformed or missing inputs');
     return;
   }
 
   try {
-    promiseId = projectsService.createProject(inputs.name, inputs.nameSpace, inputs.baseUrl, inputs.id);
-    promiseId.then(function(projectId) { 
-      res.send({projectId})
-    });
+    const projectId = await projectsService.createProject(inputs.name, inputs.nameSpace, inputs.baseUrl, inputs.projectId);
+
+    if (projectId == null) {
+      res.send('Project already exists.');
+    }
+
+    res.send({projectId});
   } catch (error) {
     console.log({error});
     res.status(500).send(error);
