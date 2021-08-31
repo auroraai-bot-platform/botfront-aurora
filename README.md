@@ -117,7 +117,7 @@ password: aaaaaaaa00
 * run `npx cypress run --spec cypress/<path_to_spec.js>`
 
 ### Run single test file with a clean database
-* run `npx cypress run --spec cypress/01_initial_setup_dont_change_name/initial_setup.spec.js` to drop the database and create test user one time
+* run `npx cypress run --spec cypress/integration/01_initial_setup_dont_change_name/initial_setup.spec.js` to drop the database and create test user one time
 * run `npx cypress run --spec cypress/<path_to_spec.js>`
 
 ### Run tests from the Cypress UI

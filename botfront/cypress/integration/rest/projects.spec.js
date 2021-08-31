@@ -8,10 +8,9 @@ const name = 'testproject';
 const nameSpace = 'bf-test'
 const baseUrl = 'http://test';
 
-
 describe('projects endpoint basic functionality', () => {
 
-  it('it should respond with error missing token', () => {
+  it('should respond with error missing token', () => {
     cy.request({
       url: endpoint,
       method: 'PUT',
@@ -117,7 +116,31 @@ describe('projects endpoint basic functionality', () => {
       url: endpoint,
       method: 'PUT',
       headers: { Authorization: token },
-      body: { nameSpace, baseUrl}, name: '134-qwd_',
+      body: { nameSpace, baseUrl, name: '134-qwd_'},
+      failOnStatusCode: false
+    })
+    .as('projects');
+
+    cy.get('@projects').should((res) => {
+      expect(res.status).to.eq(400);
+    });
+
+    // malformed projectId
+    cy.request({
+      url: endpoint,
+      method: 'PUT',
+      headers: { Authorization: token },
+      body: { nameSpace, baseUrl, name, projectId: 1},
+      failOnStatusCode: false
+    })
+    .as('projects');
+
+    // 0 length projectId
+    cy.request({
+      url: endpoint,
+      method: 'PUT',
+      headers: { Authorization: token },
+      body: { nameSpace, baseUrl, name, projectId: ''},
       failOnStatusCode: false
     })
     .as('projects');
@@ -127,7 +150,7 @@ describe('projects endpoint basic functionality', () => {
     });
   });
 
-  it('Create valid project', () => {
+  it('should create a valid project with a generated id', () => {
     cy.request({
       url: endpoint,
       method: 'PUT',
@@ -140,6 +163,23 @@ describe('projects endpoint basic functionality', () => {
     cy.get('@projects').should((res) => {
       expect(res.status).to.eq(200);
       expect(res.body).to.have.property('projectId');
+    });
+  });
+
+  it('should create a valid project with a fixed id', () => {
+    cy.request({
+      url: endpoint,
+      method: 'PUT',
+      headers: { Authorization: token },
+      body: { name, nameSpace, baseUrl, projectId: 'test-id-fixed-1' },
+      failOnStatusCode: false
+    })
+    .as('projects');
+
+    cy.get('@projects').should((res) => {
+      expect(res.status).to.eq(200);
+      expect(res.body).to.have.property('projectId');
+      expect(res.body.projectId).to.eq('test-id-fixed-1');
     });
   });
 });

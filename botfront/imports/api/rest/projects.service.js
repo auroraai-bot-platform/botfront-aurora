@@ -16,7 +16,7 @@ import { getUser } from './utilities.service';
 import { ENVIRONMENT_OPTIONS } from '../../ui/components/constants.json';
 
 
-export async function createProject(name, nameSpace, baseUrl) {
+export async function createProject(name, nameSpace, baseUrl, id) {
 
   const item = {
     disabled: false,
@@ -24,6 +24,10 @@ export async function createProject(name, nameSpace, baseUrl) {
     namespace: nameSpace,
     defaultLanguage: 'en'
   };
+
+  if (id != null) {
+    item._id = id;
+  }
 
   let _id;
     try {
