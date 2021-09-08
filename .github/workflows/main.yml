@@ -37,31 +37,31 @@ jobs:
         working-directory: ./cli
         run: npm run test
 
-  unit-bf:
-    if: "! contains(github.head_ref, 'docs')"
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
-      with:
-        node-version: '12.x'
-    - name: install meteor
-      run: curl https://install.meteor.com/ | sh
-    - uses: actions/cache@v1
-      id: cache
-      with:
-        path: ./botfront/node_modules
-        key: bf-${{ hashFiles('**/package-lock.json') }}
-    - uses: actions/cache@v1
-      with:
-        path: ~/.cache/Cypress
-        key: cypress-${{ hashFiles('**/package.json') }}
-    - working-directory: ./botfront
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: npm ci
-    - name: mocha tests
-      working-directory: ./botfront
-      run: npm run test-once
+  # unit-bf:
+  #   if: "! contains(github.head_ref, 'docs')"
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v1
+  #   - uses: actions/setup-node@v1
+  #     with:
+  #       node-version: '12.x'
+  #   - name: install meteor
+  #     run: curl https://install.meteor.com/ | sh
+  #   - uses: actions/cache@v1
+  #     id: cache
+  #     with:
+  #       path: ./botfront/node_modules
+  #       key: bf-${{ hashFiles('**/package-lock.json') }}
+  #   - uses: actions/cache@v1
+  #     with:
+  #       path: ~/.cache/Cypress
+  #       key: cypress-${{ hashFiles('**/package.json') }}
+  #   - working-directory: ./botfront
+  #     if: steps.cache.outputs.cache-hit != 'true'
+  #     run: npm ci
+  #   - name: mocha tests
+  #     working-directory: ./botfront
+  #     run: npm run test-once
 
   license-check:
     runs-on: ubuntu-latest
