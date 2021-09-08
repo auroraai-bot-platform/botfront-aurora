@@ -3,7 +3,7 @@ import { expect } from "chai";
 /* global cy:true */
 const token = Cypress.env('REST_API_TOKEN');
 
-const endpoint = '/api/projects';
+const endpoint = 'http://localhost:3030/api/projects';
 const name = 'testproject';
 const nameSpace = 'bf-test'
 const baseUrl = 'http://test';

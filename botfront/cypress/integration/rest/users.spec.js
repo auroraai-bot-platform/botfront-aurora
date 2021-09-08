@@ -1,7 +1,7 @@
 /* global cy:true */
 const token = Cypress.env('REST_API_TOKEN');
 
-const endpoint = '/api/users';
+const endpoint = 'http://localhost:3030/api/users';
 const email = 'test@example.org';
 const password = 'Aaaaaaaa00';
 

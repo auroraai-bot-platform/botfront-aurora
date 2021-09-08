@@ -1,12 +1,10 @@
-import { WebApp } from 'meteor/webapp'; 
 import express from 'express';
 import utilitiesService from './utilities.service';
 import usersService from './users.service';
 import projectsService from './projects.service';
 
-const app = express();
+const port = process.env.REST_API_PORT || 3030;
 const restApiToken = process.env.REST_API_TOKEN;
-
 const adminEmail = process.env.ADMIN_USER;
 const adminPassword = process.env.ADMIN_PASSWORD;
 
@@ -18,6 +16,10 @@ if (adminEmail != null && adminPassword != null) {
     profile: {firstName: 'admin', lastName: 'admin', preferredLanguage: 'en'}
   }, adminPassword);
 }
+
+const app = express();
+app.use(express.urlencoded({extended: true}));
+app.use(express.json());
 
 app.get('/api', (req, res, next) => {
   res.sendStatus(200);
@@ -45,16 +47,8 @@ app.get('/api', (req, res, next) => {
         }
  *     
 */
-app.put('/api/users', utilitiesService.fetchBodyMW, utilitiesService.authMW(restApiToken), async(req, res, next) => {
-  let inputs;
-  
-  try {
-    inputs = JSON.parse(req.body);
-  } catch (error) {
-    console.log({error});
-    res.status(400).send('Invalid JSON');
-    return;
-  }
+app.put('/api/users', utilitiesService.authMW(restApiToken), async(req, res, next) => {
+  const inputs = req.body;
 
   if (inputs.email == null || inputs.password == null) {
     res.status(400).send('Missing email or password');
@@ -95,15 +89,8 @@ app.put('/api/users', utilitiesService.fetchBodyMW, utilitiesService.authMW(rest
         }
  *     
 */
-app.put('/api/projects', utilitiesService.fetchBodyMW, utilitiesService.authMW(restApiToken), async (req, res, next) => {
-  let inputs;
-  try {
-    inputs = JSON.parse(req.body);
-  } catch (error) {
-    console.log({error});
-    res.status(400).send('Invalid JSON');
-    return;
-  }
+app.put('/api/projects', utilitiesService.authMW(restApiToken), async (req, res, next) => {
+  const inputs = req.body;
   
   if (inputs.name == null || typeof inputs.name !== 'string' || inputs.name.match(/^[a-zA-Z0-9]+$/) == null
     || inputs.nameSpace == null || typeof inputs.nameSpace !== 'string' || inputs.nameSpace.match(/^bf-[a-zA-Z0-9-]+$/) == null
@@ -128,5 +115,7 @@ app.put('/api/projects', utilitiesService.fetchBodyMW, utilitiesService.authMW(r
   }
 });
 
-WebApp.connectHandlers.use(app);
 
+app.listen(port, () => {
+  console.log(`REST API listening at port: ${port}`);
+})
