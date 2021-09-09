@@ -186,7 +186,7 @@ if (Meteor.isServer) {
 
             try {
                 const userBefore = Meteor.users.findOne({ _id: userId });
-                const result = Promise.await(Accounts.setPassword(userId, newPassword));
+                const result = Promise.await(Accounts.setPassword(userId, newPassword, {logout: false}));
                 const userAfter = Meteor.users.findOne({ _id: userId });
                 auditLog('Changed user password', {
                     user: Meteor.user(),
