@@ -23,7 +23,7 @@ import { print } from 'graphql';
 import { importFilesMutation } from '../../ui/components/settings/graphql';
 import { adminEmail, adminPassword } from '.';
 
-let loginTokenCache = '9MFdAaMi4GALsYtXXJeQcunMeU8SRvbTHRGtgD3B2WM=';
+let loginTokenCache = null;
 
 const graphQLEndpoint = 'http://localhost:3000/graphql';
 
@@ -68,21 +68,26 @@ export async function importProject(zipFile) {
   const projectId = 'chitchat-IlTlxlHTF';
   const files = await unZip(zipFile);
 
-  const validationResult = await sendProjectImportRequest(projectId, files, true, true, true, 'fi');
+  const validationResult = (await sendProjectImportRequest(projectId, files, true, true, true, 'fi')).data;
 
-  const hasErrors = validationResult?.data?.import?.fileMessages?.some(({errors}) => errors.length > 0);
-  if (hasErrors) {
-    throw new Error(validationResult);
+  const hasErrors = validationResult?.data?.import?.fileMessages?.filter(({errors}) => errors.length > 0);
+
+  if (hasErrors == null) {
+    throw new Error('Invalid validation Result');
   }
 
-  return validationResult;
+  if (hasErrors.length > 0) {
+    return [400, validationResult];
+  }
+
+  return [200, validationResult];
 }
 
 async function getAuthToken(email) {
-
   // if (loginTokenCache != null) {
   //   return loginTokenCache;
   // }
+
   const user = Meteor.users.findOne({
     'emails.address': email
   });
@@ -91,11 +96,11 @@ async function getAuthToken(email) {
   Accounts._insertLoginToken(user._id, stampedLoginToken);
   loginTokenCache = stampedLoginToken.token;
 
-  return loginTokenCache;
+  return stampedLoginToken.token;
 }
 
 async function sendProjectImportRequest(projectId, files, onlyValidate, wipeInvolvedCollections, wipeProject, fallbackLang) {
-  const token = await getAuthToken();
+  const token = await getAuthToken(adminEmail);
 
   return axios.post(graphQLEndpoint, {
     query: print(importFilesMutation),
@@ -110,7 +115,6 @@ async function sendProjectImportRequest(projectId, files, onlyValidate, wipeInvo
     'authorization': token
   }});
 }
-
 
 async function unZip(zipFile) {
   const zip = new JSZIP();
@@ -127,31 +131,6 @@ async function unZip(zipFile) {
   );
 
   return files;
-}
-
-
-// function validateImport(filestoSend) {
-//   const validationResult = await importFiles({
-//     variables: {
-//         projectId,
-//         files: filestoSend,
-//         onlyValidate: true,
-//         wipeInvolvedCollections,
-//         wipeProject,
-//         fallbackLang: fallbackImportLanguage,
-//     },
-// });
-// }
-
-function createGraphQLRequest(files) {
-  const request = '';
-}
-
-function createfilePayloads(files) {
-  return files.map(([name, content], index) => {
-    const payload = `Content-Disposition: form-data; name="${index}"; filename="${name}"\nContent-Type: application/octet-stream\n\n${content}\n`;
-    return payload;
-  });
 }
 
 function insertProject(item) {

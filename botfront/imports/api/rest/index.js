@@ -135,8 +135,12 @@ app.post('/api/projects/import', utilitiesService.authMW(restApiToken), async (r
     res.status(400).send('Send exactly one zip file');
   }
 
-  const files = await importProject(req.files.file.data);
-  res.send(files.data);
+  try {
+    const [statusCode, result]= await importProject(req.files.file.data);
+    res.status(statusCode).json(result);
+  } catch (error) {
+    res.status(503).json(error);
+  }
 });
 
 
