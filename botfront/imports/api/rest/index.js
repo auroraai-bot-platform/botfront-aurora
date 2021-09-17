@@ -119,6 +119,7 @@ app.put('/api/projects', utilitiesService.authMW(restApiToken), async (req, res,
 
     if (projectId == null) {
       res.send('Project already exists.');
+      return;
     }
 
     res.send({ projectId });
@@ -128,15 +129,40 @@ app.put('/api/projects', utilitiesService.authMW(restApiToken), async (req, res,
   }
 });
 
+
+
+/**
+ * @swagger
+ *  /api/projects:
+ *    post:
+ *      import a bot into a project.
+ *      If a projectId is provided, the bot will be imported into the project. If the project does not exist, it will be created
+ *      SEND DATA AS FORM-DATA
+        Interface {
+          file: blob; // a single zip file containing all required files
+          projectId: string // OPTIONAL, the projectId  used for creating the project
+        }
+ *     
+*/
 app.post('/api/projects/import', utilitiesService.authMW(restApiToken), async (req, res, next) => {
   console.log(req.files);
 
-  if (req.files?.files != null || req.files.file.mimetype !== 'application/zip') {
-    res.status(400).send('Send exactly one zip file');
+  if (req.body.projectId == null || req.body.projectId.length < 1) {
+    res.status(400).send('Provide a projectId');
+    return;
   }
 
+  const projectId = req.body.projectId
+
+  if (req.files?.file == null || req.files.file.mimetype !== 'application/zip') {
+    res.status(400).send('Send exactly one zip file');
+    return;
+  }
+
+  const file = req.files.file.data;
+
   try {
-    const [statusCode, result]= await importProject(req.files.file.data);
+    const [statusCode, result] = await importProject(file, projectId);
     res.status(statusCode).json(result);
   } catch (error) {
     res.status(503).json(error);
