@@ -64,11 +64,10 @@ export async function createProject(name, nameSpace, baseUrl, id) {
   }
 }
 
-export async function importProject(zipFile) {
-  const projectId = 'chitchat-IlTlxlHTF';
+export async function importProject(zipFile, projectId) {
   const files = await unZip(zipFile);
 
-  const validationResult = (await sendProjectImportRequest(projectId, files, true, true, true, 'fi')).data;
+  const validationResult = (await sendProjectImportRequest(projectId, files, true, true, true)).data;
 
   const hasErrors = validationResult?.data?.import?.fileMessages?.filter(({errors}) => errors.length > 0);
 
@@ -80,7 +79,12 @@ export async function importProject(zipFile) {
     return [400, validationResult];
   }
 
-  return [200, validationResult];
+
+  // return [400, {'success': true}];
+
+  const importResult = (await sendProjectImportRequest(projectId, files, false, true, true)).data;
+
+  return [200, importResult];
 }
 
 async function getAuthToken(email) {
@@ -99,7 +103,7 @@ async function getAuthToken(email) {
   return stampedLoginToken.token;
 }
 
-async function sendProjectImportRequest(projectId, files, onlyValidate, wipeInvolvedCollections, wipeProject, fallbackLang) {
+async function sendProjectImportRequest(projectId, files, onlyValidate, wipeInvolvedCollections, wipeProject, fallbackLang = '') {
   const token = await getAuthToken(adminEmail);
 
   return axios.post(graphQLEndpoint, {
@@ -109,6 +113,7 @@ async function sendProjectImportRequest(projectId, files, onlyValidate, wipeInvo
       files,
       onlyValidate,
       wipeInvolvedCollections,
+      wipeProject,
       fallbackLang,
     }
   }, {headers: {

@@ -145,8 +145,6 @@ app.put('/api/projects', utilitiesService.authMW(restApiToken), async (req, res,
  *     
 */
 app.post('/api/projects/import', utilitiesService.authMW(restApiToken), async (req, res, next) => {
-  console.log(req.files);
-
   if (req.body.projectId == null || req.body.projectId.length < 1) {
     res.status(400).send('Provide a projectId');
     return;
