@@ -23,6 +23,8 @@ import { print } from 'graphql';
 import { importFilesMutation } from '../../ui/components/settings/graphql';
 import { adminEmail, adminPassword } from '.';
 
+const TOKEN_EXPIRATION = 1000 * 60 * 60;
+
 let loginTokenCache = null;
 const defaultLanguage = 'en';
 
@@ -121,9 +123,9 @@ export async function importProject(zipFile, projectId) {
 }
 
 async function getAuthToken(email) {
-  // if (loginTokenCache != null) {
-  //   return loginTokenCache;
-  // }
+  if (loginTokenCache != null && loginTokenCache.expires > Date.now()) {
+    return loginTokenCache.token;
+  }
 
   const user = Meteor.users.findOne({
     'emails.address': email
@@ -131,7 +133,7 @@ async function getAuthToken(email) {
 
   const stampedLoginToken = Accounts._generateStampedLoginToken();
   Accounts._insertLoginToken(user._id, stampedLoginToken);
-  loginTokenCache = stampedLoginToken.token;
+  loginTokenCache = { expires: Date.now() + TOKEN_EXPIRATION, token: stampedLoginToken.token };
 
   return stampedLoginToken.token;
 }
