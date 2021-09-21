@@ -265,3 +265,5 @@ describe('/api/projects/import endpoint', () => {
           expect(res.status).to.eq(200);
         });
       });
+  });
+});
