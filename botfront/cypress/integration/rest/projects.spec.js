@@ -208,20 +208,6 @@ describe('/api/projects endpoint', () => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 describe('/api/projects/import endpoint', () => {
   const endpoint = `${apiUrl}/projects/import`;
 

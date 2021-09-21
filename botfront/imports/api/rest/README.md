@@ -231,11 +231,6 @@ This rest api provides a simple way to interact with the botfront container with
   OR
 
   * **Code:** 400 BAD REQUEST <br />
-    **Content:** `{ error: "Send exactly one zip file" }`<br />
-
-  OR
-
-  * **Code:** 400 BAD REQUEST <br />
     **Content:** `{ error: "Failed to extract zip file" }`<br />
 
   OR
