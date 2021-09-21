@@ -1,17 +1,18 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
 import utilitiesService from './utilities.service';
-import {createUser} from './users.service';
+import { createUser } from './users.service';
 import projectsService, { importProject } from './projects.service';
 
 const FILE_SIZE_LIMIT = 1024 * 1024;
 
 const port = process.env.REST_API_PORT || 3030;
 const restApiToken = process.env.REST_API_TOKEN;
-export const adminEmail = process.env.ADMIN_USER || 'johannes.feig@gofore.com';
-export const adminPassword = process.env.ADMIN_PASSWORD || '46qSJYyCAFvSn6q';
+export const adminEmail = process.env.ADMIN_USER;
+export const adminPassword = process.env.ADMIN_PASSWORD;
 
-createAdminUser();
+// make sure the database hase been initialised completely before creating the user
+setTimeout(() => { createAdminUser(); }, 4000);
 
 async function createAdminUser() {
   // create admin on startup
@@ -49,27 +50,12 @@ app.get('/api', (req, res, next) => {
           roles?: [
             {
               roles: string[],
-              project: string
-            }
-          ];
-          profile?: {
-            firstName: string;
-            lastName: string;
-            preferredLanguage: string'
-          }
-        }
- *     
-*/
-app.put('/api/users', utilitiesService.authMW(restApiToken), async (req, res, next) => {
-  const inputs = req.body;
-
-  if (inputs.email == null || inputs.password == null) {
-    res.status(400).send('Missing email or password');
+              project: sNlPhNOhb error: 'Missing email or password' });
     return;
   }
 
   if (inputs.roles != null && (!Array.isArray(inputs.roles) || inputs.roles.length < 1)) {
-    res.status(400).send('Malformed or missing roles');
+    res.status(400).json({ error: 'Malformed or missing roles' });
     return;
   }
 
@@ -80,11 +66,11 @@ app.put('/api/users', utilitiesService.authMW(restApiToken), async (req, res, ne
   };
 
   try {
-    const success = await usersService.createUser(user, inputs.password);
-    res.send(success);
+    const success = await createUser(user, inputs.password);
+    res.json(success);
   } catch (error) {
     console.log({ error });
-    res.status(500).send(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -118,14 +104,14 @@ app.put('/api/projects', utilitiesService.authMW(restApiToken), async (req, res,
     const projectId = await projectsService.createProject(inputs.name, inputs.nameSpace, inputs.baseUrl, inputs.projectId);
 
     if (projectId == null) {
-      res.send('Project already exists.');
+      res.send({ projectId, alreadyExists: true });
       return;
     }
 
     res.send({ projectId });
   } catch (error) {
     console.log({ error });
-    res.status(500).send(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -133,37 +119,42 @@ app.put('/api/projects', utilitiesService.authMW(restApiToken), async (req, res,
 
 /**
  * @swagger
- *  /api/projects:
+ *  /api/projects/import:
  *    post:
  *      import a bot into a project.
- *      If a projectId is provided, the bot will be imported into the project. If the project does not exist, it will be created
  *      SEND DATA AS FORM-DATA
         Interface {
           file: blob; // a single zip file containing all required files
-          projectId: string // OPTIONAL, the projectId  used for creating the project
+          projectId: string // the projectId used for importing into a project
         }
  *     
 */
 app.post('/api/projects/import', utilitiesService.authMW(restApiToken), async (req, res, next) => {
   if (req.body.projectId == null || req.body.projectId.length < 1) {
-    res.status(400).send('Provide a projectId');
+    res.status(400).json({ error: 'Provide a projectId' });
     return;
   }
 
-  const projectId = req.body.projectId
+  const projectId = req.body.projectId;
 
   if (req.files?.file == null || req.files.file.mimetype !== 'application/zip') {
-    res.status(400).send('Send exactly one zip file');
+    res.status(400).json({ error: 'Send exactly one zip file' });
     return;
   }
 
   const file = req.files.file.data;
 
   try {
-    const [statusCode, result] = await importProject(file, projectId);
-    res.status(statusCode).json(result);
+    const result = await importProject(file, projectId);
+
+    if (result.errors != null) {
+      throw new Error(JSON.stringify(result));
+    }
+
+    res.send({ projectId });
   } catch (error) {
-    res.status(503).json(error);
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({ error: error.message });
   }
 });
 

@@ -24,6 +24,7 @@ import { importFilesMutation } from '../../ui/components/settings/graphql';
 import { adminEmail, adminPassword } from '.';
 
 let loginTokenCache = null;
+const defaultLanguage = 'en';
 
 const graphQLEndpoint = 'http://localhost:3000/graphql';
 
@@ -34,7 +35,7 @@ export async function createProject(name, nameSpace, baseUrl, id) {
     disabled: false,
     name: name,
     namespace: nameSpace,
-    defaultLanguage: 'en'
+    defaultLanguage: defaultLanguage
   };
 
   if (id != null) {
@@ -65,26 +66,58 @@ export async function createProject(name, nameSpace, baseUrl, id) {
 }
 
 export async function importProject(zipFile, projectId) {
-  const files = await unZip(zipFile);
+  let files;
+  try {
 
-  const validationResult = (await sendProjectImportRequest(projectId, files, true, true, true)).data;
+    files = await unZip(zipFile);
+  } catch (error) {
+    const newError = new Error('Failed to extract zip file');
+    newError.statusCode = 400;
+    throw newError;
+  }
+  
+  let validationResult;
+  
+  try {
+    validationResult = (await sendProjectImportRequest(projectId, files, true, true, true)).data;
+  } catch (error) {
+    throw new Error('Failed to validate extracted files');
+  }
 
-  const hasErrors = validationResult?.data?.import?.fileMessages?.filter(({errors}) => errors.length > 0);
 
-  if (hasErrors == null) {
+  // error message thrown, when the project does not exist
+  if (validationResult?.errors?.findIndex((error) => error.message = `Cannot destructure property 'languages' of 'Projects.findOne(...)`) > -1) {
+    const error = new Error('ProjectId does not exist');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (validationResult.errors != null) {
     throw new Error('Invalid validation Result');
   }
 
-  if (hasErrors.length > 0) {
-    return [400, validationResult];
+  const validationErrors = validationResult?.data?.import?.fileMessages?.filter(({errors}) => errors.length > 0);
+
+  if (validationErrors == null) {
+    throw new Error('Invalid validation Result');
+  }
+
+  if (validationErrors.length > 0) {
+    const error = new Error(`Validation failed: ${JSON.stringify(validationErrors)}`); 
+    error.statusCode = 400;
+    error.data = validationErrors;
+    throw error;
   }
 
 
   // return [400, {'success': true}];
 
-  const importResult = (await sendProjectImportRequest(projectId, files, false, true, true)).data;
-
-  return [200, importResult];
+  try {
+    const importResult = (await sendProjectImportRequest(projectId, files, false, true, true)).data;
+    return importResult;
+  } catch (error) {
+    throw new Error(`Import failed: : ${JSON.stringify(error)}`);
+  }
 }
 
 async function getAuthToken(email) {
@@ -151,6 +184,7 @@ function insertProject(item) {
   const projectId = Projects.insert({
     ...item,
     defaultDomain: { content: 'slots:\n  disambiguation_message:\n    type: unfeaturized\nactions:\n  - action_botfront_disambiguation\n  - action_botfront_disambiguation_followup\n  - action_botfront_fallback\n  - action_botfront_mapping' },
+    languages: [defaultLanguage],
     chatWidgetSettings: {
       title: item.name,
       subtitle: 'Happy to help',
