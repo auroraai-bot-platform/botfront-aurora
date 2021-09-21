@@ -50,12 +50,27 @@ app.get('/api', (req, res, next) => {
           roles?: [
             {
               roles: string[],
-              project: sNlPhNOhb error: 'Missing email or password' });
+              project: string
+            }
+          ];
+          profile?: {
+            firstName: string;
+            lastName: string;
+            preferredLanguage: string'
+          }
+        }
+ *     
+*/
+app.put('/api/users', utilitiesService.authMW(restApiToken), async(req, res, next) => {
+  const inputs = req.body;
+
+  if (inputs.email == null || inputs.password == null) {
+    res.status(400).send('Missing email or password');
     return;
   }
 
   if (inputs.roles != null && (!Array.isArray(inputs.roles) || inputs.roles.length < 1)) {
-    res.status(400).json({ error: 'Malformed or missing roles' });
+    res.status(400).send({ error: 'Malformed or missing roles' });
     return;
   }
 
@@ -67,10 +82,10 @@ app.get('/api', (req, res, next) => {
 
   try {
     const success = await createUser(user, inputs.password);
-    res.json(success);
+    res.send(success);
   } catch (error) {
     console.log({ error });
-    res.status(500).json({ error });
+    res.status(500).send({ error });
   }
 });
 
@@ -111,7 +126,7 @@ app.put('/api/projects', utilitiesService.authMW(restApiToken), async (req, res,
     res.send({ projectId });
   } catch (error) {
     console.log({ error });
-    res.status(500).json({ error });
+    res.status(500).send({ error });
   }
 });
 
@@ -131,14 +146,14 @@ app.put('/api/projects', utilitiesService.authMW(restApiToken), async (req, res,
 */
 app.post('/api/projects/import', utilitiesService.authMW(restApiToken), async (req, res, next) => {
   if (req.body.projectId == null || req.body.projectId.length < 1) {
-    res.status(400).json({ error: 'Provide a projectId' });
+    res.status(400).send({ error: 'Provide a projectId' });
     return;
   }
 
   const projectId = req.body.projectId;
 
   if (req.files?.file == null || req.files.file.mimetype !== 'application/zip') {
-    res.status(400).json({ error: 'Send exactly one zip file' });
+    res.status(400).send({ error: 'Send exactly one zip file' });
     return;
   }
 
@@ -154,7 +169,7 @@ app.post('/api/projects/import', utilitiesService.authMW(restApiToken), async (r
     res.send({ projectId });
   } catch (error) {
     const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ error: error.message });
+    res.status(statusCode).send({ error: error.message });
   }
 });
 

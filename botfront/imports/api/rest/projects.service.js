@@ -47,7 +47,7 @@ export async function createProject(name, nameSpace, baseUrl, id) {
   let _id;
   try {
     _id = insertProject(item);
-    console.log({ _id });
+
     AnalyticsDashboards.create(defaultDashboard({ _id, ...item }));
     createEndpoints({ _id, ...item });
     createCredentials(_id, baseUrl);

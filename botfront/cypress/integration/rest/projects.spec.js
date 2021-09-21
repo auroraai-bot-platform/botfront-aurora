@@ -252,7 +252,6 @@ describe('/api/projects/import endpoint', () => {
       .then((binary) => Cypress.Blob.binaryStringToBlob(binary, 'application/zip'))
       .then((blob) => {
         data.append("file", blob);
-        console.log({data});
         cy.request({
           url: endpoint,
           method: 'POST',
