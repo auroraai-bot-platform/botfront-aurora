@@ -1,8 +1,260 @@
+
 # REST API
 This rest api provides a simple way to interact with the botfront container without the need of a meteor client.
-All added endpoints should be prefixed with `/api`
 
 ## Implemented Methods
-`GET /api` - health check
-`PUT /api/users` - creates a new user
-`PUT /api/projects` - create a new project
+
+### **Health CHeck**
+<details>
+
+  ----
+  Retuns 200 OK in case the API is active.
+
+* **URL**
+
+  /api
+* **Method:**
+
+  `GET`
+  
+*  **Headers**
+
+   **Required:**
+
+   None
+  
+*  **URL Params**
+
+   **Required:**
+ 
+   None
+
+* **Data Params**
+
+   None
+
+* **Success Response:**
+
+  * **Code:** 200 <br />
+    **Content:** None
+---
+
+</details>
+<br />
+
+### **Create User**
+<details>
+
+----
+  Creates a new user. The user is by default a global-admin. Custom roles can be provided in the optional parameters.
+
+* **URL**
+
+  /api/users
+
+* **Method:**
+
+  `PUT`
+  
+*  **Headers**
+
+   **Required:**
+
+   `Authorization=[string]`
+  
+*  **URL Params**
+
+   **Required:**
+ 
+   None
+
+* **Data Params**
+
+  ```json
+  email: string;
+  password: string;
+  roles?: [           // provide  a specific role for the user to restrict its access rights
+    {
+      roles: string[],
+      project: string
+    }
+  ];
+  profile?: {
+    firstName: string;
+    lastName: string;
+    preferredLanguage: string;
+  };
+  ```
+
+* **Success Response:**
+
+  * **Code:** 200 <br />
+    **Content:** `{ email : "example@example.org" }`
+ 
+* **Error Response:**
+
+  * **Code:** 401 UNAUTHORIZED <br />
+    **Content:** None
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Content:** `{ error: "Missing email or password" }`
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Content:** `{ error: "Malformed or missing roles" }`<br />
+    **Description** In case role information is provided
+
+---
+
+</details>
+<br />
+
+### **Create Project**
+<details>
+
+----
+  Creates a new project. The projectId can be provided to make it easier to target specific projects with updates, without the need of looking them up.
+
+* **URL**
+
+  /api/projects
+
+* **Method:**
+
+  `PUT`
+  
+*  **Headers**
+
+   **Required:**
+
+   `Authorization=[string]`
+  
+*  **URL Params**
+
+   **Required:**
+ 
+   None
+
+* **Data Params**
+
+  ```json
+  name: string;
+  nameSpace: string; // MUST START with `bf-`
+  baseUrl: string; // the url under which the rasa bot instance is reachable
+  projectId?: string // OPTIONAL, the projectId  used for creating the project
+  ```
+
+* **Success Response:**
+
+  * **Code:** 200 <br />
+    **Content:** `{ projectId : "s4Mnft8s2" }`
+ 
+* **Error Response:**
+
+  * **Code:** 401 UNAUTHORIZED <br />
+    **Content:** None
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Content:** `{ error: "Malformed or missing inputs" }`<br />
+    **Description** In case role information is provided
+
+---
+
+</details>
+<br />
+
+### **Import Project**
+<details>
+
+----
+  Import a Rasa bot configuration into a project. It is important, that the projectId is existing.
+  The data is provided as a single zip file. This file needs to contain all bot files. The files will be extracted and validated.
+  If the validation result returns any error, the import will fail and return the error information.
+  If the validation error is
+  ```shell
+  NLU data in this file could not be parsed by Rasa at <address>
+  ```
+  , then the rasa bot `Instance` for the project is not reachable or wrongly configured.
+
+* **URL**
+
+  /api/projects/import
+
+* **Method:**
+
+  `POST`
+  
+*  **Headers**
+
+   **Required:**
+
+   `Authorization=[string]`
+  
+*  **URL Params**
+
+   **Required:**
+ 
+   None
+
+* **Data Params**
+
+  ```json
+  file: blob; // a single zip file containing all required files
+  projectId: string // the projectId of the project, where the data will be imported to
+  ```
+
+* **Success Response:**
+
+  * **Code:** 200 <br />
+    **Content:** `{ projectId : [string] }`
+ 
+* **Error Response:**
+
+  * **Code:** 401 UNAUTHORIZED <br />
+    **Content:** None
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Content:** `{ error: "Provide a projectId" }`<br />
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Content:** `{ error: "Send exactly one zip file" }`<br />
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Content:** `{ error: "Send exactly one zip file" }`<br />
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Content:** `{ error: "Failed to extract zip file" }`<br />
+
+  OR
+
+  * **Code:** 400 BAD REQUEST <br />
+    **Content:** `{ error: "Validation failed" }`<br />
+
+  OR
+
+  * **Code:** 500 BAD REQUEST <br />
+    **Content:** `{ error: "Failed to validate extracted files" }`<br />
+
+  OR
+
+  * **Code:** 500 BAD REQUEST <br />
+    **Content:** `{ error: "Invalid validation Result" }`<br />
+
+---
+
+</details>
+<br />
+
