@@ -2,13 +2,26 @@ import { expect } from "chai";
 
 /* global cy:true */
 const token = Cypress.env('REST_API_TOKEN');
-
-const endpoint = 'http://localhost:3030/api/projects';
+const apiUrl = 'http://localhost:3030/api';
 const name = 'testproject';
 const nameSpace = 'bf-test'
-const baseUrl = 'http://test';
+const baseUrl = 'http://localhost:5005';
 
-describe('projects endpoint basic functionality', () => {
+const fixedProjectId = 'test-id-123';
+
+describe('/api/projects endpoint', () => {
+  const endpoint = `${apiUrl}/projects`;
+
+
+  let generatedProjectId;
+
+  before(() => {
+    cy.deleteProject(fixedProjectId);
+  });
+
+  after(() => {
+    cy.deleteProject(generatedProjectId);
+  });
 
   it('should respond with error missing token', () => {
     cy.request({
@@ -19,7 +32,7 @@ describe('projects endpoint basic functionality', () => {
     .as('projects');
 
     cy.get('@projects').should((res) => {
-      expect(res.status).to.eq(403);
+      expect(res.status).to.eq(401);
     });
   });
 
@@ -135,6 +148,10 @@ describe('projects endpoint basic functionality', () => {
     })
     .as('projects');
 
+    cy.get('@projects').should((res) => {
+      expect(res.status).to.eq(400);
+    });
+
     // 0 length projectId
     cy.request({
       url: endpoint,
@@ -160,18 +177,20 @@ describe('projects endpoint basic functionality', () => {
     })
     .as('projects');
 
-    cy.get('@projects').should((res) => {
+    cy.get('@projects').should(async (res) => {
+      generatedProjectId = res.body.projectId;
       expect(res.status).to.eq(200);
       expect(res.body).to.have.property('projectId');
     });
+
   });
 
   it('should create a valid project with a fixed id', () => {
-    cy.request({
+        cy.request({
       url: endpoint,
       method: 'PUT',
       headers: { Authorization: token },
-      body: { name, nameSpace, baseUrl, projectId: 'test-id-fixed-1' },
+      body: { name, nameSpace, baseUrl, projectId: fixedProjectId },
       failOnStatusCode: false
     })
     .as('projects');
@@ -179,7 +198,71 @@ describe('projects endpoint basic functionality', () => {
     cy.get('@projects').should((res) => {
       expect(res.status).to.eq(200);
       expect(res.body).to.have.property('projectId');
-      expect(res.body.projectId).to.eq('test-id-fixed-1');
+      expect(res.body.projectId).to.eq(fixedProjectId);
     });
+
+  });
+  
+});
+
+
+
+
+describe('/api/projects/import endpoint', () => {
+  const endpoint = `${apiUrl}/projects/import`;
+
+  it('should respond with error missing token', () => {
+
+    cy.request({
+      url: endpoint,
+      method: 'POST',
+      failOnStatusCode: false
+    })
+    .as('projects');
+
+    cy.get('@projects').should((res) => {
+      expect(res.status).to.eq(401);
+    });
+  });
+  
+  it('should respond with error missing projectId', () => {
+
+    cy.request({
+      url: endpoint,
+      method: 'POST',
+      headers: { Authorization: token },
+      failOnStatusCode: false
+    })
+    .as('projects');
+
+    cy.get('@projects').should((res) => {
+      expect(res.status).to.eq(400);
+    });
+  });
+
+  it('should import a valid rasa zip file into a project with a fixed project id', () => {
+    const alias = 'importRequest';
+
+    // build a form data object, that holds the projectId and the zip file
+    const data = new FormData();
+
+    data.set("projectId", fixedProjectId);
+
+    cy.fixture('bot.zip', "binary")
+      .then((binary) => Cypress.Blob.binaryStringToBlob(binary, 'application/zip'))
+      .then((blob) => {
+        data.append("file", blob);
+        cy.request({
+          url: endpoint,
+          method: 'POST',
+          headers: { Authorization: token, Accept: 'application/json' },
+          body: data,
+          form: false,
+          failOnStatusCode: false
+        })
+        .then((res) => {
+          expect(res.status).to.eq(200);
+        });
+      });
   });
 });

@@ -11,10 +11,6 @@ describe('users endpoint basic functionality', () => {
     cy.deleteUser(email);
   });
 
-  after(() => {
-    cy.deleteUser(email);
-  });
-
   it('it should respond with error missing token', () => {
     cy.request({
       url: endpoint,
@@ -24,7 +20,7 @@ describe('users endpoint basic functionality', () => {
     .as('users');
 
     cy.get('@users').should((res) => {
-      expect(res.status).to.eq(403);
+      expect(res.status).to.eq(401);
     });
   });
 

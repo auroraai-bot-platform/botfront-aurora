@@ -30,7 +30,7 @@ export function createUser(user, password) {
 
       return resolve({email: user.email});
     } catch (error) {
-      return reject(error);
+      reject(error);
     }
   });
 }

@@ -26,10 +26,21 @@ cd cli && npm link
 ```
 Botfront needs to be connected to other services, especially Rasa. To do this, you need to create a regular project, and start Botfront with a dedicated configuration:
 
-1. Create a Botfront project with `botfront init` (somewhere else, not in the repo)
-2. Start your project with `botfront up -e botfront`. This will run all services except the Botfront app, since you are going to run it with Meteor locally
-3. Go back to the botfront checkout `cd botfront/botfront` and run Botfront with `meteor npm run start:docker-compose.dev`. Botfront will be available at [http://localhost:3000](http://localhost:3000) so open your browser and happy editing :smile_cat:
-
+- Create a Botfront project with `botfront init` (somewhere else, not in the repo)
+- Start your project with `botfront up -e botfront`. This will run all services except the Botfront app, since you are going to run it with Meteor locally
+- Go back to the botfront checkout `cd botfront/botfront` and run Botfront with `meteor npm run start:docker-compose.dev`. Botfront will be available at [http://localhost:3000](http://localhost:3000) so open your browser and happy editing :smile_cat:
+- Go to back to the botfront app directory. Open `./.botfront/botfront.yml` and add the correct projectId and change the bf_url. Otherwise the rasa instance cannot
+connect to botfront.
+```shell
+bf_project_id: '<PROJECT-ID>'
+bf_url: 'http://host.docker.internal:3000/graphql'
+```
+- If on Linux go open `docker-compose-template.yml` and add to the rasa service definition to give access to the host
+```shell
+extra_hosts:
+      - "host.docker.internal:host-gateway"
+```
+    
 ### TroubleShooting
 
 Some [botfront cli](https://github.com/botfront/botfront/blob/master/cli/src/cli.js) commands that may help if you run into problems:

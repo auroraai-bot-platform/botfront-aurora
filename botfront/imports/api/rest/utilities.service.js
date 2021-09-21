@@ -5,7 +5,7 @@ export function getUser() {
       lastName: 'api'
     },
     emails: [
-      {address: 'restservice@example.com'}
+      { address: 'restservice@example.com' }
     ]
   };
 }
@@ -13,12 +13,12 @@ export function getUser() {
 export function authMW(token) {
   return (function (req, res, next) {
     if (token == null || token.length < 1) {
-      res.status(500).send('Token configuration missing');
+      res.status(500).json({ error: 'Token configuration missing' });
       return;
     }
 
     if (req.headers.authorization !== token) {
-      res.sendStatus(403);
+      res.sendStatus(401);
       return;
     }
 
