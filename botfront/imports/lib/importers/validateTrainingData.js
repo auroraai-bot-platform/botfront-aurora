@@ -129,27 +129,169 @@ export class TrainingDataValidator {
         return [];
     };
 
-    static countAndPluralize = (number, noun, withN = true) => `${withN ? `${number} ` : ''}${
-        number !== 1
-            ? noun === 'was'
-                ? 'were'
-                : noun.endsWith('y')
-                    ? `${noun.slice(0, noun.length - 1)}ies`
-                    : `${noun}s`
-            : noun
-    }`;
+    static countAndPluralize = (number, noun, withN = true) => `${withN ? `${number} ` : ''}${number !== 1
+        ? noun === 'was'
+            ? 'were'
+            : noun.endsWith('y')
+                ? `${noun.slice(0, noun.length - 1)}ies`
+                : `${noun}s`
+        : noun
+        }`;
 
-    convertNluToJson = async (rawText, extension) => {
-        // if yaml, we preload to json to avoid mysterious yaml
-        // parsing perf issue over at Rasa side
-        
-        const { data } = await this.axiosClient.post('data/convert/nlu', {
-            data: extension === 'yaml' ? safeLoad(rawText) : rawText,
-            input_format: extension === 'yaml' ? 'parsed_yaml' : extension,
-            output_format: 'json',
-            language: 'en',
-        });
-        return data;
+    haveEntities = (text) => {
+        return (text.match(/((\[.+?\])((\(.+?\))|(\{.+?\})))/m,)) ? true : false
+    }
+
+    parseEntities = (text) => {
+        // first find all entity values between [] since there can be more than one entities per example
+        let values = [...text.matchAll(/\[(.*?)\]/g)]
+        let entities = []
+        let counter = 0
+        // let's go through all found entity values one by one
+        for (let value of values) {
+            // let's clean text from possible previous entity values to get correct start & end indexes for the current entity
+            value = (text.substring(0, value.index).replace(/ *\([^)]*\)/g, '').replace(/{(.*?)}/g, '').replace(/[\[\]']+/g, '') + text.substring(value.index)).match(/\[(.*?)\]/)
+            let start = null
+            let end = null
+            if (value) {
+                start = value.index
+                end = start + value[1].length
+                value = value[1]
+            }
+            let entity
+            // let's find entity data between () from substring of start of the current entity and the end of next entity
+            if (values.length > counter + 1) {
+                entity = text.substring(end, values[counter + 1].index).match(/\((.*?)\)/)
+            } else {
+                entity = text.substring(end).match(/\((.*?)\)/)
+            }
+
+            if (entity) {
+                entity = entity[1]
+            } else {
+                // entity data not found between ()
+                // let's find entity data between {} from substring of start of the current entity and the end of next entity
+                if (values.length > counter + 1) {
+                    entity = text.substring(end, values[counter + 1].index).match(/{(.*?)}/,)
+                } else {
+                    entity = text.substring(end).match(/{(.*?)}/,)
+                }
+                if (entity) {
+                    entity = JSON.parse(entity[0])
+
+                    // if no 'value' in found entity data then let's use original value as 'value'
+                    if (!('value' in entity)) {
+                        entity['value'] = value
+                    }
+                } else {
+                    entity = null
+                }
+            }
+            if (typeof entity === 'object') {
+                entities.push(
+                    {
+                        start: start,
+                        end: end,
+                        ...entity
+                    }
+                )
+            } else {
+                entities.push({
+                    start: start,
+                    end: end,
+                    value: value,
+                    entity: entity
+                })
+            }
+            counter += 1
+        }
+
+        return entities
+    }
+
+    parseIntent = (nlu_example, nlu_item) => {
+        let example_metadata = 'metadata' in nlu_example ? nlu_example['metadata'] : null
+        nlu_example['text'] = nlu_example['text'].replace(/(\r\n|\n|\r)/gm, '')
+        let entities = {}
+        if (this.haveEntities(nlu_example['text'])) {
+            let entity_list = this.parseEntities(nlu_example['text'])
+            entities['entities'] = entity_list
+        }
+        return {
+            text: nlu_example['text'].replace(/ *\([^)]*\)/gm, '').replace(/{(.*?)}/gm, '').replace(/[\[\]']+/gm, ''), // remove all possible entity data from text
+            intent: nlu_item['intent'].replace(/(\r\n|\n|\r)/gm, ''),
+            metadata: {
+                language: nlu_item['metadata']['language'],
+                ...example_metadata
+            },
+            ...entities
+        }
+    }
+
+    convertNluToJson = (rawText, extension) => {
+        let inputData = extension === 'yaml' ? safeLoad(rawText) : rawText
+        let common_examples = []
+        let entity_synonyms = []
+        let gazette = []
+        let regex_features = []
+        let lookup_tables = []
+        for (const nlu_item of inputData['nlu']) {
+            // parse intent with array of examples
+            if ('intent' in nlu_item && 'examples' in nlu_item && Array.isArray(nlu_item['examples'])) {
+                for (let nlu_example of nlu_item['examples']) {
+                    common_examples.push(this.parseIntent(nlu_example, nlu_item))
+                }
+            }
+            // parse intent with string of examples
+            else if ('intent' in nlu_item && 'examples' in nlu_item && typeof nlu_item['examples'] === 'string') {
+                nlu_item['examples'] = nlu_item['examples'].split('- ').filter(item => item)
+                nlu_item['examples'] = nlu_item['examples'].map((str) => ({ text: str }))
+                for (let nlu_example of nlu_item['examples']) {
+                    common_examples.push(this.parseIntent(nlu_example, nlu_item))
+                }
+            }
+            // parse synonyms
+            else if ('synonym' in nlu_item && 'examples' in nlu_item && typeof nlu_item['examples'] === 'string') {
+                entity_synonyms.push({
+                    value: nlu_item['synonym'],
+                    synonyms: nlu_item['examples'].replace(/(\r\n|\n|\r)/gm, '').split('- ').filter(item => item)
+                })
+            }
+            // parse gazette
+            else if ('gazette' in nlu_item && 'examples' in nlu_item && typeof nlu_item['examples'] === 'string') {
+                gazette.push({
+                    value: nlu_item['gazette'],
+                    gazette: nlu_item['examples'].replace(/(\r\n|\n|\r)/gm, '').split('- ').filter(item => item)
+                })
+            }
+            // parse regex
+            else if ('regex' in nlu_item && 'examples' in nlu_item && typeof nlu_item['examples'] === 'string') {
+                regex_features.push({
+                    name: nlu_item['regex'],
+                    pattern: nlu_item['examples'].replace(/(\r\n|\n|\r)/gm, '').split('- ').filter(item => item)
+                })
+            }
+            // parse lookup
+            else if ('lookup' in nlu_item && 'examples' in nlu_item && typeof nlu_item['examples'] === 'string') {
+                lookup_tables.push({
+                    name: nlu_item['lookup'],
+                    elements: nlu_item['examples'].replace(/(\r\n|\n|\r)/gm, '').split('- ').filter(item => item)
+                })
+            }
+        }
+
+        let outputData = {
+            data: {
+                rasa_nlu_data: {
+                    common_examples: common_examples,
+                    regex_features: regex_features,
+                    lookup_tables: lookup_tables,
+                    entity_synonyms: entity_synonyms,
+                    gazette: gazette
+                }
+            }
+        }
+        return outputData;
     };
 
     static isNluEmpty = ({
@@ -171,21 +313,25 @@ export class TrainingDataValidator {
         let nlu;
         if (fileData && typeof fileData === 'object' && 'rasa_nlu_data' in fileData) {
             nlu = fileData.rasa_nlu_data;
+        } else if (extension != 'yaml') {
+            throw new Error(
+                `Botfront importer only supports Rasa YAML file format for NLU data, ${extension} format is not supported atm.`,
+            );
         } else {
             try {
-                const res = await this.convertNluToJson(fileData, extension);
+                const res = this.convertNluToJson(fileData, extension);
                 ({ rasa_nlu_data: nlu } = res?.data || {});
                 if (!nlu) throw new Error();
             } catch (e) {
                 throw new Error(
-                    `NLU data in this file could not be parsed by Rasa at ${this.instanceHost}.`,
+                    `NLU data in this file could not be parsed by Botfront importer.`,
                 );
             }
         }
         if (nlu) {
             delete nlu.lookup_tables;
             if (TrainingDataValidator.isNluEmpty(nlu)) {
-                throw new Error('NLU data came back empty from Rasa.');
+                throw new Error('NLU data came back empty from Botfront importer.');
             }
             nlu.common_examples = (nlu.common_examples || []).map((example) => {
                 if (example?.metadata?.language) {
@@ -318,12 +464,12 @@ export class TrainingDataValidator {
             )} ${droppedExamples[lang]
                 .map(ex => `'${ex[0]}'`)
                 .join(', ')} ${TrainingDataValidator.countAndPluralize(
-                droppedExamples[lang].length,
-                'was',
-                false,
-            )} dropped because same text was found in an import file (${Array.from(
-                new Set(droppedExamples[lang].map(ex => `${ex[1]}`)),
-            ).join(', ')}).`,
+                    droppedExamples[lang].length,
+                    'was',
+                    false,
+                )} dropped because same text was found in an import file (${Array.from(
+                    new Set(droppedExamples[lang].map(ex => `${ex[1]}`)),
+                ).join(', ')}).`,
         }));
         return [warnings, filteredExamples];
     };
@@ -494,7 +640,7 @@ export class TrainingDataValidator {
             );
         }
         if (branchingCheckpoint) hasDescendents = true;
-        else [linkTo] = footer;
+        else[linkTo] = footer;
         return { hasDescendents, linkTo };
     };
 
@@ -676,9 +822,8 @@ export class TrainingDataValidator {
                     fileIndex,
                 } = parsingMetadata;
                 const ancestorPath = ancestorOf.join('__');
-                const currentPath = `${
-                    ancestorPath && `${ancestorPath}__`
-                }${title.replace(/ /g, '_')}`;
+                const currentPath = `${ancestorPath && `${ancestorPath}__`
+                    }${title.replace(/ /g, '_')}`;
                 const _id = ancestorOf.length
                     ? shortid.generate().replace('_', '0')
                     : uuidv4();
