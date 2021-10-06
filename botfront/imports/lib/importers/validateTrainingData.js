@@ -210,18 +210,18 @@ export class TrainingDataValidator {
     }
 
     parseIntent = (nlu_example, nlu_item) => {
+        let item_metadata = "metadata" in nlu_item ? nlu_item["metadata"] : null
         let example_metadata = 'metadata' in nlu_example ? nlu_example['metadata'] : null
         nlu_example['text'] = nlu_example['text'].replace(/(\r\n|\n|\r)/gm, '')
         let entities = {}
         if (this.haveEntities(nlu_example['text'])) {
-            let entity_list = this.parseEntities(nlu_example['text'])
-            entities['entities'] = entity_list
+            entities['entities'] = this.parseEntities(nlu_example['text'])
         }
         return {
             text: nlu_example['text'].replace(/ *\([^)]*\)/gm, '').replace(/{(.*?)}/gm, '').replace(/[\[\]']+/gm, ''), // remove all possible entity data from text
             intent: nlu_item['intent'].replace(/(\r\n|\n|\r)/gm, ''),
             metadata: {
-                language: nlu_item['metadata']['language'],
+                ...item_metadata,
                 ...example_metadata
             },
             ...entities

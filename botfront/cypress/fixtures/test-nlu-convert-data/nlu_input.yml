@@ -1,0 +1,276 @@
+nlu:
+- intent: P25.1_library
+  metadata:
+  examples:
+  - text: |
+      Kirjastopalvelut
+    metadata:
+      canonical: true
+  - text: |
+      haluan kirjastoon
+  - text: |
+      haluan lainata kirjoja
+  - text: |
+      kirjasto
+  - text: |
+      kirjasto palvelu
+  - text: |
+      kirjaston palvelut
+  - text: |
+      kirjastopalveluita
+  - text: |
+      missä lähin kirjasto?
+  - text: |
+      mistä pääsen lainaamaan kirjan
+  - text: |
+      miten pääsen kirjastoon
+- intent: P3.4_lastenhoitopalvelut
+  examples:
+  - text: |
+      Lastenhoitopalvelut
+    metadata:
+      canonical: true
+  - text: |
+      haluan apua lasten hoitoon
+  - text: |
+      lasten päivähoito
+  - text: |
+      lasten päivähoitopaikat
+  - text: |
+      mistä saan lastenhoitopalvelut
+  - text: |
+      miten saan lastenhoitopaikan?
+  - text: |
+      palveluita lapseni päivähoitoon
+  - text: |
+      palveluita lastenhoitoon
+  - text: |
+      päivähoitopaikat
+  - text: |
+      tarvitsen tukea lapseni hoitamiseen
+- intent: P4.3_kotitalouspalvelut
+  metadata:
+    language: fi
+  examples:
+  - text: |
+      Kotitalouspalvelut
+    metadata:
+      canonical: true
+  - text: |
+      apua kodin hoitoon
+  - text: |
+      apua kodinhoitoon
+  - text: |
+      apua kotiin
+  - text: |
+      haluan kotitalouspalveluita
+  - text: |
+      haluun apua kodin askareisiin
+  - text: |
+      haluun jeesiä kotiaskareisiin
+  - text: |
+      kodin palvelut
+  - text: |
+      kotiin palveluita
+  - text: |
+      missä kotitalouspalveuita?
+  - text: |
+      miten saan apua kotitöihin
+  - text: |
+      miten saan kotitalouspalvelun
+  - text: |
+      palvelut kotiin
+- intent: chitchat.bye
+  metadata:
+    language: fi
+  examples:
+  - text: |
+      hei hei
+    metadata:
+      canonical: true
+  - text: |
+      heippa
+  - text: |
+      huomiseen
+  - text: |
+      lopeta
+  - text: |
+      moi moi
+  - text: |
+      nekämisiin
+  - text: |
+      pitää mennä
+- intent: chitchat.greet
+  metadata:
+    language: fi
+  examples:
+  - text: |
+      hei
+    metadata:
+      canonical: true
+  - text: |
+      hello
+  - text: |
+      hey
+  - text: |
+      huomenia
+  - text: |
+      huomenta
+  - text: |
+      moi
+  - text: |
+      moiii
+  - text: |
+      moikka
+  - text: |
+      moikku
+  - text: |
+      morjes
+  - text: |
+      moro
+  - text: |
+      moro moro
+  - text: |
+      moroo
+  - text: |
+      päivää
+  - text: |
+      tere
+  - text: |
+      terve
+- intent: service_municipality_choice
+  metadata:
+    language: fi
+  examples:
+  - text: |
+      [Kemiönsaari](municipality), kemiöstä, [Turku]{"entity": "municipality", "role": "rooli"} blaa [paimio]{"entity": "municipality", "value": "Paimio"} asdasd
+  - text: |
+      [Koski Tl](municipality), koskella, koskelta
+    metadata:
+      canonical: true
+  - text: |
+      [Kustavi](municipality), kustavista, kustavissa
+    metadata:
+      canonical: true
+  - text: |
+      [Paimio](municipality)
+    metadata:
+      canonical: true
+  - text: |
+      [Turku]{"entity": "municipality", "role": "rooli2", "group": "grouppi2"}
+    metadata:
+      canonical: true
+  - text: |
+      haluaisin [turusta]{"entity": "municipality", "value": "Turku"}
+  - text: |
+      haluan [kustavista]{"entity": "municipality", "role": "rooli", "group": "grouppi", "value": "Kustavi"}
+  - text: |
+      haluan palveluita [aurasta]{"entity": "municipality", "value": "Aura"}
+    metadata:
+      canonical: true
+  - text: |
+      [pyhäranta]{"entity": "municipality", "value": "Pyh\u00e4ranta"}
+    metadata:
+      canonical: true
+- intent: sports_service_search
+  metadata:
+    language: fi
+  examples:
+  - text: |
+      Liikuntapalvelut
+    metadata:
+      canonical: true
+  - text: |
+      haluan liikuntapalveluita
+  - text: |
+      haluan urheilemaan
+  - text: |
+      liikunta
+  - text: |
+      olisko mitään urheilu palveluita
+  - text: |
+      onko liinkuntapalveluita?
+  - text: |
+      pidän urheilusta
+  - text: |
+      tykkään liikunnasta
+  - text: |
+      urheilu
+  - text: |
+      urheilupalvelut
+- intent: yes
+  metadata:
+    language: fi
+  examples:
+  - text: |
+      jep
+    metadata:
+      canonical: true
+  - text: |
+      jes
+  - text: |
+      joo
+  - text: |
+      juu
+  - text: |
+      kyllä
+  - text: |
+      kyllä kiitos
+  - text: |
+      kyllä kiitti
+  - text: |
+      ok
+  - text: |
+      tottahan toki
+  - text: |
+      tottakai
+  - text: |
+      yes
+- synonym: Kaarina
+  examples: |
+    - kaarina
+    - kaarinalla
+    - kaarinalta
+    - kaarinassa
+    - kaarinasta
+- synonym: Aura
+  examples: |
+    - aura
+    - auralla
+    - auralta
+    - aurassa
+    - aurasta
+- synonym: Kemiönsaari
+  examples: |
+    - kemiönsaarella
+    - kemiönsaarelta
+    - kemiönsaaressa
+    - kemiönsaaresta
+    - kemiönsaari
+- synonym: Koski Tl
+  examples: |
+    - koski tl
+- synonym: Kustavi
+  examples: |
+    - kustavi
+    - kustavilla
+    - kustavilta
+    - kustavissa
+    - kustavista
+- gazette: municipality
+  examples: |
+    - Aura
+    - Kaarina
+    - Kemiönsaari
+    - Koski Tl
+    - Kustavi
+    - Laitila
+    - Lieto
+    - Loimaa
+    - Marttila
+    - Masku
+    - Mynämäki
+    - Naantali
+    - Nousiainen
+    - Oripää
+    - Paimio
