@@ -264,7 +264,7 @@ if (Meteor.isServer) {
             return resp;
         },
         async 'call.postTraining'(projectId, modelData) {
-            checkIfCan('nlu-data:x');
+            checkIfCan('nlu-data:x', projectId);
             check(projectId, String);
             check(modelData, Match.Any); // There is no "bytes" type
             const trainingWebhook = await getPostTrainingWebhook();
