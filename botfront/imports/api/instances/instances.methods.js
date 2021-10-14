@@ -95,31 +95,30 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
         });
     }
 
-    return {
-        rasa_nlu_data: {
-            common_examples: common_examples.map(
+    /* Teemu Hirsimäki 14.10.2021: Currently we create a simplified payload without
+    entities and other extra features.
+    */
+    const nlu = {
+        nlu_data: common_examples.map(
                 ({
                     text, intent, entities = [], metadata: { canonical, ...metadata } = {},
                 }) => ({
-                    text,
-                    intent,
-                    entities: entities.map(({ _id: _, ...rest }) => dropNullValuesFromObject(rest)),
-                    metadata: {
-                        ...metadata,
-                        ...(canonical ? { canonical } : {}),
-                    },
+                    intent: intent,
+                    examples: [ { text } ],
                 }),
             ),
-            entity_synonyms: entity_synonyms.map(copyAndFilter),
-            gazette: fuzzy_gazette.map(copyAndFilter),
-            regex_features: regex_features.map(copyAndFilter),
-        },
+            //entity_synonyms: entity_synonyms.map(copyAndFilter),
+            //gazette: fuzzy_gazette.map(copyAndFilter),
+            //regex_features: regex_features.map(copyAndFilter),
+        
         config: yaml.dump({
             ...yaml.safeLoad(config),
             language,
         }),
-    };
-};
+    }
+
+    return nlu
+}
 
 if (Meteor.isServer) {
     import {
@@ -230,20 +229,25 @@ if (Meteor.isServer) {
             }
             for (const lang of languages) {
                 const {
-                    rasa_nlu_data,
+                    nlu_data,
                     config: configForLang,
                 } = await getNluDataAndConfig(projectId, lang, selectedIntents);
-                nlu[lang] = { rasa_nlu_data };
+                nlu[lang] = { nlu_data };
                 config[lang] = `${configForLang}\n\n${corePolicies}`;
             }
+
+            /* Teemu Hirsimäki 14.10.2021: Currently we send very simplified version of 
+            payload in order to get the rasa interface working in yaml format.
+            */
             const payload = {
-                domain: yaml.safeDump(domain, { skipInvalid: true, sortKeys: true }),
+                domain,
                 stories,
-                rules,
-                nlu,
+                // rules,
+                // nlu: yaml.safeDump({'nlu': nlu['fi']['rasa_nlu_data']['common_examples']}),
+                nlu: nlu[languages[0]]['nlu_data'],
                 config,
-                fixed_model_name: getProjectModelFileName(projectId),
-                augmentation_factor: augmentationFactor,
+                // fixed_model_name: getProjectModelFileName(projectId),
+                // augmentation_factor: augmentationFactor,
             };
             auditLog('Retreived training payload for project', {
                 user: Meteor.user(),
@@ -278,15 +282,18 @@ if (Meteor.isServer) {
             const t0 = performance.now();
             try {
                 const {
-                    stories = [],
                     rules = [],
                     ...payload
                 } = await Meteor.call('rasa.getTrainingPayload', projectId, { env });
+                // Teemu Hirsimäki 14.10.2021: Currently we send simplified
+                // payload to get the basic rasa yaml interface working.
+                /*
                 payload.fragments = yaml.safeDump(
                     { stories, rules },
                     { skipInvalid: true },
                 );
                 payload.load_model_after = true;
+                */
                 // this client is used when telling rasa to load a model
                 const client = await createAxiosForRasa(projectId, { timeout: process.env.TRAINING_TIMEOUT || 0 });
                 addLoggingInterceptors(client, appMethodLogger);
@@ -296,7 +303,8 @@ if (Meteor.isServer) {
                 addLoggingInterceptors(trainingClient, appMethodLogger);
                 const trainingResponse = await trainingClient.post(
                     '/model/train',
-                    payload,
+                    yaml.safeDump(payload),
+                    { headers: { 'Content-type': 'application/x-yaml' } }
                 );
                 if (trainingResponse.status === 200) {
                     const t1 = performance.now();
