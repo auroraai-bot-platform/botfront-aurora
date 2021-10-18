@@ -65,21 +65,21 @@ export const processExportNluExampleEntities = (text, entities) => {
     // process entities into array of correctly formatted entity strings
     let entityExamples = []
     for (const entity of entities) {
-        let entityExample = text.slice(entity["start"], entity["end"])
-        if ("role" in entity || "group" in entity || ("value" in entity && entity["value"] != entityExample)) {
+        let entityExample = text.slice(entity['start'], entity['end'])
+        if ('role' in entity || 'group' in entity || ('value' in entity && entity['value'] != entityExample)) {
             let entityCopy = {
                 ...entity
             }
-            delete entityCopy["start"]
-            delete entityCopy["end"]
-            if ("value" in entityCopy && entityCopy["value"] === entityExample) {
+            delete entityCopy['start']
+            delete entityCopy['end']
+            if ('value' in entityCopy && entityCopy['value'] === entityExample) {
                 delete entityCopy[
-                    "value"
+                    'value'
                 ]
             }
             entityExample = `[${entityExample}]${JSON.stringify(entityCopy)}`
         } else {
-            entityExample = `[${entityExample}](${entity["entity"]})`
+            entityExample = `[${entityExample}](${entity['entity']})`
         }
         entityExamples.push(entityExample)
     }
@@ -87,7 +87,7 @@ export const processExportNluExampleEntities = (text, entities) => {
     // lastly replace original text with correctly formatted entity strings
     // loop entities reversed so their 'start' and 'end' indexes will remain correct while modifying the string
     for (const entity of entities.reverse()) {
-        text = text.substring(0, entity["start"]) + entityExamples.pop() + text.substring(entity["end"]);
+        text = text.substring(0, entity['start']) + entityExamples.pop() + text.substring(entity['end']);
     }
     return text
 }
