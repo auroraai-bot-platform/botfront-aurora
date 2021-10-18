@@ -240,7 +240,7 @@ describe('Importing a Botfront project', function() {
             cy.get('.ace_content').should('contain.text', 'rasa_addons.core.channels.webchat.WebchatInput');
      
             cy.visit('/project/bf/settings/default-domain');
-            cy.get('.ace_content').should('contain.text', 'actions:  - action_botfront_disambiguation  - action_botfront_disambiguation_followup  - action_botfront_fallback  - action_botfront_mapping');
+            cy.get('.ace_content').should('contain.text', 'actions:  - action_botfront_disambiguation  - action_botfront_disambiguation_followup  - action_botfront_fallback  - action_botfront_mapping  - action_unlikely_intent');
             cy.visit('/project/bf/responses');
             cy.dataCy('no-responses').should('exist');
             cy.visit('/project/bf/nlu/model/fr');
