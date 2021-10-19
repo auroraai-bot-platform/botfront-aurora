@@ -61,6 +61,40 @@ export const createInstance = async (project) => {
     });
 };
 
+export const processExportNluExampleEntities = (text, entities) => {
+    // sort entities by start index so the string modifications will work correctly
+    entities.sort((a,b) => a.start - b.start)
+    
+    // process entities into array of correctly formatted entity strings
+    let entityExamples = []
+    for (const entity of entities) {
+        let entityExample = text.slice(entity['start'], entity['end'])
+        if ('role' in entity || 'group' in entity || ('value' in entity && entity['value'] != entityExample)) {
+            let entityCopy = {
+                ...entity
+            }
+            delete entityCopy['start']
+            delete entityCopy['end']
+            if ('value' in entityCopy && entityCopy['value'] === entityExample) {
+                delete entityCopy[
+                    'value'
+                ]
+            }
+            entityExample = `[${entityExample}]${JSON.stringify(entityCopy)}`
+        } else {
+            entityExample = `[${entityExample}](${entity['entity']})`
+        }
+        entityExamples.push(entityExample)
+    }
+
+    // lastly replace original text with correctly formatted entity strings
+    // loop entities reversed so their 'start' and 'end' indexes will remain correct while modifying the string
+    for (const entity of entities.reverse()) {
+        text = text.substring(0, entity['start']) + entityExamples.pop() + text.substring(entity['end']);
+    }
+    return text
+}
+
 export const getNluDataAndConfig = async (projectId, language, intents) => {
     const model = await NLUModels.findOne(
         { projectId, language },
@@ -100,17 +134,17 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
     */
     const nlu = {
         nlu_data: common_examples.map(
-                ({
-                    text, intent, entities = [], metadata: { canonical, ...metadata } = {},
-                }) => ({
-                    intent: intent,
-                    examples: [ { text } ],
-                }),
-            ),
-            //entity_synonyms: entity_synonyms.map(copyAndFilter),
-            //gazette: fuzzy_gazette.map(copyAndFilter),
-            //regex_features: regex_features.map(copyAndFilter),
-        
+            ({
+                text, intent, entities = [], metadata: { canonical, ...metadata } = {},
+            }) => ({
+                intent: intent,
+                examples: [{ text: processExportNluExampleEntities(text, entities) }],
+            }),
+        ),
+        //entity_synonyms: entity_synonyms.map(copyAndFilter),
+        //gazette: fuzzy_gazette.map(copyAndFilter),
+        //regex_features: regex_features.map(copyAndFilter),
+
         config: yaml.dump({
             ...yaml.safeLoad(config),
             language,
@@ -299,7 +333,7 @@ if (Meteor.isServer) {
                 addLoggingInterceptors(client, appMethodLogger);
                 const trainingClient = await createAxiosForRasa(projectId,
                     { timeout: process.env.TRAINING_TIMEOUT || 0, responseType: 'arraybuffer' });
-                
+
                 addLoggingInterceptors(trainingClient, appMethodLogger);
                 const trainingResponse = await trainingClient.post(
                     '/model/train',
