@@ -62,6 +62,9 @@ export const createInstance = async (project) => {
 };
 
 export const processExportNluExampleEntities = (text, entities) => {
+    // sort entities by start index so the string modifications will work correctly
+    entities.sort((a,b) => a.start - b.start)
+    
     // process entities into array of correctly formatted entity strings
     let entityExamples = []
     for (const entity of entities) {
