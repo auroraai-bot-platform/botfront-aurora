@@ -73,6 +73,14 @@ export const processExportNluExampleEntities = (text, entities) => {
             let entityCopy = {
                 ...entity
             }
+
+            if (entityCopy['role'] === null) {
+                delete entityCopy['role'];
+            }
+            if (entityCopy['group'] === null) {
+                delete entityCopy['group'];
+            }
+
             delete entityCopy['start']
             delete entityCopy['end']
             if ('value' in entityCopy && entityCopy['value'] === entityExample) {
@@ -132,8 +140,8 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
     /* Teemu Hirsimäki 14.10.2021: Currently we create a simplified payload without
     entities and other extra features.
     */
-    const nlu = {
-        nlu_data: common_examples.map(
+    const nlu_and_config = {
+        nlu: common_examples.map(
             ({
                 text, intent, entities = [], metadata: { canonical, ...metadata } = {},
             }) => ({
@@ -145,13 +153,13 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
         //gazette: fuzzy_gazette.map(copyAndFilter),
         //regex_features: regex_features.map(copyAndFilter),
 
-        config: yaml.dump({
+        config: {
             ...yaml.safeLoad(config),
             language,
-        }),
+        }
     }
 
-    return nlu
+    return nlu_and_config
 }
 
 if (Meteor.isServer) {
@@ -261,28 +269,26 @@ if (Meteor.isServer) {
                 const project = Projects.findOne({ _id: projectId }, { languages: 1 });
                 languages = project ? project.languages : [];
             }
+
             for (const lang of languages) {
-                const {
-                    nlu_data,
-                    config: configForLang,
-                } = await getNluDataAndConfig(projectId, lang, selectedIntents);
-                nlu[lang] = { nlu_data };
-                config[lang] = `${configForLang}\n\n${corePolicies}`;
+                const nlu_and_config = await getNluDataAndConfig(projectId, lang, selectedIntents);
+                nlu[lang] = nlu_and_config.nlu;
+                config[lang] = {
+                    ...nlu_and_config.config,
+                    ...yaml.safeLoad(corePolicies)
+                };
             }
 
-            /* Teemu Hirsimäki 14.10.2021: Currently we send very simplified version of 
-            payload in order to get the rasa interface working in yaml format.
-            */
             const payload = {
                 domain,
                 stories,
-                // rules,
-                // nlu: yaml.safeDump({'nlu': nlu['fi']['rasa_nlu_data']['common_examples']}),
-                nlu: nlu[languages[0]]['nlu_data'],
-                config,
+                rules,
+                nlu: nlu[languages[0]],
+                config: config[languages[0]],
                 // fixed_model_name: getProjectModelFileName(projectId),
                 // augmentation_factor: augmentationFactor,
             };
+
             auditLog('Retreived training payload for project', {
                 user: Meteor.user(),
                 type: 'execute',
@@ -315,12 +321,22 @@ if (Meteor.isServer) {
             appMethodLogger.debug(`Training project ${projectId}...`);
             const t0 = performance.now();
             try {
-                const {
-                    rules = [],
-                    ...payload
-                } = await Meteor.call('rasa.getTrainingPayload', projectId, { env });
-                // Teemu Hirsimäki 14.10.2021: Currently we send simplified
-                // payload to get the basic rasa yaml interface working.
+                const payload = await Meteor.call('rasa.getTrainingPayload', projectId, { env });
+                
+                // Currently (21.10.2021) Rasa's model/train endpoint expects
+                // all data in single yaml structure without seperate 'domain'
+                // and 'config' blocks:
+                // https://forum.rasa.com/t/rasa-2-0-api-model-train-doesnt-work/35923/6
+                const rasa_payload = {
+                    ...payload.domain,
+                    nlu: payload.nlu,
+                    rules: payload.rules,
+                    ...payload.config,
+                    stories: payload.stories,
+                };
+
+                // TODO: what are fragments in rasa-for-botfront? Official rasa
+                // doesn't recognize these.
                 /*
                 payload.fragments = yaml.safeDump(
                     { stories, rules },
@@ -328,6 +344,7 @@ if (Meteor.isServer) {
                 );
                 payload.load_model_after = true;
                 */
+
                 // this client is used when telling rasa to load a model
                 const client = await createAxiosForRasa(projectId, { timeout: process.env.TRAINING_TIMEOUT || 0 });
                 addLoggingInterceptors(client, appMethodLogger);
@@ -336,8 +353,8 @@ if (Meteor.isServer) {
 
                 addLoggingInterceptors(trainingClient, appMethodLogger);
                 const trainingResponse = await trainingClient.post(
-                    '/model/train',
-                    yaml.safeDump(payload),
+                    '/model/train', 
+                    yaml.safeDump(rasa_payload, { skipInvalid: true }),
                     { headers: { 'Content-type': 'application/x-yaml' } }
                 );
                 if (trainingResponse.status === 200) {
