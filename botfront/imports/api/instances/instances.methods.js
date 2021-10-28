@@ -63,8 +63,8 @@ export const createInstance = async (project) => {
 
 export const processExportNluExampleEntities = (text, entities) => {
     // sort entities by start index so the string modifications will work correctly
-    entities.sort((a,b) => a.start - b.start)
-    
+    entities.sort((a, b) => a.start - b.start)
+
     // process entities into array of correctly formatted entity strings
     let entityExamples = []
     for (const entity of entities) {
@@ -114,7 +114,7 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
     const copyAndFilter = ({
         _id, mode, min_score, ...obj
     }) => obj;
-    const {
+    let {
         training_data: { entity_synonyms, fuzzy_gazette, regex_features },
         config,
     } = model;
@@ -126,7 +126,7 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
         sortKey: 'intent',
         order: 'ASC',
     });
-    const common_examples = examples.filter(e => !e?.metadata?.draft);
+    let common_examples = examples.filter(e => !e?.metadata?.draft);
     const missingExamples = Math.abs(Math.min(0, common_examples.length - 2));
     for (let i = 0; (intents || []).length && i < missingExamples; i += 1) {
         common_examples.push({
@@ -137,19 +137,34 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
         });
     }
 
+    entity_synonyms = entity_synonyms.map(copyAndFilter)
+    entity_synonyms = entity_synonyms.map(({
+        value: synonym,
+        synonyms: examples
+    }) => ({
+        synonym,
+        examples
+    }));
+
     /* Teemu Hirsimäki 14.10.2021: Currently we create a simplified payload without
     entities and other extra features.
     */
+    common_examples = common_examples.map(
+        ({
+            text, intent, entities = [], metadata: { canonical, ...metadata } = {},
+        }) => ({
+            intent: intent,
+            examples: [{ text: processExportNluExampleEntities(text, entities) }],
+        }))
+
+    // group examples by intent as in Rasa docs: https://rasa.com/docs/rasa/training-data-format#training-examples
+    common_examples = Array.from(common_examples.reduce((m, { intent, examples }) =>
+        m.set(intent, [...(m.get(intent) || []), examples[0].text]), new Map
+    ), ([intent, examples]) => ({ intent, examples })
+    );
+
     const nlu_and_config = {
-        nlu: common_examples.map(
-            ({
-                text, intent, entities = [], metadata: { canonical, ...metadata } = {},
-            }) => ({
-                intent: intent,
-                examples: [{ text: processExportNluExampleEntities(text, entities) }],
-            }),
-        ),
-        //entity_synonyms: entity_synonyms.map(copyAndFilter),
+        nlu: [...common_examples, ...entity_synonyms],
         //gazette: fuzzy_gazette.map(copyAndFilter),
         //regex_features: regex_features.map(copyAndFilter),
 
@@ -158,7 +173,6 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
             language,
         }
     }
-
     return nlu_and_config
 }
 
@@ -322,7 +336,6 @@ if (Meteor.isServer) {
             const t0 = performance.now();
             try {
                 const payload = await Meteor.call('rasa.getTrainingPayload', projectId, { env });
-                
                 // Currently (21.10.2021) Rasa's model/train endpoint expects
                 // all data in single yaml structure without seperate 'domain'
                 // and 'config' blocks:
@@ -352,9 +365,12 @@ if (Meteor.isServer) {
                     { timeout: process.env.TRAINING_TIMEOUT || 0, responseType: 'arraybuffer' });
 
                 addLoggingInterceptors(trainingClient, appMethodLogger);
+
+                // hack to add '|' to end of 'examples:' yaml as in Rasa docs: https://rasa.com/docs/rasa/training-data-format#training-examples
+                // this could be done some better way in js-yaml library but didn't yet figure out how
                 const trainingResponse = await trainingClient.post(
-                    '/model/train', 
-                    yaml.safeDump(rasa_payload, { skipInvalid: true }),
+                    '/model/train',
+                    yaml.safeDump(rasa_payload, { skipInvalid: true, lineWidth: -1 }).replace(new RegExp('examples:', 'g'), 'examples: |'),
                     { headers: { 'Content-type': 'application/x-yaml' } }
                 );
                 if (trainingResponse.status === 200) {
