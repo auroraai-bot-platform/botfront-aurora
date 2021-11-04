@@ -25,3 +25,7 @@ export function authMW(token) {
     next();
   });
 }
+
+export function getS3Url(region, bucket, key) {
+  return `https://s3.${region}.amazonaws.com/${bucket}/${key}`;
+}
