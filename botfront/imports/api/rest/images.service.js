@@ -1,7 +1,6 @@
 import { S3 } from '@aws-sdk/client-s3';
 import { getS3Url } from './utilities.service';
-
-const region = 'eu-north-1';
+import { region } from './index';
 
 export async function uploadImage(outputBucket, key, data) {
 
@@ -10,13 +9,12 @@ export async function uploadImage(outputBucket, key, data) {
   const fileUrl = getS3Url(region, outputBucket, key);
 
   const s3 = new S3({ region });
-
   await s3.putObject({ Bucket: outputBucket, Key: key, Body: buffer });
 
   return fileUrl;
 }
 
 export async function deleteImage(bucket, key) {
-  const s3 = new S3(region);
+  const s3 = new S3({ region });
   await s3.deleteObject({ Bucket: bucket, Key: key });
 }

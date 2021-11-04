@@ -1,25 +1,32 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
-import utilitiesService from './utilities.service';
+import { authMW, setImageWebhooks } from './utilities.service';
 import { createUser } from './users.service';
 import projectsService, { importProject } from './projects.service';
 import { deleteImage, uploadImage } from './images.service';
+
+
+export const region = process.env.region || 'eu-north-1';
+
+export const adminEmail = process.env.ADMIN_USER;
+export const adminPassword = process.env.ADMIN_PASSWORD;
 
 const FILE_SIZE_LIMIT = parseInt(process.env.FILE_SIZE_LIMIT) || 1024 * 1024;
 
 const fileBucket = process.env.FILE_BUCKET || 'customer.webchat.file-bucket';
 const filePrefix = process.env.FILE_PREFIX || 'files/';
 
-const region = process.env.region || 'eu-north-1';
-
 const port = process.env.REST_API_PORT || 3030;
 const restApiToken = process.env.REST_API_TOKEN;
 
-export const adminEmail = process.env.ADMIN_USER;
-export const adminPassword = process.env.ADMIN_PASSWORD;
 
 // make sure the database hase been initialised completely before creating the user
-setTimeout(() => { createAdminUser(); }, 4000);
+Meteor.startup(() => {
+  console.log("Startup");
+
+  createAdminUser();const url = `http://localhost:${port}/api/images`;
+  setImageWebhooks(url);
+});
 
 async function createAdminUser() {
   // create admin on startup
@@ -68,7 +75,7 @@ app.get('/api', (req, res, next) => {
         }
  *     
 */
-app.put('/api/users', utilitiesService.authMW(restApiToken), async (req, res, next) => {
+app.put('/api/users', authMW(restApiToken), async (req, res, next) => {
   const inputs = req.body;
 
   if (inputs.email == null || inputs.password == null) {
@@ -110,7 +117,7 @@ app.put('/api/users', utilitiesService.authMW(restApiToken), async (req, res, ne
         }
  *     
 */
-app.put('/api/projects', utilitiesService.authMW(restApiToken), async (req, res, next) => {
+app.put('/api/projects', authMW(restApiToken), async (req, res, next) => {
   const inputs = req.body;
 
   if (inputs.name == null || typeof inputs.name !== 'string' || inputs.name.match(/^[a-zA-Z0-9]+$/) == null
@@ -151,7 +158,7 @@ app.put('/api/projects', utilitiesService.authMW(restApiToken), async (req, res,
         }
  *     
 */
-app.post('/api/projects/import', utilitiesService.authMW(restApiToken), async (req, res, next) => {
+app.post('/api/projects/import', authMW(restApiToken), async (req, res, next) => {
   if (req.body.projectId == null || req.body.projectId.length < 1) {
     res.status(400).send({ error: 'Provide a projectId' });
     return;
