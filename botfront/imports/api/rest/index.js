@@ -22,9 +22,11 @@ const restApiToken = process.env.REST_API_TOKEN;
 
 // make sure the database hase been initialised completely before creating the user
 Meteor.startup(() => {
-  console.log("Startup");
+  console.log("Startup: Create Admin User & Set Image Webhooks");
 
-  createAdminUser();const url = `http://localhost:${port}/api/images`;
+  createAdminUser();
+  
+  const url = `http://localhost:${port}/api/images`;
   setImageWebhooks(url);
 });
 
