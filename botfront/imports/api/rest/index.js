@@ -13,7 +13,7 @@ export const adminPassword = process.env.ADMIN_PASSWORD;
 
 const FILE_SIZE_LIMIT = parseInt(process.env.FILE_SIZE_LIMIT) || 1024 * 1024;
 
-const fileBucket = process.env.FILE_BUCKET || 'customer.webchat.file-bucket';
+const fileBucket = process.env.FILE_BUCKET;
 const filePrefix = process.env.FILE_PREFIX || 'files/';
 
 const port = process.env.REST_API_PORT || 3030;
