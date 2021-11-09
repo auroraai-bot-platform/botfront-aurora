@@ -253,3 +253,102 @@ This rest api provides a simple way to interact with the botfront container with
 </details>
 <br />
 
+### **Upload Image**
+<details>
+
+----
+Webhook used by Botfront to persist images used by Botfront. The images need to be publicly accessible.
+Uploads an image to S3 and return a publicly accessible url of that image. The endpoint does not require authorisation as it is only locally accessible.
+
+* **URL**
+
+  /api/images
+
+* **Method:**
+
+  `POST`
+  
+*  **Headers**
+
+   **Required:**
+  
+*  **URL Params**
+
+   **Required:**
+ 
+   None
+
+* **Data Params**
+
+  ```json
+  projectId: string,
+  data: string, // image encoded in base64
+  mimeType: string,
+  language: string,
+  responseId": string
+  ```
+
+* **Success Response:**
+
+  * **Code:** 200 <br />
+    **Content:** `{ uri : [string] }`
+ 
+* **Error Response:**
+
+  * **Code:** 400 Bad Request <br />
+    **Content:** None
+
+---
+
+</details>
+<br />
+
+### **Delete Image**
+<details>
+
+----
+  Webhook used by Botfront to delete images not used anymore by Botfront.
+  Deletes an existing image file from S3. The endpoint does not require authorisation as it is only locally accessible.
+
+* **URL**
+
+  /api/images
+
+* **Method:**
+
+  `DELETE`
+  
+*  **Headers**
+
+   **Required:**
+  
+*  **URL Params**
+
+   **Required:**
+ 
+   None
+
+* **Data Params**
+
+  ```json
+  projectId: string
+  uri: string
+  ```
+
+* **Success Response:**
+
+  * **Code:** 204 <br />
+    **Content:** `{ projectId : [string] }`
+ 
+* **Error Response:**
+
+  * **Code:** 404 NOT FOUND <br />
+    **Content:** None
+  
+  * **Code:** 400 Bad Request <br />
+    **Content:** None
+---
+
+</details>
+<br />
+

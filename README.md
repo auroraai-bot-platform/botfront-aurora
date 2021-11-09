@@ -1,10 +1,10 @@
-<h2 name="documentation" align="center">Documentation</h2>
+# Documentation
 
 The [official documentation](https://botfront.io/docs/getting-started/setup) of Botfront is hosted on [botfront.io](https://botfront.io/docs/getting-started/setup). It is automatically built and updated on every new release. Once you've installed the cli you can also use `botfront docs` to open it.
 
 **We welcome contributions!** It can be as easy as clicking on the "Edit page on Github" link at the bottom of every documentation pages.
 
-<h2 name="development" align="center">Development</h2>
+# Development
 
 ### Installation
 
@@ -103,7 +103,24 @@ As an example, a commit that improved the documentation:
 docs(conversation builder): update slots manager screenshot.
 ```
 
-<h2 name="testing" align="center">Testing</h2>
+# Testing
+
+## Unit & Integration Testing
+Unit tests are running through the meteor mocha package `meteortesting:mocha`.
+Tests should be stored in `*.test.js` files beside the source code js files.
+
+### Installation
+* run `npm ci` to install the dependencies
+
+### Run all tests
+This will take a while
+* run `npm run test-once`
+
+### Run only tests related to the REST API
+This will run all tests, which contain `REST:` within the description
+* run `npm run test-rest`
+
+## E2E Testing
 End to end tests are using the Cypress testing framework.
 The first test case `01_initial_setup_dont_change_name/initial_setup.spec.js` drops the mongo database on startup and creates own test user.
 The test user is necessary to run the e2e tests.
@@ -114,7 +131,7 @@ password: aaaaaaaa00
 ```
 
 ### Installation
-* install `mongo` client as the first testc ase will drop the whole database via the mongo client
+* install `mongo` client as the first testcase will drop the whole database via the mongo client
 * run `meteor npm install` inside `botfront/cypress` to install the cypress plugins
 
 
@@ -138,7 +155,8 @@ password: aaaaaaaa00
 **Some tests also require Rasa to be available.**
 
 <br/>
-<h2 align="center">License</h2>
+
+# License
 
 Copyright (C) 2021 Dialogue Technologies Inc.
 

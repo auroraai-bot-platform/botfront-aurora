@@ -1,18 +1,34 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
-import utilitiesService from './utilities.service';
+import { authMW, setImageWebhooks } from './utilities.service';
 import { createUser } from './users.service';
 import projectsService, { importProject } from './projects.service';
+import { deleteImage, uploadImage } from './images.service';
 
-const FILE_SIZE_LIMIT = 1024 * 1024;
 
-const port = process.env.REST_API_PORT || 3030;
-const restApiToken = process.env.REST_API_TOKEN;
+export const region = process.env.region || 'eu-north-1';
+
 export const adminEmail = process.env.ADMIN_USER;
 export const adminPassword = process.env.ADMIN_PASSWORD;
 
+const FILE_SIZE_LIMIT = parseInt(process.env.FILE_SIZE_LIMIT) || 1024 * 1024;
+
+const fileBucket = process.env.FILE_BUCKET;
+const filePrefix = process.env.FILE_PREFIX || 'files/';
+
+const port = process.env.REST_API_PORT || 3030;
+const restApiToken = process.env.REST_API_TOKEN;
+
+
 // make sure the database hase been initialised completely before creating the user
-setTimeout(() => { createAdminUser(); }, 4000);
+Meteor.startup(() => {
+  console.log("Startup: Create Admin User & Set Image Webhooks");
+
+  createAdminUser();
+  
+  const url = `http://localhost:${port}/api/images`;
+  setImageWebhooks(url);
+});
 
 async function createAdminUser() {
   // create admin on startup
@@ -29,8 +45,8 @@ async function createAdminUser() {
 }
 
 const app = express();
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.urlencoded({ limit: FILE_SIZE_LIMIT, extended: true }));
+app.use(express.json({ limit: FILE_SIZE_LIMIT }));
 app.use(fileUpload({
   limits: { fileSize: FILE_SIZE_LIMIT },
 }));
@@ -61,7 +77,7 @@ app.get('/api', (req, res, next) => {
         }
  *     
 */
-app.put('/api/users', utilitiesService.authMW(restApiToken), async(req, res, next) => {
+app.put('/api/users', authMW(restApiToken), async (req, res, next) => {
   const inputs = req.body;
 
   if (inputs.email == null || inputs.password == null) {
@@ -103,7 +119,7 @@ app.put('/api/users', utilitiesService.authMW(restApiToken), async(req, res, nex
         }
  *     
 */
-app.put('/api/projects', utilitiesService.authMW(restApiToken), async (req, res, next) => {
+app.put('/api/projects', authMW(restApiToken), async (req, res, next) => {
   const inputs = req.body;
 
   if (inputs.name == null || typeof inputs.name !== 'string' || inputs.name.match(/^[a-zA-Z0-9]+$/) == null
@@ -144,7 +160,7 @@ app.put('/api/projects', utilitiesService.authMW(restApiToken), async (req, res,
         }
  *     
 */
-app.post('/api/projects/import', utilitiesService.authMW(restApiToken), async (req, res, next) => {
+app.post('/api/projects/import', authMW(restApiToken), async (req, res, next) => {
   if (req.body.projectId == null || req.body.projectId.length < 1) {
     res.status(400).send({ error: 'Provide a projectId' });
     return;
@@ -174,6 +190,102 @@ app.post('/api/projects/import', utilitiesService.authMW(restApiToken), async (r
 });
 
 
+
+/**
+ * @swagger
+ *  /api/images:
+ *    post:
+ *      upload webhook for image upload
+        Interface {
+        "projectId": string,
+        "data": string, // image encoded in base64
+        "mimeType": string,
+        "language": string,
+        "responseId": string // template name followed by unix timestamp, e.g. utter_get_started_1588107073256
+      }
+ *     
+*/
+
+app.post('/api/images', async (req, res, next) => {
+  const mimeType = req.body.mimeType;
+
+
+  if (!mimeType || typeof mimeType !== 'string') {
+    res.status(400).send(`Bad mime type: ${mimeType}`);
+    return;
+  }
+
+  const [type, fileExtension] = mimeType.split('/');
+
+  if (type !== 'image') {
+    res.status(400).send(`Bad mime type: ${mimeType}`);
+    return;
+  }
+
+  const data = req.body.data;
+
+  if (data.length < 1) {
+    res.status(400).send('Image has not content');
+    return;
+  }
+
+  const key = `${filePrefix}${Math.round((Math.random() * 1000000000))}.${fileExtension}`;
+
+  try {
+    const fileUrl = await uploadImage(fileBucket, key, data);
+    res.json({ uri: fileUrl });
+  } catch (error) {
+    console.log({ error });
+    res.sendStatus(400);
+  }
+});
+
+
+
+/**
+ * @swagger
+ *  /api/images:
+ *    delete:
+ *      delete webhook for image delete
+        Interface {
+        "projectId": string,
+        "uri": string
+      }
+ *     
+*/
+
+app.delete('/api/images', async (req, res, next) => {
+  const mimeType = req.body.mimeType;
+
+
+  if (!req.body.uri) {
+    res.sendStatus(404);
+    return;
+  }
+
+  const url = new URL(req.body.uri);
+  const urlPath = url.pathname.split('/');
+
+  const isRegionValid = region === url.hostname.split('.')[1];
+  const isBucketValid = fileBucket === urlPath[1];
+
+  if (!isBucketValid || !isRegionValid) {
+    res.status(400).send('The s3Bucket or region in the provided URL are different from the configured s3Bucket and region');
+    return;
+  }
+
+  const key = urlPath.slice(2).join('/');
+
+  try {
+    const fileUrl = await deleteImage(fileBucket, key);
+    res.sendStatus(204);
+  } catch (error) {
+    res.sendStatus(404);
+  }
+});
+
+
+
 app.listen(port, () => {
   console.log(`REST API listening at port: ${port}`);
-})
+});
