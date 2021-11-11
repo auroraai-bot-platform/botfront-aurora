@@ -117,7 +117,7 @@
     "uniforms-bridge-simple-schema-2": "^2.6.2",
     "uniforms-semantic": "^2.6.2",
     "use-memo-one": "^1.1.1",
-    "uuid": "^3.3.2",
+    "uuid": "^3.4.0",
     "winston": "^3.2.1",
     "workbook": "^1.1.3",
     "xlsx": "^0.16.3"

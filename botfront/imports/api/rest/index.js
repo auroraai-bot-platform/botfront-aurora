@@ -5,6 +5,8 @@ import { createUser } from './users.service';
 import projectsService, { importProject } from './projects.service';
 import { deleteImage, uploadImage } from './images.service';
 
+import { v4 as uuidv4 } from 'uuid';
+
 
 export const region = process.env.region || 'eu-north-1';
 
@@ -229,7 +231,7 @@ app.post('/api/images', async (req, res, next) => {
     return;
   }
 
-  const key = `${filePrefix}${Math.round((Math.random() * 1000000000))}.${fileExtension}`;
+  const key = `${filePrefix}${uuidv4()}.${fileExtension}`;
 
   try {
     const fileUrl = await uploadImage(fileBucket, key, data);
