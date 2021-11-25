@@ -12,6 +12,7 @@ import {
     validateAnalyticsConfig,
     validateWidgetSettings,
     validateFormsResults,
+    validateGazette,
 } from '../../../lib/importers/validateMisc.js';
 import { validateRasaConfig } from '../../../lib/importers/validateRasaConfig.js';
 import {
@@ -93,6 +94,7 @@ export async function validateFiles(files, params) {
         filesWithMessages,
         newParams,
     );
+    [filesWithMessages, newParams] = validateGazette(filesWithMessages, newParams);
     [filesWithMessages, newParams] = validateTestCases(filesWithMessages, newParams);
     [filesWithMessages, newParams] = validateEndpoints(filesWithMessages, newParams);
     [filesWithMessages, newParams] = validateCredentials(filesWithMessages, newParams);
@@ -102,7 +104,6 @@ export async function validateFiles(files, params) {
     [filesWithMessages, newParams] = validateAnalyticsConfig(filesWithMessages, newParams);
     [filesWithMessages, newParams] = validateWidgetSettings(filesWithMessages, newParams);
     [filesWithMessages, newParams] = validateFormsResults(filesWithMessages, newParams);
-
 
     return [filesWithMessages, newParams];
 }

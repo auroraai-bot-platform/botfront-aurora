@@ -144,6 +144,15 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
         examples,
     }));
 
+    fuzzy_gazette = fuzzy_gazette.map(copyAndFilter);
+    fuzzy_gazette = fuzzy_gazette.map(({
+        value: gazette,
+        gazette: examples,
+    }) => ({
+        gazette,
+        examples,
+    }));
+
     /* Teemu Hirsimäki 14.10.2021: Currently we create a simplified payload without
     entities and other extra features.
     */
@@ -158,12 +167,10 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
 
     // group examples by intent as in Rasa docs: https://rasa.com/docs/rasa/training-data-format#training-examples
     common_examples = Array.from(common_examples.reduce((m, { intent, examples }) => m.set(intent, [...(m.get(intent) || []), examples[0].text]), new Map()), ([intent, examples]) => ({ intent, examples }));
-
     const nlu_and_config = {
         nlu: [...common_examples, ...entity_synonyms],
-        // gazette: fuzzy_gazette.map(copyAndFilter),
+        gazette: fuzzy_gazette,
         // regex_features: regex_features.map(copyAndFilter),
-
         config: {
             ...yaml.safeLoad(config),
             language,
@@ -261,6 +268,7 @@ if (Meteor.isServer) {
             );
             const nlu = {};
             const config = {};
+            const gazette = {};
 
             const {
                 stories = [], rules = [], domain, wasPartial,
@@ -283,6 +291,8 @@ if (Meteor.isServer) {
             for (const lang of languages) {
                 const nlu_and_config = await getNluDataAndConfig(projectId, lang, selectedIntents);
                 nlu[lang] = nlu_and_config.nlu;
+                gazette[lang] = nlu_and_config.gazette;
+
                 config[lang] = {
                     ...nlu_and_config.config,
                     ...yaml.safeLoad(corePolicies),
@@ -295,6 +305,7 @@ if (Meteor.isServer) {
                 rules,
                 nlu,
                 config,
+                gazette,
                 // fixed_model_name: getProjectModelFileName(projectId),
                 // augmentation_factor: augmentationFactor,
             };
@@ -342,6 +353,7 @@ if (Meteor.isServer) {
                     rules: payload.rules,
                     ...Object.values(payload.config)[0], // atm shelf-rasa only supports one language
                     stories: payload.stories,
+                    gazette: Object.values(payload.gazette)[0], // atm shelf-rasa only supports one language
                 };
 
                 // TODO: what are fragments in rasa-for-botfront? Official rasa
