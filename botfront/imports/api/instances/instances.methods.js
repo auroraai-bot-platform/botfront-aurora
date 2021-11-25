@@ -63,45 +63,43 @@ export const createInstance = async (project) => {
 
 export const processExportNluExampleEntities = (text, entities) => {
     // sort entities by start index so the string modifications will work correctly
-    entities.sort((a, b) => a.start - b.start)
+    entities.sort((a, b) => a.start - b.start);
 
     // process entities into array of correctly formatted entity strings
-    let entityExamples = []
+    const entityExamples = [];
     for (const entity of entities) {
-        let entityExample = text.slice(entity['start'], entity['end'])
-        if ('role' in entity || 'group' in entity || ('value' in entity && entity['value'] != entityExample)) {
-            let entityCopy = {
-                ...entity
+        let entityExample = text.slice(entity.start, entity.end);
+        if ('role' in entity || 'group' in entity || ('value' in entity && entity.value != entityExample)) {
+            const entityCopy = {
+                ...entity,
+            };
+
+            if (entityCopy.role === null) {
+                delete entityCopy.role;
+            }
+            if (entityCopy.group === null) {
+                delete entityCopy.group;
             }
 
-            if (entityCopy['role'] === null) {
-                delete entityCopy['role'];
+            delete entityCopy.start;
+            delete entityCopy.end;
+            if ('value' in entityCopy && entityCopy.value === entityExample) {
+                delete entityCopy.value;
             }
-            if (entityCopy['group'] === null) {
-                delete entityCopy['group'];
-            }
-
-            delete entityCopy['start']
-            delete entityCopy['end']
-            if ('value' in entityCopy && entityCopy['value'] === entityExample) {
-                delete entityCopy[
-                    'value'
-                ]
-            }
-            entityExample = `[${entityExample}]${JSON.stringify(entityCopy)}`
+            entityExample = `[${entityExample}]${JSON.stringify(entityCopy)}`;
         } else {
-            entityExample = `[${entityExample}](${entity['entity']})`
+            entityExample = `[${entityExample}](${entity.entity})`;
         }
-        entityExamples.push(entityExample)
+        entityExamples.push(entityExample);
     }
 
     // lastly replace original text with correctly formatted entity strings
     // loop entities reversed so their 'start' and 'end' indexes will remain correct while modifying the string
     for (const entity of entities.reverse()) {
-        text = text.substring(0, entity['start']) + entityExamples.pop() + text.substring(entity['end']);
+        text = text.substring(0, entity.start) + entityExamples.pop() + text.substring(entity.end);
     }
-    return text
-}
+    return text;
+};
 
 export const getNluDataAndConfig = async (projectId, language, intents) => {
     const model = await NLUModels.findOne(
@@ -137,13 +135,13 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
         });
     }
 
-    entity_synonyms = entity_synonyms.map(copyAndFilter)
+    entity_synonyms = entity_synonyms.map(copyAndFilter);
     entity_synonyms = entity_synonyms.map(({
         value: synonym,
-        synonyms: examples
+        synonyms: examples,
     }) => ({
         synonym,
-        examples
+        examples,
     }));
 
     /* Teemu Hirsimäki 14.10.2021: Currently we create a simplified payload without
@@ -153,28 +151,26 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
         ({
             text, intent, entities = [], metadata: { canonical, ...metadata } = {},
         }) => ({
-            intent: intent,
+            intent,
             examples: [{ text: processExportNluExampleEntities(text, entities) }],
-        }))
+        }),
+    );
 
     // group examples by intent as in Rasa docs: https://rasa.com/docs/rasa/training-data-format#training-examples
-    common_examples = Array.from(common_examples.reduce((m, { intent, examples }) =>
-        m.set(intent, [...(m.get(intent) || []), examples[0].text]), new Map
-    ), ([intent, examples]) => ({ intent, examples })
-    );
+    common_examples = Array.from(common_examples.reduce((m, { intent, examples }) => m.set(intent, [...(m.get(intent) || []), examples[0].text]), new Map()), ([intent, examples]) => ({ intent, examples }));
 
     const nlu_and_config = {
         nlu: [...common_examples, ...entity_synonyms],
-        //gazette: fuzzy_gazette.map(copyAndFilter),
-        //regex_features: regex_features.map(copyAndFilter),
+        // gazette: fuzzy_gazette.map(copyAndFilter),
+        // regex_features: regex_features.map(copyAndFilter),
 
         config: {
             ...yaml.safeLoad(config),
             language,
-        }
-    }
-    return nlu_and_config
-}
+        },
+    };
+    return nlu_and_config;
+};
 
 if (Meteor.isServer) {
     import {
@@ -291,7 +287,7 @@ if (Meteor.isServer) {
                 nlu[lang] = nlu_and_config.nlu;
                 config[lang] = {
                     ...nlu_and_config.config,
-                    ...yaml.safeLoad(corePolicies)
+                    ...yaml.safeLoad(corePolicies),
                 };
                 nlu_multi.push(...nlu[lang])
                 if (config[lang]["multi_language_config"]) {
@@ -305,6 +301,7 @@ if (Meteor.isServer) {
                 rules,
                 nlu: config_multi ? nlu_multi : nlu[languages[0]],
                 config: config_multi ? config_multi : config[languages[0]],
+
                 // fixed_model_name: getProjectModelFileName(projectId),
                 // augmentation_factor: augmentationFactor,
             };
@@ -348,9 +345,9 @@ if (Meteor.isServer) {
                 // https://forum.rasa.com/t/rasa-2-0-api-model-train-doesnt-work/35923/6
                 const rasa_payload = {
                     ...payload.domain,
-                    nlu: payload.nlu,
+                    nlu: Object.values(payload.nlu)[0], // atm shelf-rasa only supports one language
                     rules: payload.rules,
-                    ...payload.config,
+                    ...Object.values(payload.config)[0], // atm shelf-rasa only supports one language
                     stories: payload.stories,
                 };
 
@@ -377,7 +374,7 @@ if (Meteor.isServer) {
                 const trainingResponse = await trainingClient.post(
                     '/model/train',
                     yaml.safeDump(rasa_payload, { skipInvalid: true, lineWidth: -1 }).replace(new RegExp('examples:', 'g'), 'examples: |'),
-                    { headers: { 'Content-type': 'application/x-yaml' } }
+                    { headers: { 'Content-type': 'application/x-yaml' } },
                 );
                 if (trainingResponse.status === 200) {
                     const t1 = performance.now();
