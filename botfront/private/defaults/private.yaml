@@ -26,6 +26,7 @@ defaultDomain:
   slots:
     disambiguation_message:
       type: any
+      influence_conversation: false
   actions:
     - action_botfront_disambiguation
     - action_botfront_disambiguation_followup
