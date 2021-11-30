@@ -185,7 +185,7 @@ function insertProject(item) {
 
     const projectId = Projects.insert({
         ...item,
-        defaultDomain: { content: 'slots:\n  disambiguation_message:\n    type: any\nactions:\n  - action_botfront_disambiguation\n  - action_botfront_disambiguation_followup\n  - action_botfront_fallback\n  - action_botfront_mapping' },
+        defaultDomain: { content: 'slots:\n  disambiguation_message:\n    type: any\n    influence_conversation: false\nactions:\n  - action_botfront_disambiguation\n  - action_botfront_disambiguation_followup\n  - action_botfront_fallback\n  - action_botfront_mapping' },
         languages: [defaultLanguage],
         chatWidgetSettings: {
             title: item.name,

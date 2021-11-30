@@ -28,6 +28,7 @@ const getSlotsInRasaFormat = (slots = []) => {
         if (slot.categories) options.values = slot.categories;
         slotsToAdd[slot.name] = {
             type: slot.type,
+            influence_conversation: slot.influenceConversation,
             ...options,
         };
     });
@@ -242,7 +243,7 @@ export const getFragmentsAndDomain = async (projectId, language, env = 'developm
 
     defaultDomain.slots = {
         ...(defaultDomain.slots || {}),
-        fallback_language: { type: 'any', initial_value: defaultLanguage },
+        fallback_language: { type: 'any', initial_value: defaultLanguage, influence_conversation: false },
     };
     appMethodLogger.debug('Selecting fragment groups');
     const groups = StoryGroups.find(
