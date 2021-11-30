@@ -41,6 +41,7 @@ class Slots extends React.Component {
         this.setState({
             newSlot: {
                 type: slotType,
+                influenceConversation: slotType !== 'any', // set false for any type slots (as in rasa docs)
             },
         });
     };

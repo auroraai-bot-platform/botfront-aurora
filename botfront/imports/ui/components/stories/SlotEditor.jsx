@@ -63,6 +63,11 @@ function SlotEditor(props) {
                     </>
                 )}
                 {type === 'categorical' && <AutoField name='categories' />}
+                {type !== 'any' && (
+                    <AutoField
+                        name='influenceConversation'
+                    />
+                )}
                 <AutoField
                     name='projectId'
                     value={projectId}

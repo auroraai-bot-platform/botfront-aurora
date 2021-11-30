@@ -285,6 +285,7 @@ const validateADomain = (
         slots.push({
             name,
             type: slot.type,
+            influenceConversation: 'influence_conversation' in slot ? slot.influence_conversation : slot.type !== 'any',
             ...options,
         });
     });

@@ -25,6 +25,7 @@ export const SlotSchema = new SimpleSchema({
             'any',
         ],
     },
+    influenceConversation: { type: Boolean, defaultValue: true, optional: true },
     createdAt: {
         type: Date,
         optional: true,
