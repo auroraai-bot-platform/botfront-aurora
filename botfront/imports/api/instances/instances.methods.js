@@ -288,6 +288,8 @@ if (Meteor.isServer) {
                 languages = project ? project.languages : [];
             }
 
+            const nlu_multi = [];
+            let config_multi;
             for (const lang of languages) {
                 const nlu_and_config = await getNluDataAndConfig(projectId, lang, selectedIntents);
                 nlu[lang] = nlu_and_config.nlu;
@@ -297,14 +299,18 @@ if (Meteor.isServer) {
                     ...nlu_and_config.config,
                     ...yaml.safeLoad(corePolicies),
                 };
+                nlu_multi.push(...nlu[lang])
+                if (config[lang]["multi_language_config"]) {
+                    config_multi = config[lang];
+                }
             }
 
             const payload = {
                 domain,
                 stories,
                 rules,
-                nlu,
-                config,
+                nlu: config_multi ? nlu_multi : nlu[languages[0]],
+                config: config_multi ? config_multi : config[languages[0]],
                 gazette,
                 // fixed_model_name: getProjectModelFileName(projectId),
                 // augmentation_factor: augmentationFactor,

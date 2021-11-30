@@ -41,7 +41,7 @@ export const formatError = (error) => {
         let errorInfo = response.data;
         if (Buffer.isBuffer(errorInfo)) {
             try {
-                errorInfo = JSON.parse(errorInfo.slice(0, 1000).toString());
+                errorInfo = JSON.parse(errorInfo.slice(0, 10000).toString());
             } catch {
                 //
             }
