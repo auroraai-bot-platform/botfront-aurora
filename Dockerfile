@@ -19,8 +19,15 @@ RUN bash $SCRIPTS_FOLDER/build-meteor-bundle.sh
 
 # Use Debian, because nodegit is too hard to get to work with
 # Alpine >=3.8
-FROM node:14-bullseye-slim
-RUN apt-get update && apt-get install -y python python2 g++ build-essential
+FROM node:14-alpine
+RUN apk update && \
+    apk upgrade && \
+    apk add git libgit2-dev bash krb5-dev && \
+    apk add python3 python2 coreutlis tzdata pkgconfig build-base && \
+    npm install --prefix /opt/bundle/bundle/programs/server nodegit
+
+RUN apk del tzdata pkgconfig build-base && \
+    rm -rf /tmp/* /var/cache/apk/*
 
 ENV APP_BUNDLE_FOLDER /opt/bundle
 ENV SCRIPTS_FOLDER /docker
@@ -37,8 +44,9 @@ COPY --from=0 $APP_BUNDLE_FOLDER/bundle $APP_BUNDLE_FOLDER/bundle/
 RUN bash $SCRIPTS_FOLDER/build-meteor-npm-dependencies.sh
 
 # Nodegit dependencies
-RUN apt-get update && apt-get install -y libgssapi-krb5-2
-RUN npm install --prefix $APP_BUNDLE_FOLDER/bundle/programs/server nodegit
+#RUN apt-get update && apt-get install -y libgssapi-krb5-2 \
+#  && rm -rf /var/lib/apt/lists/*
+#RUN npm install --prefix $APP_BUNDLE_FOLDER/bundle/programs/server nodegit
 
 # Those dependencies are needed by the entrypoint.sh script
 RUN npm install -C $SCRIPTS_FOLDER p-wait-for@3.2.0 mongodb
