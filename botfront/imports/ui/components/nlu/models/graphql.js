@@ -23,6 +23,14 @@ query getIntentStatistics($projectId: String!, $language: String!) {
     }
 }`;
 
+export const GET_ENTITY_STATISTICS = gql`
+query getEntityStatistics($projectId: String!, $projectLanguages: [String]) {
+    getEntityStatistics(
+        projectId: $projectId
+        projectLanguages: $projectLanguages
+    ) { entities }
+}`;
+
 export const GET_EXAMPLE_COUNT = gql`
 query examples(
     $projectId: String!
