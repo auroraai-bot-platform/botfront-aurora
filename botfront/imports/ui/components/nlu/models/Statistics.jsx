@@ -192,7 +192,7 @@ const Statistics = (props) => {
             <div className='side-by-side'>{renderCards()}</div>
             <br />
             <div className='side-by-side'>
-                {intentDataToDisplay && intentDataToDisplay.length
+                {intentDataToDisplay
                     ? (
                         <div className='glow-box extra-padding' style={{ width: '50%' }}>
                             <div className='side-by-side'>
