@@ -1,6 +1,7 @@
 import {
     getExamples,
     listIntentsAndEntities,
+    getEntityStatistics,
     insertExamples,
     updateExamples,
     deleteExamples,
@@ -40,6 +41,10 @@ export default {
         async listIntentsAndEntities(_, args, context) {
             checkIfCan('nlu-data:r', args.projectId, context.user._id);
             return listIntentsAndEntities(args);
+        },
+        async getEntityStatistics(_, args, context) {
+            checkIfCan('nlu-data:r', args.projectId, context.user._id);
+            return getEntityStatistics(args);
         },
         getIntentStatistics: async (_root, args, context) => {
             const { projectId, language } = args;
@@ -151,7 +156,9 @@ export default {
         example: ({ example }) => example,
         counts: ({ counts }) => counts,
     },
-
+    EntityStatistics: {
+        entities: ({ entities }) => entities,
+    },
     NluStatisticsByLanguage: {
         language: ({ language }) => language,
         count: ({ count }) => count,

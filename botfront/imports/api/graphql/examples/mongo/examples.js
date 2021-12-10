@@ -152,8 +152,27 @@ export const listIntentsAndEntities = async ({ projectId, language }) => {
             intents[ex.intent].push({ entities: exEntities, example: ex });
         }
     });
-
+    
     return { intents, entities };
+};
+
+export const getEntityStatistics = async ({ projectId, projectLanguages }) => {
+    const returnEntities = {};
+    for (const language of projectLanguages) {
+        let uniqueEntities = [];
+        const examples = await Examples.find({
+            projectId,
+            'metadata.language': language,
+        })
+            .select({
+                entities: 1,
+                'metadata.language': 1,
+            })
+            .lean();
+        uniqueEntities = [].concat(...examples.map(({ entities }) => entities)).reduce((h, item) => Object.assign(h, { [item.entity]: [...new Set((h[item.entity] || []).concat(item.value))] }), {});
+        returnEntities[language] = uniqueEntities;
+    }
+    return { entities: returnEntities };
 };
 
 export const insertExamples = async ({
