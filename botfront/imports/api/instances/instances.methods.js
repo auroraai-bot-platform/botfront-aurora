@@ -349,6 +349,7 @@ if (Meteor.isServer) {
             const t0 = performance.now();
             try {
                 const payload = await Meteor.call('rasa.getTrainingPayload', projectId, { env });
+
                 // Currently (21.10.2021) Rasa's model/train endpoint expects
                 // all data in single yaml structure without seperate 'domain'
                 // and 'config' blocks:
@@ -361,6 +362,35 @@ if (Meteor.isServer) {
                     stories: payload.stories,
                     gazette: Object.values(payload.gazette)[0], // atm shelf-rasa only supports one language
                 };
+
+                // Rasa forms yaml format updated to support current version of Rasa 2.8
+                var required_slots = {};
+
+
+                // function that inserts type
+                function addType(data) {
+                if (data['type']=='from_entity') {
+                    return {'type': data['type'], 'entity': data['entity'][0]};
+                } else {
+                    return {'type': data['type']};
+                }
+                }
+
+                // reorder slots, and add type key value for shelf-rasa compatibility
+                payload.domain.forms.user_form.slots.forEach((element) => {
+                    typedict = addType(element['filling'][0]);
+                    
+                    for (var key in typedict){
+                    element[key] = typedict[key]
+                    }
+                    
+                    required_slots[element.name]=[element];
+
+                });
+
+                reformatted_form = {'required_slots': required_slots};
+                payload.domain.forms.user_form = reformatted_form
+
 
                 // TODO: what are fragments in rasa-for-botfront? Official rasa
                 // doesn't recognize these.
