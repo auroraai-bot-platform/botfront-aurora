@@ -22,9 +22,6 @@ RUN bash $SCRIPTS_FOLDER/build-meteor-bundle.sh
 FROM node:14-bullseye-slim
 RUN apt-get update && apt-get install -y python python2 g++ build-essential
 
-RUN apk del tzdata pkgconfig build-base && \
-    rm -rf /tmp/* /var/cache/apk/*
-
 ENV APP_BUNDLE_FOLDER /opt/bundle
 ENV SCRIPTS_FOLDER /docker
 
