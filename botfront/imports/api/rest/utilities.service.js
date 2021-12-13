@@ -34,17 +34,22 @@ export function getS3Url(region, bucket, key) {
 }
 
 
-export function setImageWebhooks(url) {
+export function setStaticWebhooks(images, deploy) {
   const settings = {
     'settings.private.webhooks.uploadImageWebhook': {
       name: 'UploadImage',
       method: 'POST',
-      url: url
+      url: images
     },
     'settings.private.webhooks.deleteImageWebhook': {
       name: 'DeleteImage',
       method: 'DELETE',
-      url: url
+      url: images
+    },
+    'settings.private.webhooks.deploymentWebhook': {
+      name: 'DeployProject',
+      method: 'POST',
+      url: deploy
     }
   };
 

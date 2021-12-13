@@ -1,6 +1,7 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
-import { authMW, setImageWebhooks } from './utilities.service';
+import fs from 'fs';
+import { authMW, setStaticWebhooks } from './utilities.service';
 import { createUser } from './users.service';
 import projectsService, { importProject } from './projects.service';
 import { deleteImage, uploadImage } from './images.service';
@@ -17,6 +18,7 @@ const FILE_SIZE_LIMIT = parseInt(process.env.FILE_SIZE_LIMIT) || 1024 * 1024;
 
 const fileBucket = process.env.FILE_BUCKET;
 const filePrefix = process.env.FILE_PREFIX || 'files/';
+const globalPrefix = process.env.PREFIX || 'local-';
 
 const port = process.env.REST_API_PORT || 3030;
 const restApiToken = process.env.REST_API_TOKEN;
@@ -28,8 +30,9 @@ Meteor.startup(() => {
 
   createAdminUser();
   
-  const url = `http://localhost:${port}/api/images`;
-  setImageWebhooks(url);
+  const images = `http://localhost:${port}/api/images`;
+  const deploy = `http://localhost:${port}/api/deploy`;
+  setStaticWebhooks(images, deploy);
 });
 
 async function createAdminUser() {
@@ -286,6 +289,47 @@ app.delete('/api/images', async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ *  /api/deploy:
+ *    post:
+ *      create new deployment for production rasa
+        Interface {
+        "projectId": string,
+        "namespace": string,
+        "environment": string,
+        "gitString": string
+      }
+ *     
+*/
+
+app.post('/api/deploy', async (req, res, next) => {
+  const projectId = req.body.projectId;
+  const modelBucket = `${globalPrefix}models-${projectId}`
+
+  const data = fs.readFileSync(`/app/models/model-${projectId}.tar.gz`, (err, filecontent) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(filecontent);
+    }
+  });
+
+  if (data.length < 1 || data == null) {
+    res.status(400).send('Model has not content');
+    return;
+  }
+
+  const key = `model-${projectId}.tar.gz`;
+
+  try {
+    const fileUrl = await uploadImage(modelBucket, key, data);
+    res.json({ uri: fileUrl });
+  } catch (error) {
+    console.log({ error });
+    res.sendStatus(400);
+  }
+});
 
 
 app.listen(port, () => {
