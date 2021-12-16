@@ -20,15 +20,15 @@ function EnvSelector(props) {
     } = useContext(ProjectContext);
     const availableEnvs = ['development', ...(envsFromProps || deploymentEnvironments)];
     const envChange = envChangeFromProps || defaultEnvChange;
-    const valueToDisplay = value || defaultValue
+    const valueToDisplay = value || defaultValue;
     if (availableEnvs.length < 2) return null;
     return (
         <span className='environment-selector'>
-            Data source:{'\u00A0'}
+            Select environment:{'\u00A0'}
             <Dropdown
                 data-cy='env-selector'
                 inline
-                onChange={(event, data) => {envChange(data.value)}}
+                onChange={(event, data) => { envChange(data.value); }}
                 value={valueToDisplay}
                 options={availableEnvs.map(projectEnv => ({ text: projectEnv, value: projectEnv }))}
             />

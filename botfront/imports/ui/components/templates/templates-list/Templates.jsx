@@ -14,6 +14,7 @@ import { Loading } from '../../utils/Utils';
 import PageMenu from '../../utils/PageMenu';
 import { DELETE_BOT_RESPONSE } from '../mutations';
 import { ProjectContext } from '../../../layouts/context';
+import EnvSelector from '../../common/EnvSelector';
 
 import Can from '../../roles/Can';
 
@@ -71,6 +72,7 @@ class Templates extends React.Component {
 
     renderMenu = projectId => (
         <PageMenu title='Bot responses' icon='comment alternate'>
+            <Menu.Item> <EnvSelector /></Menu.Item>
             <Can I='responses:w' projectId={projectId}>
                 <Menu.Menu position='right'>
                     <Menu.Item>{this.renderAddResponse()}</Menu.Item>

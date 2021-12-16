@@ -9,6 +9,7 @@ import {
     Popup,
 } from 'semantic-ui-react';
 import { useMutation } from '@apollo/react-hooks';
+import { connect } from 'react-redux';
 import { safeLoad } from 'js-yaml';
 
 import IconButton from '../../common/IconButton';
@@ -43,6 +44,7 @@ const BotResponsesContainer = (props) => {
         disableEnterKey,
         editable: initialEditable,
         theme,
+        environment,
     } = props;
     const {
         project: { _id: projectId },
@@ -53,7 +55,7 @@ const BotResponsesContainer = (props) => {
     const otherLanguages = projectLanguages.filter(lang => lang.value !== language);
     const [importRespFromLang] = useMutation(RESP_FROM_LANG, {
         onCompleted: (data) => {
-            const resp = data.importRespFromLang.values.find(value => value.lang === language);
+            const resp = data.importRespFromLang.values.find(value => value.lang === language && value.env === environment);
             const content = safeLoad(resp.sequence[0].content);
             const type = parseContentType(content);
             setResponseInCache(name, { ...content, __typename: type });
@@ -213,7 +215,7 @@ const BotResponsesContainer = (props) => {
                             onChange={(_, selection) => {
                                 importRespFromLang({
                                     variables: {
-                                        projectId, key: name, originLang: selection.value, destLang: language,
+                                        projectId, key: name, originLang: selection.value, destLang: language, env: environment,
                                     },
                                 });
                             }}
@@ -287,6 +289,7 @@ BotResponsesContainer.propTypes = {
     disableEnterKey: PropTypes.bool,
     editable: PropTypes.bool,
     theme: PropTypes.string,
+    environment: PropTypes.string,
 };
 
 BotResponsesContainer.defaultProps = {
@@ -303,6 +306,11 @@ BotResponsesContainer.defaultProps = {
     disableEnterKey: false,
     editable: true,
     theme: 'default',
+    environment: 'development',
 };
 
-export default BotResponsesContainer;
+const mapStateToProps = () => ({});
+
+export default connect(
+    mapStateToProps,
+)(BotResponsesContainer);
