@@ -23,7 +23,7 @@ type Mutation {
     importSubmissions(
         form_results: [Any]!
         projectId: String!
-        environment: Environement = development
+        environment: Environment = development
     ): batchMutationOutput
 }
 
