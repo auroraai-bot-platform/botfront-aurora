@@ -59,18 +59,18 @@ export const indexBotResponse = (response) => {
 };
 
 const mergeAndIndexBotResponse = async ({
-    projectId, language, key, newPayload, index,
+    projectId, language, key, newPayload, index, environment,
 }) => {
     const botResponse = await BotResponses.findOne({ projectId, key }).lean();
     if (!botResponse) {
         const textIndex = [key, ...indexResponseContent(newPayload)].join('\n');
         return textIndex;
     }
-    const valueIndex = botResponse.values.findIndex(({ lang }) => lang === language);
+    const valueIndex = botResponse.values.findIndex(({ lang, env }) => lang === language && env === environment);
     if (valueIndex > -1) { // add to existing language
         botResponse.values[valueIndex].sequence[index] = { content: safeDump(cleanPayload(newPayload)) };
     } else { // add a new language
-        botResponse.values = [...botResponse.values, { lang: language, sequence: [{ content: safeDump(cleanPayload(newPayload)) }] }];
+        botResponse.values = [...botResponse.values, { lang: language, env: environment, sequence: [{ content: safeDump(cleanPayload(newPayload)) }] }];
     }
     return indexBotResponse(botResponse);
 };
@@ -88,10 +88,31 @@ export const createResponses = async (projectId, responses) => {
     return Promise.all(answer);
 };
 
-const isResponseNameTaken = async(projectId, key, _id) => {
+const isResponseNameTaken = async (projectId, key, _id) => {
     if (!key || !projectId) return false;
     if (_id) return !!(await BotResponses.findOne({ projectId, key, _id: { $not: new RegExp(`^${_id}$`) } }).lean());
     return !!(await BotResponses.findOne({ projectId, key }).lean());
+};
+
+export const deleteResponse = async (projectId, key, env = 'development') => {
+    const response = await BotResponses.findOne({ projectId, key, 'values.env': env }).lean();
+    if (!response) return;
+    const environments = [...new Set(response.values.map(item => item.env))];
+    // if resp have multiple envs then only remove wanted env values
+    if (environments.length > 1) {
+        const filteredValues = response.values.filter(function (item) { return item.env !== env; });
+        await BotResponses.findOneAndUpdate(
+            {
+                projectId, key,
+            },
+            { $set: { values: filteredValues } },
+            { upsert: true },
+        );
+        return;
+    }
+    const { deleteImageWebhook: { url, method } } = getWebhooks();
+    if (url && method) deleteImages(getImageUrls(response), projectId, url, method);
+    return BotResponses.findOneAndDelete({ _id: response._id }).lean(); // eslint-disable-line consistent-return
 };
 
 export const upsertFullResponse = async (projectId, _id, key, newResponse) => {
@@ -99,16 +120,41 @@ export const upsertFullResponse = async (projectId, _id, key, newResponse) => {
     const responseWithNameExists = await isResponseNameTaken(projectId, newResponse.key, _id);
     const textIndex = indexBotResponse(newResponse);
     delete update._id;
-    let response = await BotResponses.findOneAndUpdate(
-        { projectId, ...(_id ? { _id } : { key }) },
-        {
-            $set: { ...update, textIndex },
-            $setOnInsert: {
-                _id: shortid.generate(),
+    let response;
+    if (!('devKeyChange' in newResponse)) {
+        newResponse.devKeyChange = false;
+    }
+    // check if user wants change dev response key name
+    // insert new reponse key for dev env while keeping existing for prod env
+    if (newResponse.devKeyChange) {
+        const newKey = newResponse.key;
+        // filter possible production values away since this is response key name change to dev env
+        update.values = update.values.filter(function (item) { return item.env !== 'production'; });
+        response = await BotResponses.findOneAndUpdate(
+            { projectId, key: newKey },
+            {
+                $set: { ...update, textIndex },
+                $setOnInsert: {
+                    _id: shortid.generate(),
+                },
             },
-        },
-        { runValidators: true, upsert: true },
-    ).exec();
+            { runValidators: true, upsert: true },
+        ).exec();
+        // delete dev env responses from remaining previous response key so only prod left
+        await deleteResponse(projectId, key, 'development');
+    } else {
+        response = await BotResponses.findOneAndUpdate(
+            { projectId, ...(_id ? { _id } : { key }) },
+            {
+                $set: { ...update, textIndex },
+                $setOnInsert: {
+                    _id: shortid.generate(),
+                },
+            },
+            { runValidators: true, upsert: true },
+        ).exec();
+    }
+    
     if (responseWithNameExists) {
         return response;
     }
@@ -145,14 +191,6 @@ export const getBotResponses = async projectId => BotResponses.find({
 }).lean();
 
 
-export const deleteResponse = async (projectId, key) => {
-    const response = await BotResponses.findOne({ projectId, key }).lean();
-    if (!response) return;
-    const { deleteImageWebhook: { url, method } } = getWebhooks();
-    if (url && method) deleteImages(getImageUrls(response), projectId, url, method);
-    return BotResponses.findOneAndDelete({ _id: response._id }).lean(); // eslint-disable-line consistent-return
-};
-
 export const getBotResponse = async (projectId, key) => BotResponses.findOne({
     projectId,
     key,
@@ -185,10 +223,10 @@ export const updateResponseType = async ({
 };
 
 export const upsertResponse = async ({
-    projectId, language, key, newPayload, index, newKey,
+    projectId, language, key, newPayload, index, newKey, env, devKeyChange = false,
 }) => {
     const textIndex = await mergeAndIndexBotResponse({
-        projectId, language, key: newKey || key, newPayload, index,
+        projectId, language, key: newKey || key, newPayload, index, env,
     });
     const newNameIsTaken = await isResponseNameTaken(projectId, newKey);
     if (newNameIsTaken) throw new Error('E11000'); // response names must be unique
@@ -198,32 +236,64 @@ export const upsertResponse = async ({
                 'values.$.sequence': {
                     $each: [{ content: safeDump(cleanPayload(newPayload)) }],
                 },
+                'values.$.env': env,
             },
             $set: { textIndex, ...(newKey ? { key: newKey } : {}) },
         }
-        : { $set: { [`values.$.sequence.${index}`]: { content: safeDump(cleanPayload(newPayload)) }, textIndex, ...(newKey ? { key: newKey } : {}) } };
-    const updatedResponse = await BotResponses.findOneAndUpdate(
-        { projectId, key, 'values.lang': language },
-        update,
-        { runValidators: true, new: true, lean: true },
-    ).exec().then(result => (
-        result
-    || BotResponses.findOneAndUpdate(
-        { projectId, key },
-        {
-            $push: { values: { lang: language, sequence: [{ content: safeDump(cleanPayload(newPayload)) }] } },
-            $setOnInsert: {
-                _id: shortid.generate(),
-                projectId,
-                key: newKey || key,
-                textIndex,
+        : {
+            $set: {
+                [`values.$.sequence.${index}`]: { content: safeDump(cleanPayload(newPayload)) }, 'values.$.env': env, textIndex, ...(newKey ? { key: newKey } : {}),
             },
-        },
-        {
-            runValidators: true, new: true, lean: true, upsert: true,
-        },
-    )
-    ));
+        };
+    let updatedResponse;
+    // check if user wants change dev response key name
+    // insert new reponse key for dev env while keeping existing for prod env
+    if (devKeyChange) {
+        updatedResponse = await BotResponses.findOneAndUpdate(
+            { projectId, key: newKey },
+            {
+                $push: { values: { lang: language, env, sequence: [{ content: safeDump(cleanPayload(newPayload)) }] } },
+                $setOnInsert: {
+                    _id: shortid.generate(),
+                    projectId,
+                    key: newKey || key,
+                    textIndex,
+                },
+            },
+            {
+                runValidators: true, new: true, lean: true, upsert: true,
+            },
+        ).exec();
+        // delete dev env responses from remaining previous response so only prod left
+        await deleteResponse(projectId, key, env);
+    } else {
+        updatedResponse = await BotResponses.findOneAndUpdate(
+            {
+                projectId, key, 'values.lang': language, 'values.env': env,
+            },
+            update,
+            { runValidators: true, new: true, lean: true },
+        ).exec().then(result => (
+            result
+            || BotResponses.findOneAndUpdate(
+                { projectId, key },
+                {
+                    $push: { values: { lang: language, env, sequence: [{ content: safeDump(cleanPayload(newPayload)) }] } },
+                    $setOnInsert: {
+                        _id: shortid.generate(),
+                        projectId,
+                        key: newKey || key,
+                        textIndex,
+                    },
+                },
+                {
+                    runValidators: true, new: true, lean: true, upsert: true,
+                },
+            )
+        ));
+    }
+
+    
     if (!newNameIsTaken && updatedResponse && newKey === updatedResponse.key) {
         await replaceStoryLines(projectId, key, newKey);
     }
@@ -231,12 +301,14 @@ export const upsertResponse = async ({
 };
 
 export const deleteVariation = async ({
-    projectId, language, key, index,
+    projectId, language, key, index, environment,
 }) => {
     const responseMatch = await BotResponses.findOne(
-        { projectId, key, 'values.lang': language },
+        {
+            projectId, key, 'values.lang': language, 'values.env': environment,
+        },
     ).exec();
-    const sequenceIndex = responseMatch && responseMatch.values.findIndex(({ lang }) => lang === language);
+    const sequenceIndex = responseMatch && responseMatch.values.findIndex(({ lang, env }) => lang === language && env === environment);
 
     const { sequence } = responseMatch.values[sequenceIndex];
     if (!sequence) return null;
@@ -244,14 +316,16 @@ export const deleteVariation = async ({
     responseMatch.values[sequenceIndex].sequence = updatedSequence;
     const textIndex = indexBotResponse(responseMatch);
     return BotResponses.findOneAndUpdate(
-        { projectId, key, 'values.lang': language },
+        {
+            projectId, key, 'values.lang': language, 'values.env': environment,
+        },
         { $set: { 'values.$.sequence': updatedSequence, textIndex } },
         { new: true, lean: true },
     );
 };
 
 export const newGetBotResponses = async ({
-    projectId, template, language, options = {},
+    projectId, template, language, environment = 'development', options = {},
 }) => {
     const { emptyAsDefault } = options;
     // template (optional): str || array
@@ -259,6 +333,8 @@ export const newGetBotResponses = async ({
     let templateKey = {};
     let languageKey = {};
     let languageFilter = [];
+    let envKey = {};
+    let envFilter = [];
     if (template) {
         const templateArray = typeof template === 'string' ? [template] : template;
         templateKey = { key: { $in: templateArray } };
@@ -274,6 +350,22 @@ export const newGetBotResponses = async ({
                             input: '$values',
                             as: 'value',
                             cond: { $in: ['$$value.lang', languageArray] },
+                        },
+                    },
+                },
+            },
+        ];
+    }
+    if (environment) {
+        envKey = { 'values.env': environment };
+        envFilter = [
+            {
+                $addFields: {
+                    values: {
+                        $filter: {
+                            input: '$values',
+                            as: 'value',
+                            cond: { $in: ['$$value.env', [environment]] },
                         },
                     },
                 },
@@ -297,8 +389,13 @@ export const newGetBotResponses = async ({
     ];
 
     let templates = await BotResponses.aggregate([
-        { $match: { projectId, ...templateKey, ...languageKey } },
+        {
+            $match: {
+                projectId, ...templateKey, ...languageKey, ...envKey,
+            },
+        },
         ...languageFilter,
+        ...envFilter,
         ...aggregationParameters,
     ]).allowDiskUse(true);
 
@@ -349,21 +446,50 @@ export const deleteResponsesRemovedFromStories = async (removedResponses, projec
 
 
 export const langToLangResp = async ({
-    projectId, key, originLang, destLang,
+    projectId, key, originLang, destLang, env,
 }) => {
     const response = await BotResponses.findOne({ key }).lean();
     const langsValues = response.values;
-    const originRespIdx = langsValues.findIndex(langValue => langValue.lang === originLang);
+    const originRespIdx = langsValues.findIndex(langValue => langValue.lang === originLang && langValue.env === env);
     // copy response content to temp array
     const newResponseInDestLang = langsValues[originRespIdx].sequence;
-    const destRespIdx = langsValues.findIndex(langValue => langValue.lang === destLang);
+    const destRespIdx = langsValues.findIndex(langValue => langValue.lang === destLang && langValue.env === env);
     // if the lang was already defined we replace it
     if (destRespIdx !== -1) {
-        langsValues[destRespIdx] = ({ lang: destLang, sequence: newResponseInDestLang });
+        langsValues[destRespIdx] = ({ lang: destLang, sequence: newResponseInDestLang, env });
     } else {
-        langsValues.push({ lang: destLang, sequence: newResponseInDestLang });
+        langsValues.push({ lang: destLang, sequence: newResponseInDestLang, env });
     }
     response.values = langsValues;
     await upsertFullResponse(projectId, response._id, key, response);
     return response;
+};
+
+export const deployProdUpdateResponses = async (projectId) => {
+    // during prod deployment, replace prod responses with current dev responses
+    const responses = await getBotResponses(projectId);
+    for (const response of responses) {
+        response.values = response.values.filter(function (item) { return item.env !== 'production'; });
+        if (response.values.length > 0) {
+            let newProdValues = [...response.values];
+            newProdValues = newProdValues.map(function (item) {
+                const temp = Object.assign({}, item);
+                temp.env = 'production';
+                return temp;
+            });
+            response.values = response.values.concat(newProdValues);
+            const textIndex = indexBotResponse(response);
+            await BotResponses.findOneAndUpdate(
+                {
+                    projectId: response.projectId, key: response.key,
+                },
+                { $set: { values: response.values, textIndex } },
+                { new: true, lean: true },
+            ).exec();
+        }
+        // if no dev resp values for this resp then delete it because it isn't needed anymore
+        else {
+            await BotResponses.findOneAndDelete({ _id: response._id }).lean();
+        }
+    }
 };

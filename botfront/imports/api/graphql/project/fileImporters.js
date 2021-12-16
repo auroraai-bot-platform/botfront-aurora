@@ -119,6 +119,17 @@ export const handleImportActions = async (actions, projectId) => {
 };
 export const handleImportResponse = async (responses, projectId) => {
     const insertResponses = responses.map(async (resp) => {
+        // TODO: should botfront import only support dev resp importing so
+        // you won't accidentally import & overwrite active prod responses or
+        // should also prod resp importing be supported?
+        // let's just set all imported resps as dev for now
+        if ('values' in resp && resp.values.length > 0) {
+            resp.values = resp.values.map(function (item) {
+                const temp = Object.assign({}, item);
+                temp.env = 'development';
+                return temp;
+            });
+        }
         const existing = await botResponses.findOne({ key: resp.key, projectId }).lean();
         if (existing) {
             const newResponse = deduplicateAndMergeResponses([resp, existing])[0];
