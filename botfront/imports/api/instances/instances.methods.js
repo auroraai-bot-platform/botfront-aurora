@@ -356,11 +356,11 @@ if (Meteor.isServer) {
                 // https://forum.rasa.com/t/rasa-2-0-api-model-train-doesnt-work/35923/6
                 const rasa_payload = {
                     ...payload.domain,
-                    nlu: Object.values(payload.nlu)[0], // atm shelf-rasa only supports one language
+                    nlu: Object.values(payload.nlu), // atm shelf-rasa only supports one language
                     rules: payload.rules,
-                    ...Object.values(payload.config)[0], // atm shelf-rasa only supports one language
+                    ...payload.config, // atm shelf-rasa only supports one language
                     stories: payload.stories,
-                    gazette: Object.values(payload.gazette)[0], // atm shelf-rasa only supports one language
+                    gazette: Object.values(payload.gazette), // atm shelf-rasa only supports one language
                 };
 
                 // Rasa forms yaml format updated to support current version of Rasa 2.8
@@ -376,21 +376,31 @@ if (Meteor.isServer) {
                 }
                 }
 
-                // reorder slots, and add type key value for shelf-rasa compatibility
-                payload.domain.forms.user_form.slots.forEach((element) => {
-                    typedict = addType(element['filling'][0]);
+                // Reorder slots to shelf-rasa compatible form
+                function toRequiredSlots(slots) {
+                    var required_slots = {};
+                    slots.forEach((element) => {
+                        typedict = addType(element['filling'][0]);
+                        
+                        for (var key in typedict){
+                            element[key] = typedict[key]
+                        }
+                        
+                        required_slots[element.name]=[element];
+                    })
                     
-                    for (var key in typedict){
-                    element[key] = typedict[key]
-                    }
+                    return {'required_slots': required_slots}
+                }
                     
-                    required_slots[element.name]=[element];
+                reformatted_form = {}
 
-                });
-
-                reformatted_form = {'required_slots': required_slots};
-                payload.domain.forms.user_form = reformatted_form
-
+                // Process each form in the domain
+                for (var key in payload.domain.forms){
+                  slots_record = toRequiredSlots(payload.domain.forms[key]['slots'])
+                  reformatted_form[key] = slots_record
+                }
+                
+                rasa_payload.forms = reformatted_form             
 
                 // TODO: what are fragments in rasa-for-botfront? Official rasa
                 // doesn't recognize these.
