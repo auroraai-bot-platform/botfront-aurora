@@ -3,7 +3,9 @@ import gql from 'graphql-tag';
 import apolloClient from '../../startup/client/apollo';
 import { GET_BOT_RESPONSES, UPSERT_BOT_RESPONSE } from './graphql';
 
-export function useResponsesContext({ projectId, workingLanguage, projectLanguages }) {
+export function useResponsesContext({
+    projectId, workingLanguage, projectLanguages, environment,
+}) {
     /*
         This is a file to hold all the response madness until it gets refactored
         into something saner.
@@ -12,7 +14,7 @@ export function useResponsesContext({ projectId, workingLanguage, projectLanguag
     const [responses, setResponsesState] = useState({});
 
     const responsesFrag = () => ({
-        id: `${projectId}-${workingLanguage}`,
+        id: `${projectId}-${workingLanguage}-${environment}`,
         fragment: gql`
                 fragment C on Cached {
                     responses
@@ -83,6 +85,7 @@ export function useResponsesContext({ projectId, workingLanguage, projectLanguag
                 templates: newTemplates,
                 projectId,
                 language: workingLanguage,
+                env: environment,
             },
         });
         if (!result.data) return setResponsesState(oldResponses);
@@ -115,6 +118,7 @@ export function useResponsesContext({ projectId, workingLanguage, projectLanguag
             key,
             newKey,
             index,
+            env: environment,
             ...responseTypeVariable,
         };
         const result = await apolloClient.mutate({

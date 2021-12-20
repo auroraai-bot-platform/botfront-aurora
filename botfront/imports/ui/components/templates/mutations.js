@@ -1,8 +1,8 @@
 import gql from 'graphql-tag';
 
 export const DELETE_BOT_RESPONSE = gql`
-mutation deleteResponse($projectId: String!, $key: String!) {
-    deleteResponse(projectId: $projectId, key: $key){
+mutation deleteResponse($projectId: String!, $key: String!, $env: String) {
+    deleteResponse(projectId: $projectId, key: $key, env: $env){
       success
     }
 }`;
@@ -23,8 +23,8 @@ mutation createAndOverwriteResponses($projectId: String!, $responses: [BotRespon
 }`;
 
 export const DELETE_VARIATION = gql`
-mutation deleteVariation($projectId: String!, $key: String!, $language: String!, $index: Int!) {
-  deleteVariation(projectId: $projectId, key: $key, language: $language, index: $index){
+mutation deleteVariation($projectId: String!, $key: String!, $language: String!, $index: Int!, $environment: String) {
+  deleteVariation(projectId: $projectId, key: $key, language: $language, index: $index, environment: $environment){
     success
   }
 }`;

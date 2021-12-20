@@ -5,6 +5,7 @@ import yaml from 'js-yaml';
 import React from 'react';
 import axios from 'axios';
 import BotResponses from '../api/graphql/botResponses/botResponses.model';
+import { deployProdUpdateResponses } from '../api/graphql/botResponses/mongo/botResponses';
 
 import { GlobalSettings } from '../api/globalSettings/globalSettings.collection';
 import { Instances } from '../api/instances/instances.collection';
@@ -238,12 +239,16 @@ if (Meteor.isServer) {
             check(projectId, String);
             check(isTest, Boolean);
             await Meteor.callWithPromise('rasa.train', projectId, 'development');
-            await Meteor.callWithPromise('commitAndPushToRemote', projectId, 'chore: deployment checkpoint');
+            await deployProdUpdateResponses(projectId); // update prod responses to match with dev
+            const { namespace, gitSettings } = await Projects.findOne({ _id: projectId }, { fields: { namespace: 1, gitSettings: 1 } });
+            // only push project to git if git repo configured in bf project
+            if (gitSettings) {
+                await Meteor.callWithPromise('commitAndPushToRemote', projectId, 'chore: production deployment checkpoint');
+            }
             const result = await runTestCases(projectId);
             if (result.failing !== 0) {
                 throw new Meteor.Error('500', `${result.failing} test${result.failing === 1 ? '' : 's'} failed during the pre-deployment test run`);
             }
-            const { namespace, gitSettings } = await Projects.findOne({ _id: projectId }, { fields: { namespace: 1, gitSettings: 1 } });
             const data = {
                 projectId,
                 namespace,

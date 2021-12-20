@@ -189,9 +189,9 @@ export const extractDomain = ({
     return domain;
 };
 
-export const getAllResponses = async (projectId, language = '') => {
+export const getAllResponses = async (projectId, language = '', environment = 'development') => {
     // fetches responses and turns them into nested key-value format
-    const responses = await newGetBotResponses({ projectId, language });
+    const responses = await newGetBotResponses({ projectId, language, environment });
     return responses.reduce((acc, curr) => {
         const { key, payload, ...rest } = curr;
         // we do this at the source too, but to be safe here too
@@ -318,7 +318,7 @@ export const getFragmentsAndDomain = async (projectId, language, env = 'developm
     );
 
     appMethodLogger.debug('Generating domain');
-    const responses = await getAllResponses(projectId, language);
+    const responses = await getAllResponses(projectId, language, env);
     let slots = Slots.find({ projectId }).fetch();
     const project = Projects.findOne({ _id: projectId }, { allowContextualQuestions: 1 });
     if (project.allowContextualQuestions) {

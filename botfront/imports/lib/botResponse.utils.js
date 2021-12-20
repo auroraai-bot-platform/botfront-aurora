@@ -96,7 +96,7 @@ export const defaultTemplate = (template) => {
     }
 };
 
-export const createResponseFromTemplate = (type, language, options = {}) => {
+export const createResponseFromTemplate = (type, language, environment, options = {}) => {
     const { key: incommingKey } = options;
     const key = incommingKey || 'utter_';
     const newTemplate = {
@@ -105,6 +105,7 @@ export const createResponseFromTemplate = (type, language, options = {}) => {
             {
                 sequence: [{ content: safeDump(defaultTemplate(type)) }],
                 lang: language,
+                env: environment,
             },
         ],
     };
@@ -155,7 +156,7 @@ export const getDefaultTemplateFromSequence = (sequence) => {
     return defaultTemplate(typeName);
 };
 
-export const addResponseLanguage = (response, language) => {
+export const addResponseLanguage = (response, language, environment) => {
     const updatedResponse = response;
     const newValue = {
         sequence: response.values
@@ -172,6 +173,7 @@ export const addResponseLanguage = (response, language) => {
             ]
             : [{ content: 'text: \'\'' }],
         lang: language,
+        env: environment,
     };
     updatedResponse.values = [...(response.values || []), newValue];
     return updatedResponse;

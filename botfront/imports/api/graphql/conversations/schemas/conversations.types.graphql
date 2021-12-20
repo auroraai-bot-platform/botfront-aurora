@@ -44,7 +44,7 @@ type Query {
     intentsInConversations(projectId: String!): [String]
     latestImportedEvent(
         projectId: String!
-        environment: Environement = development
+        environment: Environment = development
     ): String
 }
 
@@ -66,7 +66,7 @@ type Mutation {
     importConversations(
         conversations: [ConversationContainerInput]!
         projectId: String!
-        environment: Environement = development
+        environment: Environment = development
         importConversationsOnly: Boolean = false
     ): batchMutationOutput
 }
