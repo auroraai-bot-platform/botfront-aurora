@@ -311,7 +311,7 @@ if (Meteor.isServer) {
                 rules,
                 nlu: config_multi ? nlu_multi : nlu[languages[0]],
                 config: config_multi ? config_multi : config[languages[0]],
-                gazette,
+                gazette: gazette[languages[0]],
                 // fixed_model_name: getProjectModelFileName(projectId),
                 // augmentation_factor: augmentationFactor,
             };
@@ -371,33 +371,68 @@ if (Meteor.isServer) {
                 function addType(data) {
                 if (data['type']=='from_entity') {
                     return {'type': data['type'], 'entity': data['entity'][0]};
+                } else if (data['type']=='from_intent') {
+                    return {'type': data['type'], 'intent': 'null', 'value': 'null'}
                 } else {
                     return {'type': data['type']};
                 }
+                }
+
+                // Unlists list items to dict format
+                function unlistItems(item) {
+                    var new_elements = []
+                    item.forEach((element) => {
+                        var new_element = {}
+                        for (var key in element) {
+                            if (Array.isArray(element[key])) {
+                                if (element[key].length > 0) {
+                                    // keep element key value if it is not an empty list
+                                    new_element[key] = element[key][0]
+                                }
+                                
+                            } else {
+                                new_element[key] = element[key]
+                            }
+                        }
+                        new_elements.push(new_element)
+                    })
+                    return new_elements
                 }
 
                 // Reorder slots to shelf-rasa compatible form
                 function toRequiredSlots(slots) {
                     var required_slots = {};
                     slots.forEach((element) => {
+                        
                         typedict = addType(element['filling'][0]);
                         
                         for (var key in typedict){
-                            element[key] = typedict[key]
+                        element[key] = typedict[key]
                         }
-                        
+                        // unlist all items (intent,not_intent,type,entity,role)
+                        element['filling'] = unlistItems(element['filling'])
                         required_slots[element.name]=[element];
                     })
                     
-                    return {'required_slots': required_slots}
+                    return required_slots
                 }
-                    
-                reformatted_form = {}
+
+                var reformatted_form = {}
 
                 // Process each form in the domain
                 for (var key in payload.domain.forms){
-                  slots_record = toRequiredSlots(payload.domain.forms[key]['slots'])
-                  reformatted_form[key] = slots_record
+                    reformatted_form[key] = {}
+                  for (var formkey in payload.domain.forms[key]){
+                      if (formkey=='slots') {
+                          slots_record = toRequiredSlots(payload.domain.forms[key][formkey])
+                          reformatted_form[key]['required_slots'] = slots_record
+                      } else {
+                          other_record = payload.domain.forms[key][formkey]
+                          reformatted_form[key][formkey] = other_record
+                      }
+                      
+                  }
+                  
                 }
                 
                 rasa_payload.forms = reformatted_form             
