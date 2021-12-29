@@ -363,22 +363,25 @@ if (Meteor.isServer) {
                     gazette: Object.values(payload.gazette), // atm shelf-rasa only supports one language
                 };
 
-                // Rasa forms yaml format updated to support current version of Rasa 2.8
+                // Form restructuring start:                    
+                // Form definition in domain updated to support current version of Rasa 2.8
+                // We stack slots under required_slots
+
                 var required_slots = {};
 
-
-                // function that inserts type
+                // Helper functions
+                // 1) function that copies slot type under slot root.
                 function addType(data) {
                 if (data['type']=='from_entity') {
                     return {'type': data['type'], 'entity': data['entity'][0]};
                 } else if (data['type']=='from_intent') {
-                    return {'type': data['type'], 'intent': 'null', 'value': 'null'}
+                    return {'type': data['type'], 'intent': [], 'value': []}
                 } else {
                     return {'type': data['type']};
                 }
                 }
 
-                // Unlists list items to dict format
+                // 2) function which unlists list items to dict.
                 function unlistItems(item) {
                     var new_elements = []
                     item.forEach((element) => {
@@ -399,7 +402,7 @@ if (Meteor.isServer) {
                     return new_elements
                 }
 
-                // Reorder slots to shelf-rasa compatible form
+                // 3) function which reorders botfronts slot content into a shelf-rasa compatible form.
                 function toRequiredSlots(slots) {
                     var required_slots = {};
                     slots.forEach((element) => {
@@ -409,7 +412,7 @@ if (Meteor.isServer) {
                         for (var key in typedict){
                         element[key] = typedict[key]
                         }
-                        // unlist all items (intent,not_intent,type,entity,role)
+                        // unlist all items (intent,not_intent,type,entity,role,group,value)
                         element['filling'] = unlistItems(element['filling'])
                         required_slots[element.name]=[element];
                     })
@@ -419,7 +422,7 @@ if (Meteor.isServer) {
 
                 var reformatted_form = {}
 
-                // Process each form in the domain
+                // Main loop for restructuring Forms. Process each form in the domain with helper functions.
                 for (var key in payload.domain.forms){
                     reformatted_form[key] = {}
                   for (var formkey in payload.domain.forms[key]){
@@ -436,6 +439,9 @@ if (Meteor.isServer) {
                 }
                 
                 rasa_payload.forms = reformatted_form             
+                
+                // Form restructuring ends.
+
 
                 // TODO: what are fragments in rasa-for-botfront? Official rasa
                 // doesn't recognize these.
