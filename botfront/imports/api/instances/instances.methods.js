@@ -311,7 +311,7 @@ if (Meteor.isServer) {
                 rules,
                 nlu: config_multi ? nlu_multi : nlu[languages[0]],
                 config: config_multi ? config_multi : config[languages[0]],
-                gazette,
+                gazette: gazette[languages[0]],
                 // fixed_model_name: getProjectModelFileName(projectId),
                 // augmentation_factor: augmentationFactor,
             };
@@ -349,18 +349,99 @@ if (Meteor.isServer) {
             const t0 = performance.now();
             try {
                 const payload = await Meteor.call('rasa.getTrainingPayload', projectId, { env });
+
                 // Currently (21.10.2021) Rasa's model/train endpoint expects
                 // all data in single yaml structure without seperate 'domain'
                 // and 'config' blocks:
                 // https://forum.rasa.com/t/rasa-2-0-api-model-train-doesnt-work/35923/6
                 const rasa_payload = {
                     ...payload.domain,
-                    nlu: Object.values(payload.nlu)[0], // atm shelf-rasa only supports one language
+                    nlu: Object.values(payload.nlu), // atm shelf-rasa only supports one language
                     rules: payload.rules,
-                    ...Object.values(payload.config)[0], // atm shelf-rasa only supports one language
+                    ...payload.config, // atm shelf-rasa only supports one language
                     stories: payload.stories,
-                    gazette: Object.values(payload.gazette)[0], // atm shelf-rasa only supports one language
+                    gazette: Object.values(payload.gazette), // atm shelf-rasa only supports one language
                 };
+
+                // Form restructuring start:                    
+                // Form definition in domain updated to support current version of Rasa 2.8
+                // We stack slots under required_slots
+
+                var required_slots = {};
+
+                // Helper functions
+                // 1) function that copies slot type under slot root.
+                function addType(data) {
+                if (data['type']=='from_entity') {
+                    return {'type': data['type'], 'entity': data['entity'][0]};
+                } else if (data['type']=='from_intent') {
+                    return {'type': data['type'], 'intent': [], 'value': []}
+                } else {
+                    return {'type': data['type']};
+                }
+                }
+
+                // 2) function which unlists list items to dict.
+                function unlistItems(item) {
+                    var new_elements = []
+                    item.forEach((element) => {
+                        var new_element = {}
+                        for (var key in element) {
+                            if (Array.isArray(element[key])) {
+                                if (element[key].length > 0) {
+                                    // keep element key value if it is not an empty list
+                                    new_element[key] = element[key][0]
+                                }
+                                
+                            } else {
+                                new_element[key] = element[key]
+                            }
+                        }
+                        new_elements.push(new_element)
+                    })
+                    return new_elements
+                }
+
+                // 3) function which reorders botfronts slot content into a shelf-rasa compatible form.
+                function toRequiredSlots(slots) {
+                    var required_slots = {};
+                    slots.forEach((element) => {
+                        
+                        typedict = addType(element['filling'][0]);
+                        
+                        for (var key in typedict){
+                        element[key] = typedict[key]
+                        }
+                        // unlist all items (intent,not_intent,type,entity,role,group,value)
+                        element['filling'] = unlistItems(element['filling'])
+                        required_slots[element.name]=[element];
+                    })
+                    
+                    return required_slots
+                }
+
+                var reformatted_form = {}
+
+                // Main loop for restructuring Forms. Process each form in the domain with helper functions.
+                for (var key in payload.domain.forms){
+                    reformatted_form[key] = {}
+                  for (var formkey in payload.domain.forms[key]){
+                      if (formkey=='slots') {
+                          slots_record = toRequiredSlots(payload.domain.forms[key][formkey])
+                          reformatted_form[key]['required_slots'] = slots_record
+                      } else {
+                          other_record = payload.domain.forms[key][formkey]
+                          reformatted_form[key][formkey] = other_record
+                      }
+                      
+                  }
+                  
+                }
+                
+                rasa_payload.forms = reformatted_form             
+                
+                // Form restructuring ends.
+
 
                 // TODO: what are fragments in rasa-for-botfront? Official rasa
                 // doesn't recognize these.
