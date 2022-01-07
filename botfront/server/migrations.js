@@ -1023,6 +1023,32 @@ Migrations.add({
     },
 });
 
+Migrations.add({
+    version: 27,
+    // add env variable to bot responses
+    up: () => {
+        BotResponses.find()
+            .lean()
+            .then(responses => responses.forEach((response) => {
+                const updatedResponse = {
+                    ...response,
+                    values: response.values.map(value => ({
+                        ...value,
+                        env: 'env' in value ? value.env : 'development',
+                    })),
+                };
+                delete updatedResponse._id;
+                if (!isEqual(response, updatedResponse)) {
+                    const { projectId, key } = response;
+                    BotResponses.updateOne(
+                        { projectId, key },
+                        updatedResponse,
+                    ).exec();
+                }
+            }));
+    },
+});
+
 Meteor.startup(() => {
     Migrations.migrateTo('latest');
 });
