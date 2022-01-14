@@ -59,7 +59,7 @@ COPY --from=0 $APP_BUNDLE_FOLDER/bundle $APP_BUNDLE_FOLDER/bundle/
 RUN bash $SCRIPTS_FOLDER/build-meteor-npm-dependencies.sh
 
 # Nodegit dependencies
-RUN BUILD_ONLY=true npm install --prefix $APP_BUNDLE_FOLDER/bundle/programs/server nodegit@0.28.0-alpha.10
+RUN BUILD_ONLY=true npm install --prefix $APP_BUNDLE_FOLDER/bundle/programs/server nodegit
 RUN ln -s /usr/lib/libcurl.so.4 /usr/lib/libcurl-gnutls.so.4
 
 # Those dependencies are needed by the entrypoint.sh script
