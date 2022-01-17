@@ -352,3 +352,53 @@ Uploads an image to S3 and return a publicly accessible url of that image. The e
 </details>
 <br />
 
+### **Deploy project**
+<details>
+
+----
+  Webhook used by Botfront to deploy model into S3 storage.
+  The endpoint does not require authorisation as it is only locally accessible.
+
+* **URL**
+
+  /api/deploy
+
+* **Method:**
+
+  `POST`
+  
+*  **Headers**
+
+   **Required:**
+  
+*  **URL Params**
+
+   **Required:**
+ 
+   None
+
+* **Data Params**
+
+  ```json
+  projectId: string,
+  path: string
+  ```
+
+   **Required:**
+ 
+   None
+
+* **Success Response:**
+
+  * **Code:** 200 <br />
+    **Content:** `{ uri : [string] }`
+ 
+* **Error Response:**
+
+  * **Code:** 400 Bad Request <br />
+    **Content:** None
+---
+
+</details>
+<br />
+

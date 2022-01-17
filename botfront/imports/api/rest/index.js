@@ -1,6 +1,6 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
-import fs from 'fs';
+import {promises as fs} from 'fs';
 import { authMW, setStaticWebhooks } from './utilities.service';
 import { createUser } from './users.service';
 import projectsService, { importProject } from './projects.service';
@@ -305,15 +305,13 @@ app.delete('/api/images', async (req, res, next) => {
 
 app.post('/api/deploy', async (req, res, next) => {
   const projectId = req.body.projectId;
+  const path = req.body.path || '/app/models';
   const modelBucket = `${globalPrefix}models-${projectId}`
 
-  const data = fs.readFileSync(`/app/models/model-${projectId}.tar.gz`, (err, filecontent) => {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log(filecontent);
-    }
-  });
+  const data = await fs.readFile(`${path}/model-${projectId}.tar.gz`)
+  .catch(
+    (error) => console.log(error)
+  );
 
   if (data.length < 1 || data == null) {
     res.status(400).send('Model has not content');
