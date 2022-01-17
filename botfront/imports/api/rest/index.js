@@ -4,7 +4,7 @@ import fs from 'fs';
 import { authMW, setStaticWebhooks } from './utilities.service';
 import { createUser } from './users.service';
 import projectsService, { importProject } from './projects.service';
-import { deleteImage, uploadImage } from './images.service';
+import { deleteFile, uploadFile } from './files.service';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -237,7 +237,7 @@ app.post('/api/images', async (req, res, next) => {
   const key = `${filePrefix}${uuidv4()}.${fileExtension}`;
 
   try {
-    const fileUrl = await uploadImage(fileBucket, key, data);
+    const fileUrl = await uploadFile(fileBucket, key, data);
     res.json({ uri: fileUrl });
   } catch (error) {
     console.log({ error });
@@ -282,7 +282,7 @@ app.delete('/api/images', async (req, res, next) => {
   const key = urlPath.slice(2).join('/');
 
   try {
-    const fileUrl = await deleteImage(fileBucket, key);
+    const fileUrl = await deleteFile(fileBucket, key);
     res.sendStatus(204);
   } catch (error) {
     res.sendStatus(404);
@@ -323,7 +323,7 @@ app.post('/api/deploy', async (req, res, next) => {
   const key = `model-${projectId}.tar.gz`;
 
   try {
-    const fileUrl = await uploadImage(modelBucket, key, data);
+    const fileUrl = await uploadFile(modelBucket, key, data);
     res.json({ uri: fileUrl });
   } catch (error) {
     console.log({ error });
