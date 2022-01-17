@@ -55,7 +55,7 @@ describe('deploy rest api tests', () => {
     const projectId = 'test'
     await fs.writeFile(`model-${projectId}.txt`, 'test', 'utf-8')
     .then(
-      c(
+      await c(
         {
           gzip: true,
           file: `model-${projectId}.tar.gz`
@@ -68,7 +68,7 @@ describe('deploy rest api tests', () => {
     );
 
     const uploadResult = await axios.post(`${baseUrl}/deploy`, { projectId: 'test', path: '.' });
-    assert.equal(uploadResult.status, 200);
-    assert.isString(uploadResult.data?.uri);
+    assert.equal(uploadResult.status, 200, 'Upload failed');
+    assert.isString(uploadResult.data?.uri, 'Incorrect uri returned');
   });
 });
