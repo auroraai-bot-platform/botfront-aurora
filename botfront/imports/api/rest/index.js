@@ -16,7 +16,7 @@ export const adminPassword = process.env.ADMIN_PASSWORD;
 
 const FILE_SIZE_LIMIT = parseInt(process.env.FILE_SIZE_LIMIT) || 1024 * 1024;
 
-const fileBucket = process.env.FILE_BUCKET;
+const fileBucket = process.env.FILE_BUCKET || 'undefined';
 const filePrefix = process.env.FILE_PREFIX || 'files/';
 const globalPrefix = process.env.PREFIX || 'local-';
 
