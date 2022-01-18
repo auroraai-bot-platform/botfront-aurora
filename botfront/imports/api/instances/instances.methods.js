@@ -469,16 +469,28 @@ if (Meteor.isServer) {
                     { headers: { 'Content-type': 'application/x-yaml' } },
                 );
                 if (trainingResponse.status === 200) {
-                    const t1 = performance.now();
-                    appMethodLogger.debug(
-                        `Training project ${projectId} - ${(t1 - t0).toFixed(2)} ms`,
+                    // Activate trained model (former approach loaded model in rasa model/train, 
+                    // but aurora tries to keep rasa intact and make changes to botfront instead.)
+                    
+                    const activateModelResponse = await client.put(
+                        '/model',
+                        { "model_file": 'models/' + trainingResponse.headers.filename},
+                        { headers: { 'Content-type': 'application/json' } },
                     );
-                    Meteor.call('call.postTraining', projectId, trainingResponse.data);
-                    Activity.update(
-                        { projectId, validated: true },
-                        { $set: { validated: false } },
-                        { multi: true },
-                    ).exec();
+
+                    if (activateModelResponse.status === 204) {        
+
+                        const t1 = performance.now();
+                        appMethodLogger.debug(
+                            `Training project ${projectId} - ${(t1 - t0).toFixed(2)} ms`,
+                        );
+                        Meteor.call('call.postTraining', projectId, trainingResponse.data);
+                        Activity.update(
+                            { projectId, validated: true },
+                            { $set: { validated: false } },
+                            { multi: true },
+                        ).exec();
+                    }
                 }
 
                 Meteor.call('project.markTrainingStopped', projectId, 'success');
