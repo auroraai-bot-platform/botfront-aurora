@@ -1,9 +1,10 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
-import { authMW, setImageWebhooks } from './utilities.service';
+import {promises as fs} from 'fs';
+import { authMW, setStaticWebhooks } from './utilities.service';
 import { createUser } from './users.service';
 import projectsService, { importProject } from './projects.service';
-import { deleteImage, uploadImage } from './images.service';
+import { deleteFile, uploadFile } from './files.service';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,6 +18,7 @@ const FILE_SIZE_LIMIT = parseInt(process.env.FILE_SIZE_LIMIT) || 1024 * 1024;
 
 const fileBucket = process.env.FILE_BUCKET;
 const filePrefix = process.env.FILE_PREFIX || 'files/';
+const globalPrefix = process.env.PREFIX || 'local-';
 
 const port = process.env.REST_API_PORT || 3030;
 const restApiToken = process.env.REST_API_TOKEN;
@@ -28,8 +30,9 @@ Meteor.startup(() => {
 
   createAdminUser();
   
-  const url = `http://localhost:${port}/api/images`;
-  setImageWebhooks(url);
+  const images = `http://localhost:${port}/api/images`;
+  const deploy = `http://localhost:${port}/api/deploy`;
+  setStaticWebhooks(images, deploy);
 });
 
 async function createAdminUser() {
@@ -234,7 +237,7 @@ app.post('/api/images', async (req, res, next) => {
   const key = `${filePrefix}${uuidv4()}.${fileExtension}`;
 
   try {
-    const fileUrl = await uploadImage(fileBucket, key, data);
+    const fileUrl = await uploadFile(fileBucket, key, data);
     res.json({ uri: fileUrl });
   } catch (error) {
     console.log({ error });
@@ -279,13 +282,52 @@ app.delete('/api/images', async (req, res, next) => {
   const key = urlPath.slice(2).join('/');
 
   try {
-    const fileUrl = await deleteImage(fileBucket, key);
+    const fileUrl = await deleteFile(fileBucket, key);
     res.sendStatus(204);
   } catch (error) {
     res.sendStatus(404);
   }
 });
 
+/**
+ * @swagger
+ *  /api/deploy:
+ *    post:
+ *      create new deployment for production rasa
+        Interface {
+        "projectId": string,
+        "namespace": string,
+        "environment": string,
+        "gitString": string
+      }
+ *     
+*/
+
+app.post('/api/deploy', async (req, res, next) => {
+  const projectId = req.body.projectId;
+  const path = req.body.path || '/app/models';
+  const modelBucket = `${globalPrefix}models-${projectId}`
+
+  const data = await fs.readFile(`${path}/model-${projectId}.tar.gz`)
+  .catch(
+    (error) => console.log(error)
+  );
+
+  if (data.length < 1 || data == null) {
+    res.status(400).send('Model has not content');
+    return;
+  }
+
+  const key = `model-${projectId}.tar.gz`;
+
+  try {
+    const fileUrl = await uploadFile(modelBucket, key, data);
+    res.json({ uri: fileUrl });
+  } catch (error) {
+    console.log({ error });
+    res.sendStatus(400);
+  }
+});
 
 
 app.listen(port, () => {

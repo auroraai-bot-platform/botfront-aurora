@@ -2,7 +2,7 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client
 import { getS3Url } from './utilities.service';
 import { region } from './index';
 
-export async function uploadImage(outputBucket, key, data) {
+export async function uploadFile(outputBucket, key, data) {
 
   const buffer = Buffer.from(data, 'base64');
 
@@ -14,7 +14,7 @@ export async function uploadImage(outputBucket, key, data) {
   return fileUrl;
 }
 
-export async function deleteImage(bucket, key) {
+export async function deleteFile(bucket, key) {
   const s3 = new S3Client({ region });
   await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 }
