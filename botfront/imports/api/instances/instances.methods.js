@@ -305,6 +305,7 @@ if (Meteor.isServer) {
                 }
             }
 
+            /*
             const payload = {
                 domain,
                 stories,
@@ -312,6 +313,20 @@ if (Meteor.isServer) {
                 nlu: config_multi ? nlu_multi : nlu[languages[0]],
                 config: config_multi ? config_multi : config[languages[0]],
                 gazette: gazette[languages[0]],
+                // fixed_model_name: getProjectModelFileName(projectId),
+                // augmentation_factor: augmentationFactor,
+            };
+            */
+            const payload = {
+                domain,
+                stories,
+                rules,
+                nlu: nlu,
+                config: config,
+                gazette: gazette,
+                nlu_multi,
+                config_multi,
+                languages
                 // fixed_model_name: getProjectModelFileName(projectId),
                 // augmentation_factor: augmentationFactor,
             };
@@ -354,11 +369,12 @@ if (Meteor.isServer) {
                 // all data in single yaml structure without seperate 'domain'
                 // and 'config' blocks:
                 // https://forum.rasa.com/t/rasa-2-0-api-model-train-doesnt-work/35923/6
+                const config = payload.config_multi ? payload.config_multi : payload.config[payload.languages[0]];
                 const rasa_payload = {
                     ...payload.domain,
-                    nlu: Object.values(payload.nlu), // atm shelf-rasa only supports one language
+                    nlu: payload.config_multi ? payload.nlu_multi : payload.nlu[payload.languages[0]],
                     rules: payload.rules,
-                    ...payload.config, // atm shelf-rasa only supports one language
+                    ...config,
                     stories: payload.stories,
                     gazette: Object.values(payload.gazette), // atm shelf-rasa only supports one language
                 };
