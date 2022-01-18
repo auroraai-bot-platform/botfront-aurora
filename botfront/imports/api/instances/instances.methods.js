@@ -305,18 +305,10 @@ if (Meteor.isServer) {
                 }
             }
 
-            /*
-            const payload = {
-                domain,
-                stories,
-                rules,
-                nlu: config_multi ? nlu_multi : nlu[languages[0]],
-                config: config_multi ? config_multi : config[languages[0]],
-                gazette: gazette[languages[0]],
-                // fixed_model_name: getProjectModelFileName(projectId),
-                // augmentation_factor: augmentationFactor,
-            };
-            */
+            /* For nlu and config, we return here all languages separately (nlu, config) and
+            possible multi_config version (nlu_multi, config_multi), because this function
+            is called for several purposes: rasa training, git integration, project export.
+            The caller can then decide which parts to use. */
             const payload = {
                 domain,
                 stories,
