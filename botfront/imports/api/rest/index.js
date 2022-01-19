@@ -306,12 +306,15 @@ app.delete('/api/images', async (req, res, next) => {
 app.post('/api/deploy', async (req, res, next) => {
   const projectId = req.body.projectId;
   const path = req.body.path || '/app/models';
-  const modelBucket = `${globalPrefix}models-${projectId}`
+  const modelBucket = `${globalPrefix}models-${projectId}`;
 
-  const data = await fs.readFile(`${path}/model-${projectId}.tar.gz`)
-  .catch(
-    (error) => console.log(error)
-  );
+  let data;
+  
+  try {
+    data = await fs.readFile(`${path}/model-${projectId}.tar.gz`);
+  } catch (error) {
+    console.log(error);
+  }
 
   if (data.length < 1 || data == null) {
     res.status(400).send('Model has not content');
