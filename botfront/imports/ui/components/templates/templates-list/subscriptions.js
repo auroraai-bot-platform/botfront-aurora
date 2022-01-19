@@ -6,6 +6,7 @@ subscription responsesModified($projectId: String!) {
         key
         _id
         values{
+            env
             lang
             sequence {
                 content
@@ -21,6 +22,7 @@ subscription responseDeleted($projectId: String!) {
         key
         _id
         values{
+            env
             lang
             sequence {
                 content

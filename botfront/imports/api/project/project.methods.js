@@ -81,14 +81,20 @@ if (Meteor.isServer) {
                 }
                 const update = item;
                 delete update.createdAt;
+
+                // Avoid writing private ssh keys to logs
+                const sanitizedBefore = projectBefore;
+                const sanitizedAfter = update;
+                sanitizedBefore.gitSettings.privateSshKey = 'XXX';
+                sanitizedAfter.gitSettings.privateSshKey = 'XXX';
                 auditLog('Updated project', {
                     user: Meteor.user(),
                     resId: update._id,
                     type: 'updated',
                     projectId: update._id,
                     operation: 'project-updated',
-                    before: { project: projectBefore },
-                    after: { project: update },
+                    before: { project: sanitizedBefore },
+                    after: { project: sanitizedAfter },
                     resType: 'project',
                 });
                 return Projects.update({ _id: update._id }, { $set: update });

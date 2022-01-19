@@ -32,14 +32,14 @@ class TemplatesTable extends React.Component {
     getTemplateLanguages = () => sortBy(this.props.nluLanguages);
 
     getColumns = (lang) => {
-        const { projectId } = this.props;
+        const { projectId, environment } = this.props;
         const { dialogueActions } = this.context;
         const columns = [
             {
                 id: lang,
                 filterable: true,
                 accessor: (t) => {
-                    const template = find(t.values, { lang });
+                    const template = find(t.values, { lang, env: environment });
                     const { sequence = [] } = template || {};
                     const filterableText = sequence.map(val => (val || {}).content).join('');
                     return { sequence, filterableText };
@@ -139,8 +139,8 @@ class TemplatesTable extends React.Component {
     };
 
     deleteTemplate = (key) => {
-        const { projectId, deleteBotResponse } = this.props;
-        deleteBotResponse({ variables: { projectId, key } });
+        const { projectId, deleteBotResponse, environment } = this.props;
+        deleteBotResponse({ variables: { projectId, key, env: environment } });
     };
 
     fixLanguage = () => {
@@ -286,10 +286,11 @@ TemplatesTable.propTypes = {
     setActiveEditor: PropTypes.func.isRequired,
     newResponse: PropTypes.object,
     closeNewResponse: PropTypes.func.isRequired,
+    environment: PropTypes.string,
 };
 
 TemplatesTable.defaultProps = {
-    activeEditor: '', newResponse: { open: false, type: '' },
+    activeEditor: '', newResponse: { open: false, type: '' }, environment: 'development',
 };
 
 const mapStateToProps = state => ({
@@ -297,6 +298,7 @@ const mapStateToProps = state => ({
     pageNumber: state.settings.get('templatesTablePage'),
     filterText: state.settings.get('templatesTableFilter'),
     workingLanguage: state.settings.get('workingLanguage'),
+    environment: state.settings.get('workingDeploymentEnvironment'),
 });
 
 const mapDispatchToProps = {

@@ -75,7 +75,9 @@ function Project(props) {
         upsertResponse,
         resetResponseInCache,
         setResponseInCache,
-    } = useResponsesContext({ projectId, workingLanguage, projectLanguages });
+    } = useResponsesContext({
+        projectId, workingLanguage, projectLanguages, environment: 'development',
+    });
 
     useEffect(() => {
         if (refreshEntitiesAndIntents) {
@@ -265,7 +267,7 @@ function Project(props) {
                     )}
                 </SplitPane>
             </div>
-            <Alert stack={{ limit: 3 }} html={true} />
+            <Alert stack={{ limit: 3 }} html />
         </div>
     );
 }

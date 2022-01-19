@@ -48,6 +48,7 @@ const BotResponseEditor = (props) => {
         projectId,
         name,
         renameable,
+        environment,
     } = props;
 
     const { resetResponseInCache, setResponseInCache } = useContext(ProjectContext); // using the upsert function from the project context ensures the visual story is updated
@@ -91,7 +92,7 @@ const BotResponseEditor = (props) => {
     };
 
     const handleDeleteVariation = (index) => {
-        const activeIndex = newBotResponse.values.findIndex(({ lang }) => lang === language);
+        const activeIndex = newBotResponse.values.findIndex(({ lang, env }) => lang === language && env === environment);
         
         const { sequence } = newBotResponse.values[activeIndex];
         const updatedSequence = [
@@ -110,6 +111,7 @@ const BotResponseEditor = (props) => {
             language,
             key: newBotResponse.key,
             index,
+            env: environment,
         };
         deleteVariation({ variables });
     };
@@ -129,12 +131,19 @@ const BotResponseEditor = (props) => {
             setNewBotResponse({ ...newBotResponse, key: responseKey });
             return;
         }
-        upsertFullResponse({ ...newBotResponse, key: responseKey }, validateResponseName);
+        // if user tries to rename response key which is also used in production env,
+        // then let's create new response for the new key name in development env so
+        // production response key stays intact and prod bot continues working
+        if (environment === 'development' && [...new Set(newBotResponse.values.map(item => item.env))].includes('production')) {
+            upsertFullResponse({ ...newBotResponse, key: responseKey, devKeyChange: true }, validateResponseName);
+        } else {
+            upsertFullResponse({ ...newBotResponse, key: responseKey }, validateResponseName);
+        }
     };
 
     const updateSequence = (oldResponse, contentInput, index) => {
         const updatedResponse = { ...oldResponse };
-        const activeIndex = oldResponse.values.findIndex(({ lang }) => lang === language);
+        const activeIndex = oldResponse.values.findIndex(({ lang, env }) => lang === language && env === environment);
         let { sequence } = updatedResponse.values[activeIndex];
         const content = typeof contentInput === 'string'
             ? contentInput : safeDump(contentInput);
@@ -167,9 +176,9 @@ const BotResponseEditor = (props) => {
     };
 
     const getActiveSequence = () => {
-        const activeValue = newBotResponse.values && newBotResponse.values.find(({ lang }) => lang === language);
+        const activeValue = newBotResponse.values && newBotResponse.values.find(({ lang, env }) => lang === language && env === environment);
         if (!activeValue) {
-            return addResponseLanguage(newBotResponse, language).values.find(({ lang }) => lang === language).sequence;
+            return addResponseLanguage(newBotResponse, language, environment).values.find(({ lang, env }) => lang === language && env === environment).sequence;
         }
         return activeValue.sequence;
     };
@@ -193,14 +202,17 @@ const BotResponseEditor = (props) => {
                 }
             });
         } if (!renameError) {
-            return resetResponseInCache(name).then(() => {
-                setResponseInCache(responseKey, getRefreshData()).then(() => {
-                    if (name !== responseKey) {
-                        reloadStories();
-                    }
-                    closeModal();
+            // only reload dev stories
+            if (environment === 'development') {
+                return resetResponseInCache(name).then(() => {
+                    setResponseInCache(responseKey, getRefreshData()).then(() => {
+                        if (name !== responseKey) {
+                            reloadStories();
+                        }
+                        closeModal();
+                    });
                 });
-            });
+            } return closeModal();
         }
         return false;
     };
@@ -304,6 +316,7 @@ BotResponseEditor.propTypes = {
     projectId: PropTypes.string.isRequired,
     name: PropTypes.string,
     renameable: PropTypes.bool,
+    environment: PropTypes.string,
 };
 
 BotResponseEditor.defaultProps = {
@@ -311,6 +324,7 @@ BotResponseEditor.defaultProps = {
     isNew: false,
     name: null,
     renameable: true,
+    environment: 'development',
 };
 
 const BotResponseEditorWrapper = (props) => {
@@ -321,6 +335,7 @@ const BotResponseEditorWrapper = (props) => {
         isNew,
         responseType,
         language,
+        environment,
     } = props;
 
     const [botResponse, setBotResponse] = useState();
@@ -338,7 +353,7 @@ const BotResponseEditorWrapper = (props) => {
                 setBotResponse(data.botResponse);
             }
             if (data && data.botResponse === null) {
-                setBotResponse(createResponseFromTemplate('TextPayload', language, { key: name }));
+                setBotResponse(createResponseFromTemplate('TextPayload', language, environment, { key: name }));
             }
         }, [data]);
 
@@ -359,7 +374,7 @@ const BotResponseEditorWrapper = (props) => {
 
     const KEY = 'utter_';
     if (isNew && !incomingBotResponse && !botResponse) {
-        setBotResponse(createResponseFromTemplate(responseType, language, { key: KEY }));
+        setBotResponse(createResponseFromTemplate(responseType, language, environment, { key: KEY }));
     }
 
     const key = name || (incomingBotResponse
@@ -383,6 +398,7 @@ BotResponseEditorWrapper.propTypes = {
     language: PropTypes.string.isRequired,
     projectId: PropTypes.string.isRequired,
     name: PropTypes.string,
+    environment: PropTypes.string,
 };
 
 BotResponseEditorWrapper.defaultProps = {
@@ -390,11 +406,13 @@ BotResponseEditorWrapper.defaultProps = {
     isNew: false,
     responseType: '',
     name: null,
+    environment: 'development',
 };
 
 const mapStateToProps = state => ({
     language: state.settings.get('workingLanguage'),
     projectId: state.settings.get('projectId'),
+    environment: state.settings.get('workingDeploymentEnvironment'),
 });
 
 export default connect(mapStateToProps)(BotResponseEditorWrapper);

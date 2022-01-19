@@ -61,6 +61,46 @@ export const createInstance = async (project) => {
     });
 };
 
+export const processExportNluExampleEntities = (text, entities) => {
+    // sort entities by start index so the string modifications will work correctly
+    entities.sort((a, b) => a.start - b.start);
+
+    // process entities into array of correctly formatted entity strings
+    const entityExamples = [];
+    for (const entity of entities) {
+        let entityExample = text.slice(entity.start, entity.end);
+        if ('role' in entity || 'group' in entity || ('value' in entity && entity.value != entityExample)) {
+            const entityCopy = {
+                ...entity,
+            };
+
+            if (entityCopy.role === null) {
+                delete entityCopy.role;
+            }
+            if (entityCopy.group === null) {
+                delete entityCopy.group;
+            }
+
+            delete entityCopy.start;
+            delete entityCopy.end;
+            if ('value' in entityCopy && entityCopy.value === entityExample) {
+                delete entityCopy.value;
+            }
+            entityExample = `[${entityExample}]${JSON.stringify(entityCopy)}`;
+        } else {
+            entityExample = `[${entityExample}](${entity.entity})`;
+        }
+        entityExamples.push(entityExample);
+    }
+
+    // lastly replace original text with correctly formatted entity strings
+    // loop entities reversed so their 'start' and 'end' indexes will remain correct while modifying the string
+    for (const entity of entities.reverse()) {
+        text = text.substring(0, entity.start) + entityExamples.pop() + text.substring(entity.end);
+    }
+    return text;
+};
+
 export const getNluDataAndConfig = async (projectId, language, intents) => {
     const model = await NLUModels.findOne(
         { projectId, language },
@@ -72,7 +112,7 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
     const copyAndFilter = ({
         _id, mode, min_score, ...obj
     }) => obj;
-    const {
+    let {
         training_data: { entity_synonyms, fuzzy_gazette, regex_features },
         config,
     } = model;
@@ -84,7 +124,7 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
         sortKey: 'intent',
         order: 'ASC',
     });
-    const common_examples = examples.filter(e => !e?.metadata?.draft);
+    let common_examples = examples.filter(e => !e?.metadata?.draft);
     const missingExamples = Math.abs(Math.min(0, common_examples.length - 2));
     for (let i = 0; (intents || []).length && i < missingExamples; i += 1) {
         common_examples.push({
@@ -95,30 +135,48 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
         });
     }
 
-    return {
-        rasa_nlu_data: {
-            common_examples: common_examples.map(
-                ({
-                    text, intent, entities = [], metadata: { canonical, ...metadata } = {},
-                }) => ({
-                    text,
-                    intent,
-                    entities: entities.map(({ _id: _, ...rest }) => dropNullValuesFromObject(rest)),
-                    metadata: {
-                        ...metadata,
-                        ...(canonical ? { canonical } : {}),
-                    },
-                }),
-            ),
-            entity_synonyms: entity_synonyms.map(copyAndFilter),
-            gazette: fuzzy_gazette.map(copyAndFilter),
-            regex_features: regex_features.map(copyAndFilter),
-        },
-        config: yaml.dump({
+    entity_synonyms = entity_synonyms.map(copyAndFilter);
+    entity_synonyms = entity_synonyms.map(({
+        value: synonym,
+        synonyms: examples,
+    }) => ({
+        synonym,
+        examples,
+    }));
+
+    fuzzy_gazette = fuzzy_gazette.map(copyAndFilter);
+    fuzzy_gazette = fuzzy_gazette.map(({
+        value: gazette,
+        gazette: examples,
+    }) => ({
+        gazette,
+        examples,
+    }));
+
+    /* Teemu Hirsimäki 14.10.2021: Currently we create a simplified payload without
+    entities and other extra features.
+    */
+    common_examples = common_examples.map(
+        ({
+            text, intent, entities = [], metadata: { canonical, ...metadata } = {},
+        }) => ({
+            intent,
+            examples: [{ text: processExportNluExampleEntities(text, entities) }],
+        }),
+    );
+
+    // group examples by intent as in Rasa docs: https://rasa.com/docs/rasa/training-data-format#training-examples
+    common_examples = Array.from(common_examples.reduce((m, { intent, examples }) => m.set(intent, [...(m.get(intent) || []), examples[0].text]), new Map()), ([intent, examples]) => ({ intent, examples }));
+    const nlu_and_config = {
+        nlu: [...common_examples, ...entity_synonyms],
+        gazette: fuzzy_gazette,
+        // regex_features: regex_features.map(copyAndFilter),
+        config: {
             ...yaml.safeLoad(config),
             language,
-        }),
+        },
     };
+    return nlu_and_config;
 };
 
 if (Meteor.isServer) {
@@ -210,6 +268,7 @@ if (Meteor.isServer) {
             );
             const nlu = {};
             const config = {};
+            const gazette = {};
 
             const {
                 stories = [], rules = [], domain, wasPartial,
@@ -228,23 +287,42 @@ if (Meteor.isServer) {
                 const project = Projects.findOne({ _id: projectId }, { languages: 1 });
                 languages = project ? project.languages : [];
             }
+
+            const nlu_multi = [];
+            let config_multi;
             for (const lang of languages) {
-                const {
-                    rasa_nlu_data,
-                    config: configForLang,
-                } = await getNluDataAndConfig(projectId, lang, selectedIntents);
-                nlu[lang] = { rasa_nlu_data };
-                config[lang] = `${configForLang}\n\n${corePolicies}`;
+                const nlu_and_config = await getNluDataAndConfig(projectId, lang, selectedIntents);
+                nlu[lang] = nlu_and_config.nlu;
+                gazette[lang] = nlu_and_config.gazette;
+
+                config[lang] = {
+                    ...nlu_and_config.config,
+                    ...yaml.safeLoad(corePolicies),
+                };
+                nlu_multi.push(...nlu[lang])
+                if (config[lang]["multi_language_config"]) {
+                    config_multi = config[lang];
+                }
             }
+
+            /* For nlu and config, we return here all languages separately (nlu, config) and
+            possible multi_config version (nlu_multi, config_multi), because this function
+            is called for several purposes: rasa training, git integration, project export.
+            The caller can then decide which parts to use. */
             const payload = {
-                domain: yaml.safeDump(domain, { skipInvalid: true, sortKeys: true }),
+                domain,
                 stories,
                 rules,
-                nlu,
-                config,
-                fixed_model_name: getProjectModelFileName(projectId),
-                augmentation_factor: augmentationFactor,
+                nlu: nlu,
+                config: config,
+                gazette: gazette,
+                nlu_multi,
+                config_multi,
+                languages
+                // fixed_model_name: getProjectModelFileName(projectId),
+                // augmentation_factor: augmentationFactor,
             };
+
             auditLog('Retreived training payload for project', {
                 user: Meteor.user(),
                 type: 'execute',
@@ -277,26 +355,126 @@ if (Meteor.isServer) {
             appMethodLogger.debug(`Training project ${projectId}...`);
             const t0 = performance.now();
             try {
-                const {
-                    stories = [],
-                    rules = [],
-                    ...payload
-                } = await Meteor.call('rasa.getTrainingPayload', projectId, { env });
+                const payload = await Meteor.call('rasa.getTrainingPayload', projectId, { env });
+
+                // Currently (21.10.2021) Rasa's model/train endpoint expects
+                // all data in single yaml structure without seperate 'domain'
+                // and 'config' blocks:
+                // https://forum.rasa.com/t/rasa-2-0-api-model-train-doesnt-work/35923/6
+                const config = payload.config_multi ? payload.config_multi : payload.config[payload.languages[0]];
+                const rasa_payload = {
+                    ...payload.domain,
+                    nlu: payload.config_multi ? payload.nlu_multi : payload.nlu[payload.languages[0]],
+                    rules: payload.rules,
+                    ...config,
+                    stories: payload.stories,
+                    gazette: Object.values(payload.gazette), // atm shelf-rasa only supports one language
+                };
+
+                // Form restructuring start:                    
+                // Form definition in domain updated to support current version of Rasa 2.8
+                // We stack slots under required_slots
+
+                var required_slots = {};
+
+                // Helper functions
+                // 1) function that copies slot type under slot root.
+                function addType(data) {
+                if (data['type']=='from_entity') {
+                    return {'type': data['type'], 'entity': data['entity'][0]};
+                } else if (data['type']=='from_intent') {
+                    return {'type': data['type'], 'intent': [], 'value': []}
+                } else {
+                    return {'type': data['type']};
+                }
+                }
+
+                // 2) function which unlists list items to dict.
+                function unlistItems(item) {
+                    var new_elements = []
+                    item.forEach((element) => {
+                        var new_element = {}
+                        for (var key in element) {
+                            if (Array.isArray(element[key])) {
+                                if (element[key].length > 0) {
+                                    // keep element key value if it is not an empty list
+                                    new_element[key] = element[key][0]
+                                }
+                                
+                            } else {
+                                new_element[key] = element[key]
+                            }
+                        }
+                        new_elements.push(new_element)
+                    })
+                    return new_elements
+                }
+
+                // 3) function which reorders botfronts slot content into a shelf-rasa compatible form.
+                function toRequiredSlots(slots) {
+                    var required_slots = {};
+                    slots.forEach((element) => {
+                        
+                        typedict = addType(element['filling'][0]);
+                        
+                        for (var key in typedict){
+                        element[key] = typedict[key]
+                        }
+                        // unlist all items (intent,not_intent,type,entity,role,group,value)
+                        element['filling'] = unlistItems(element['filling'])
+                        required_slots[element.name]=[element];
+                    })
+                    
+                    return required_slots
+                }
+
+                var reformatted_form = {}
+
+                // Main loop for restructuring Forms. Process each form in the domain with helper functions.
+                for (var key in payload.domain.forms){
+                    reformatted_form[key] = {}
+                  for (var formkey in payload.domain.forms[key]){
+                      if (formkey=='slots') {
+                          slots_record = toRequiredSlots(payload.domain.forms[key][formkey])
+                          reformatted_form[key]['required_slots'] = slots_record
+                      } else {
+                          other_record = payload.domain.forms[key][formkey]
+                          reformatted_form[key][formkey] = other_record
+                      }
+                      
+                  }
+                  
+                }
+                
+                rasa_payload.forms = reformatted_form             
+                
+                // Form restructuring ends.
+
+
+                // TODO: what are fragments in rasa-for-botfront? Official rasa
+                // doesn't recognize these.
+                /*
                 payload.fragments = yaml.safeDump(
                     { stories, rules },
                     { skipInvalid: true },
                 );
                 payload.load_model_after = true;
+                */
+
                 // this client is used when telling rasa to load a model
                 const client = await createAxiosForRasa(projectId, { timeout: process.env.TRAINING_TIMEOUT || 0 });
                 addLoggingInterceptors(client, appMethodLogger);
                 const trainingClient = await createAxiosForRasa(projectId,
                     { timeout: process.env.TRAINING_TIMEOUT || 0, responseType: 'arraybuffer' });
-                
+
                 addLoggingInterceptors(trainingClient, appMethodLogger);
+
+                // hack to add '|' to end of 'examples:' yaml as in Rasa docs: https://rasa.com/docs/rasa/training-data-format#training-examples
+                // this could be done some better way in js-yaml library but didn't yet figure out how
                 const trainingResponse = await trainingClient.post(
                     '/model/train',
-                    payload,
+                    yaml.safeDump(rasa_payload, { skipInvalid: true, lineWidth: -1 }).replace(new RegExp('examples:', 'g'), 'examples: |'),
+                    { headers: { 'Content-type': 'application/x-yaml' } },
                 );
                 if (trainingResponse.status === 200) {
                     const t1 = performance.now();

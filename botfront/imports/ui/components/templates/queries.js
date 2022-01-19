@@ -6,6 +6,7 @@ query retreiveBotResponses($projectId: String!) {
         _id
         key
         values{
+            env
             lang
             sequence {
                 content
@@ -21,6 +22,7 @@ query retreiveBotResponses($_id: String!) {
         _id
         key
         values{
+            env
             lang
             sequence {
                 content
@@ -36,6 +38,7 @@ query retreiveABotResponses($projectId: String!, $key: String!, $lang: String) {
         _id
         key
         values{
+            env
             lang
             sequence {
                 content

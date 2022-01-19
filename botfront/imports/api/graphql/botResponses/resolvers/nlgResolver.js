@@ -17,10 +17,10 @@ const chooseTemplateSource = (responses, channel) => {
 };
 
 const resolveTemplate = async ({
-    template, projectId, language, channel = null,
+    template, projectId, language, environment, channel = null,
 }) => {
     const responses = await newGetBotResponses({
-        projectId, template, language,
+        projectId, template, language, environment,
     });
     const source = chooseTemplateSource(responses, channel);
     if (!source) return { text: template }; // No response found, return template name
@@ -37,7 +37,7 @@ export default {
             checkIfCan('responses:r', args.projectId, context.user._id);
             const {
                 template,
-                arguments: { language: specifiedLang, projectId } = {},
+                arguments: { language: specifiedLang, projectId, environment } = {},
                 tracker: { slots } = {},
                 channel: { name: channel } = {},
             } = args;
@@ -49,11 +49,11 @@ export default {
                 ? specifiedLang
                 : slots.fallback_language;
             return resolveTemplate({
-                template, projectId, language, channel,
+                template, projectId, language, environment, channel,
             });
         },
         getResponses: async (_root, {
-            projectId, templates, language,
+            projectId, templates, language, env,
         }, context) => {
             checkIfCan('responses:r', projectId, context.user._id);
             const responses = await newGetBotResponses({
@@ -61,6 +61,7 @@ export default {
                 template: templates,
                 options: { emptyAsDefault: true },
                 language,
+                environment: env,
             });
             const noMatch = templates.filter(t => !responses.map(r => r.key).includes(t))
                 .map(r => ({ key: r, payload: 'text: \'\'' }));

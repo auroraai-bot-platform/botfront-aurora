@@ -28,6 +28,7 @@ const getSlotsInRasaFormat = (slots = []) => {
         if (slot.categories) options.values = slot.categories;
         slotsToAdd[slot.name] = {
             type: slot.type,
+            influence_conversation: slot.influenceConversation,
             ...options,
         };
     });
@@ -188,9 +189,9 @@ export const extractDomain = ({
     return domain;
 };
 
-export const getAllResponses = async (projectId, language = '') => {
+export const getAllResponses = async (projectId, language = '', environment = 'development') => {
     // fetches responses and turns them into nested key-value format
-    const responses = await newGetBotResponses({ projectId, language });
+    const responses = await newGetBotResponses({ projectId, language, environment });
     return responses.reduce((acc, curr) => {
         const { key, payload, ...rest } = curr;
         // we do this at the source too, but to be safe here too
@@ -242,7 +243,7 @@ export const getFragmentsAndDomain = async (projectId, language, env = 'developm
 
     defaultDomain.slots = {
         ...(defaultDomain.slots || {}),
-        fallback_language: { type: 'unfeaturized', initial_value: defaultLanguage },
+        fallback_language: { type: 'any', initial_value: defaultLanguage, influence_conversation: false },
     };
     appMethodLogger.debug('Selecting fragment groups');
     const groups = StoryGroups.find(
@@ -317,7 +318,7 @@ export const getFragmentsAndDomain = async (projectId, language, env = 'developm
     );
 
     appMethodLogger.debug('Generating domain');
-    const responses = await getAllResponses(projectId, language);
+    const responses = await getAllResponses(projectId, language, env);
     let slots = Slots.find({ projectId }).fetch();
     const project = Projects.findOne({ _id: projectId }, { allowContextualQuestions: 1 });
     if (project.allowContextualQuestions) {

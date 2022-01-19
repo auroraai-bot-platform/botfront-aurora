@@ -1,6 +1,6 @@
 type Query {
     botResponses(projectId: String!): [BotResponse!]
-    botResponse(projectId: String!, key: String!, lang: String): BotResponse
+    botResponse(projectId: String!, key: String!, lang: String, env: String): BotResponse
     botResponseById(_id: String): BotResponse
     getResponse(
         template: String!
@@ -12,6 +12,7 @@ type Query {
         templates: [String]!
         language: String
         projectId: String
+        env: String
     ): [BotResponsePayload]
 }
 scalar ConversationInput # for Legacy reasons this is kept as an alias for 'Any'
@@ -22,7 +23,7 @@ type Subscription {
 }
 
 type Mutation {
-    deleteResponse(projectId: String!, key: String!): updateResponse!
+    deleteResponse(projectId: String!, key: String!, env: String): updateResponse!
     upsertFullResponse(
         projectId: String!
         _id: String
@@ -43,13 +44,14 @@ type Mutation {
         # can update the rest of the variations and other languages for this response
         newResponseType: String
         index: Int = -1
+        env: String
         logging: Boolean
     ): BotResponse
 
     createResponses(projectId: String!, responses: String): updateResponse!
 
-    deleteVariation(projectId: String!, key: String!, language: String!, index: Int!): updateResponse!
-    importRespFromLang(projectId: String!, key: String!,originLang: String!, destLang: String!): BotResponse
+    deleteVariation(projectId: String!, key: String!, language: String!, index: Int!, environment: String): updateResponse!
+    importRespFromLang(projectId: String!, key: String!, originLang: String!, destLang: String!, env: String): BotResponse
 }
 
 type BotResponse {
@@ -61,6 +63,7 @@ type BotResponse {
 }
 
 type BotResponseValue {
+    env: String
     lang: String
     sequence: [ContentContainer]
 }
@@ -75,9 +78,11 @@ input BotResponseInput {
     projectId: String
     values: [BotResponseValueInput]
     metadata: Any
+    devKeyChange: Boolean
 }
 
 input BotResponseValueInput {
+    env: String
     lang: String
     sequence: [ContentContainerInput]
 }

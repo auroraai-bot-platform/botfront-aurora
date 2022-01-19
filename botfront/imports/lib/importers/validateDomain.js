@@ -275,6 +275,8 @@ const validateADomain = (
 
     Object.keys(slotsFromFile || {}).forEach((name) => {
         const slot = slotsFromFile[name];
+        // convert old unfeaturized slots to any type
+        slot.type = slot.type === 'unfeaturized' ? 'any' : slot.type;
         const options = {};
         if (slot.min_value) options.minValue = slot.min_value;
         if (slot.max_value) options.maxValue = slot.max_value;
@@ -283,6 +285,7 @@ const validateADomain = (
         slots.push({
             name,
             type: slot.type,
+            influenceConversation: 'influence_conversation' in slot ? slot.influence_conversation : slot.type !== 'any',
             ...options,
         });
     });

@@ -2,6 +2,7 @@ import yaml from 'js-yaml';
 import { Instances } from '../../api/instances/instances.collection';
 import { Projects } from '../../api/project/project.collection';
 import { onlyValidFiles } from './common';
+import { languages as LANGUAGES, langFromCode } from '../languages';
 
 
 export const validateSimpleYamlFiles = (files, params, type, alias = type, supportEnvs = true) => {
@@ -22,15 +23,18 @@ export const validateSimpleYamlFiles = (files, params, type, alias = type, suppo
             };
         }
         const extractEnv = new RegExp(`(?<=${type}(\\.|-))(.*)(?=\\.ya?ml)`);
-        
-        const extractedEnv = extractEnv.exec(filename);
+
+        let extractedEnv = null;
+        if (type !== 'gazette') {
+            extractedEnv = extractEnv.exec(filename);
+        }
         const env = extractedEnv ? extractedEnv[0] : 'development';
         if (env) {
             if (!supportedEnvs.includes(env)) {
                 warnings.push(`The "${env}" environment is not supported by this project, this file won't be used in the import`);
             } else if (envInFiles[env]) {
                 warnings.push(`Conflicts with ${envInFiles[env]}, and thus won't be used in the import`);
-            } else {
+            } else if (type !== 'gazette') {
                 envInFiles[env] = filename;
                 newSummary.push(`${alias.charAt(0).toUpperCase() + alias.slice(1)}${supportedEnvs.length > 1 && supportEnvs ? ` for ${env} ` : ' '}will be imported from ${filename}.`);
             }
@@ -76,7 +80,7 @@ export const validateSimpleJsonFiles = (files, params, type, alias = type) => {
         }
         const extractEnv = new RegExp(`(?<=${type}(\\.|-))(.*)(?=\\.json)`);
         const extractedEnv = extractEnv.exec(file.filename);
-      
+
         const env = extractedEnv ? extractedEnv[0] : 'development';
         if (!supportedEnvs.includes(env)) {
             warnings.push(`The "${env}" environment is not supported by this project, this file won't be used in the import`);
@@ -86,7 +90,7 @@ export const validateSimpleJsonFiles = (files, params, type, alias = type) => {
             countPerEnv[env] = 0;
         }
         countPerEnv[env] += parsed.length;
-        
+
         return {
             ...file,
             [type]: parsed,
@@ -94,7 +98,7 @@ export const validateSimpleJsonFiles = (files, params, type, alias = type) => {
             env,
         };
     });
-    
+
     const newSummary = params.summary;
     if (supportedEnvs.length > 1 && filesToValid.length > 0) {
         supportedEnvs.forEach((env) => {
@@ -179,6 +183,36 @@ export const validateIncoming = (files, params) => {
     });
 
     return [updatedFiles, newParams];
+};
+
+export const validateGazette = (files, params) => {
+    const [newFiles, newParams] = validateSimpleYamlFiles(files, params, 'gazette', 'gazette', true);
+    const newSummary = newParams.summary;
+    const extractLang = new RegExp('(?<=gazette(\\.|-))(.*)(?=\\.yml)');
+    for (const file of newFiles) {
+        if (file?.dataType === 'gazette') {
+            let langCode = extractLang.exec(file.filename);
+            langCode = langCode ? langCode[0] : null;
+            langCode = Object.keys(LANGUAGES).includes(langCode) ? langCode : null;
+            const gazette = [];
+            for (const parsedGazette of file.gazette) {
+                if ('gazette' in parsedGazette && 'examples' in parsedGazette && Array.isArray(parsedGazette.examples)) {
+                    gazette.push({
+                        value: parsedGazette.gazette,
+                        gazette: parsedGazette.examples.filter(item => item),
+                    });
+                }
+            }
+            if (gazette.length > 0) {
+                file.nlu = {};
+                file.nlu.gazette = gazette;
+                file.nlu.language = langCode || newParams.fallbackLang;
+                file.dataType = 'training_data'; // sort of hack to make botfront import gazette into its training data
+                newSummary.push(`${gazette.length} Gazettes will be imported for ${langFromCode(file.nlu.language)}`);
+            }
+        }
+    }
+    return [newFiles, { ...newParams, summary: newSummary }];
 };
 
 export const validateConversations = (files, params) => validateSimpleJsonFiles(files, params, 'conversations');

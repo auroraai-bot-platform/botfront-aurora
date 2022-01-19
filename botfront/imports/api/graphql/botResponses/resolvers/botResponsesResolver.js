@@ -63,7 +63,7 @@ export default {
     Mutation: {
         async deleteResponse(_, args, auth) {
             checkIfCan('responses:w', args.projectId, auth.user._id);
-            const botResponseDeleted = await deleteResponse(args.projectId, args.key);
+            const botResponseDeleted = await deleteResponse(args.projectId, args.key, args.env);
             auditLog('Deleted response', {
                 user: auth.user,
                 type: 'deleted',
@@ -117,6 +117,10 @@ export default {
         upsertResponse: async (_, args, auth) => {
             checkIfCan('responses:w', args.projectId, auth.user._id);
             const responseBefore = await getBotResponse(args.projectId, args.key);
+            // check if user changed resp key value in dev env so prod key needs to remain same until prod deployment if resp has existing prod value
+            if ('env' in args && args.env === 'development' && 'newKey' in args && args.newKey !== responseBefore.key && [...new Set(responseBefore.values.map(item => item.env))].includes('production')) {
+                args.devKeyChange = true;
+            }
             // if the response type has been updated all the other languages and variations for this response
             // need to be updated so we use the updateResponseType function instead of upsertResponse
             const response = args.newResponseType ? await updateResponseType(args) : await upsertResponse(args);
@@ -192,6 +196,7 @@ export default {
         values: (parent, _, __) => parent.values,
     },
     BotResponseValue: {
+        env: (parent, _, __) => parent.env,
         lang: (parent, _, __) => parent.lang,
         sequence: (parent, _, __) => parent.sequence,
     },

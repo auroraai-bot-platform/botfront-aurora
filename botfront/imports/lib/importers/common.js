@@ -7,6 +7,7 @@ export const determineDataType = (f, rawText) => {
     const { dataType, filename } = f;
     try {
         if (dataType) return dataType;
+        if (/^gazette((\.|-)[a-z]+)?\.ya?ml$/.test(filename)) return 'gazette';
         if (/^default-domain((\.|-)[a-z]+)?\.ya?ml$/.test(filename)) return 'defaultdomain';
         if (/^bfconfig((\.|-)[a-z]+)?\.ya?ml$/.test(filename)) return 'bfconfig';
         if (/^domain((\.|-)[a-z]+)?\.ya?ml$/.test(filename)) return 'domain';

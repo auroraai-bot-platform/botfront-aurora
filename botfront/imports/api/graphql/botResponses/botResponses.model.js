@@ -48,6 +48,7 @@ if (Meteor.isServer) {
             type: [
                 {
                     _id: false,
+                    env: { type: String },
                     lang: { type: String, enum: Object.keys(languages) },
                     sequence: [{ _id: false, content: { type: String } }],
                 },

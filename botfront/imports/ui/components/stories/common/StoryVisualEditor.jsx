@@ -85,7 +85,7 @@ export default class StoryVisualEditor extends React.Component {
 
     renderAddLine = (rawIndex) => {
         const { lineInsertIndex } = this.state;
-        const { story, mode } = this.props;
+        const { story, mode, environment } = this.props;
         const { project: { _id: projectId } } = this.context;
         if (mode === 'test_case' || !can('stories:w', projectId)) {
             // prevent crowding of story elements in read only mode
@@ -251,6 +251,7 @@ export default class StoryVisualEditor extends React.Component {
     };
 
     handleSaveBotResponse = async (i, name, newResponse) => {
+        const { environment } = this.props;
         const { key: newName, payload } = newResponse;
         const { upsertResponse, responses } = this.context;
         if (isEqual(responses[name], payload) && newName === name) return;
@@ -362,9 +363,11 @@ StoryVisualEditor.propTypes = {
     getResponseLocations: PropTypes.func.isRequired,
     mode: PropTypes.oneOf(['story', 'rule_steps', 'rule_condition', 'test_case']),
     className: PropTypes.string,
+    environment: PropTypes.string,
 };
 
 StoryVisualEditor.defaultProps = {
     mode: 'story',
     className: '',
+    environment: 'development',
 };

@@ -51,26 +51,14 @@ if (Meteor.isServer) {
         );
     };
 
-    const convertJsonToYaml = async (projectId, json, language) => {
-        const axiosClient = await createAxiosForRasa(projectId);
-        const { data } = await axiosClient.post('/data/convert/nlu', {
-            data: json,
-            input_format: 'json',
-            output_format: 'yaml',
-            language,
-        });
-        return data.data || '';
-    };
 
     const deletePathsNotInZip = (dir, zip, exclusions) => Promise.all(
-            glob.sync(join('**', '*'), {
-                cwd: dir,
-                nodir: true,
-                ignore: [...exclusions, ...Object.keys(zip.files)]
-            }).map((path) => {
-                return fs.promises.unlink(join(dir, path));
-            }),
-        );
+        glob.sync(join('**', '*'), {
+            cwd: dir,
+            nodir: true,
+            ignore: [...exclusions, ...Object.keys(zip.files)],
+        }).map(path => fs.promises.unlink(join(dir, path))),
+    );
 
     const extractZip = (dir, zip) => Promise.all(
         Object.entries(zip.files).map(async ([path, item]) => {
@@ -550,6 +538,10 @@ if (Meteor.isServer) {
                     language === 'all'
                         ? rasaData.nlu
                         : { [language]: rasaData.nlu[language] },
+                gazette:
+                    language === 'all'
+                        ? rasaData.gazette
+                        : { [language]: rasaData.gazette[language] },
                 fragments: fragmentsByGroup,
                 tests:
                     language === 'all'
@@ -592,28 +584,39 @@ if (Meteor.isServer) {
             }
             const languages = Object.keys(exportData.config);
             languages.forEach(l => rasaZip.addFile(
-                exportData.config[l],
+                safeDump(exportData.config[l]),
                 languages.length > 1 ? `config-${l}.yml` : 'config.yml',
             ));
+            languages.forEach((l) => {
+                if (exportData.gazette[l].length > 0) {
+                    rasaZip.addFile(
+                        safeDump(exportData.gazette[l]),
+                        languages.length > 1 ? `botfront/gazette-${l}.yml` : 'botfront/gazette.yml',
+                    );
+                }
+            });
             // eslint-disable-next-line no-restricted-syntax
             for (const l of languages) {
-                let data;
-                let extension;
-                try {
-                    if (Meteor.isTest) throw new Error(); // keep json for export test
-                    // eslint-disable-next-line no-await-in-loop
-                    data = await convertJsonToYaml(projectId, exportData.nlu[l], l);
-                    extension = 'yml';
-                } catch {
-                    data = JSON.stringify(exportData.nlu[l], null, 2);
-                    extension = 'json';
+                if (exportData.nlu[l].length > 0) {
+                    let data;
+                    let extension;
+                    exportData.nlu[l] = { nlu: exportData.nlu[l] };
+                    try {
+                        if (Meteor.isTest) throw new Error(); // keep json for export test
+                        // eslint-disable-next-line no-await-in-loop
+                        data = safeDump(exportData.nlu[l]).replace(new RegExp('examples:', 'g'), 'examples: |');
+                        extension = 'yml';
+                    } catch {
+                        data = JSON.stringify(exportData.nlu[l], null, 2);
+                        extension = 'json';
+                    }
+                    rasaZip.addFile(
+                        data,
+                        languages.length > 1
+                            ? `data/nlu/${l}.${extension}`
+                            : `data/nlu.${extension}`,
+                    );
                 }
-                rasaZip.addFile(
-                    data,
-                    languages.length > 1
-                        ? `data/nlu/${l}.${extension}`
-                        : `data/nlu.${extension}`,
-                );
                 if (exportData.tests[l]) {
                     rasaZip.addFile(
                         safeDump({ stories: exportData.tests[l] }),
@@ -662,9 +665,9 @@ if (Meteor.isServer) {
                 );
             });
 
-            rasaZip.addFile(exportData.domain, 'domain.yml');
-            rasaZip.addFile(bfconfigYaml, 'botfront/bfconfig.yml');
-            rasaZip.addFile(defaultDomain, 'botfront/default-domain.yml');
+            rasaZip.addFile(safeDump(exportData.domain), 'domain.yml');
+            rasaZip.addFile(String(bfconfigYaml), 'botfront/bfconfig.yml');
+            rasaZip.addFile(String(defaultDomain), 'botfront/default-domain.yml');
             if (Object.keys(analyticsConfig).length > 0) {
                 rasaZip.addFile(
                     safeDump(analyticsConfig),
