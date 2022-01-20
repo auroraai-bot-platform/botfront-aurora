@@ -305,13 +305,20 @@ if (Meteor.isServer) {
                 }
             }
 
+            /* For nlu and config, we return here all languages separately (nlu, config) and
+            possible multi_config version (nlu_multi, config_multi), because this function
+            is called for several purposes: rasa training, git integration, project export.
+            The caller can then decide which parts to use. */
             const payload = {
                 domain,
                 stories,
                 rules,
-                nlu: config_multi ? nlu_multi : nlu[languages[0]],
-                config: config_multi || config[languages[0]],
-                gazette: gazette[languages[0]],
+                nlu,
+                config,
+                gazette,
+                nlu_multi,
+                config_multi,
+                languages,
                 // fixed_model_name: getProjectModelFileName(projectId),
                 // augmentation_factor: augmentationFactor,
             };
@@ -354,11 +361,12 @@ if (Meteor.isServer) {
                 // all data in single yaml structure without seperate 'domain'
                 // and 'config' blocks:
                 // https://forum.rasa.com/t/rasa-2-0-api-model-train-doesnt-work/35923/6
+                const config = payload.config_multi ? payload.config_multi : payload.config[payload.languages[0]];
                 const rasa_payload = {
                     ...payload.domain,
-                    nlu: Object.values(payload.nlu), // atm shelf-rasa only supports one language
+                    nlu: payload.config_multi ? payload.nlu_multi : payload.nlu[payload.languages[0]],
                     rules: payload.rules,
-                    ...payload.config, // atm shelf-rasa only supports one language
+                    ...config,
                     stories: payload.stories,
                     gazette: Object.values(payload.gazette), // atm shelf-rasa only supports one language
                 };

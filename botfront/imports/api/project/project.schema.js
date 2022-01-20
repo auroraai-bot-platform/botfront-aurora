@@ -28,10 +28,10 @@ export const chatWidgetSettingsSchema = new SimpleSchema({
     title: { type: String, optional: true, defaultValue: 'Botfront' },
     // we need to validate the user input (JSON), but we want to store it as an Object, thus the double type
     customData: SimpleSchema.oneOf({ type: String, optional: true, custom: validateJSON }, { type: Object, optional: true, blackbox: true }),
-    subtitle: { type: String, optional: true, defaultValue: 'Happy to help' },
+    subtitle: { type: String, optional: true, defaultValue: '' },
     profileAvatar: { type: String, optional: true },
     openLauncherImage: { type: String, optional: true },
-    inputTextFieldHint: { type: String, optional: true, defaultValue: 'Type your message...' },
+    inputTextFieldHint: { type: String, optional: true, defaultValue: '' },
     closeImage: { type: String, optional: true },
     initPayload: { type: String, optional: true, defaultValue: '/get_started' },
     mainColor: { type: String, optional: true },
