@@ -448,9 +448,6 @@ if (Meteor.isServer) {
                 payload.load_model_after = true;
                 */
 
-                // this client is used when telling rasa to load a model
-                const client = await createAxiosForRasa(projectId, { timeout: process.env.TRAINING_TIMEOUT || 0 });
-                addLoggingInterceptors(client, appMethodLogger);
                 const trainingClient = await createAxiosForRasa(projectId,
                     { timeout: process.env.TRAINING_TIMEOUT || 0, responseType: 'arraybuffer' });
 
@@ -467,7 +464,7 @@ if (Meteor.isServer) {
                     // Activate trained model (former approach loaded model in rasa model/train,
                     // but aurora tries to keep rasa intact and make changes to botfront instead.)
                     
-                    const activateModelResponse = await client.put(
+                    const activateModelResponse = await trainingClient.put(
                         '/model',
                         { model_file: `models/${trainingResponse.headers.filename}` },
                         { headers: { 'Content-type': 'application/json' } },
