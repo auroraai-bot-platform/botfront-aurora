@@ -1,5 +1,6 @@
 import { mergeTypeDefs } from '@graphql-tools/merge';
 import gql from 'graphql-tag';
+import { GraphQLUpload } from 'graphql-upload-minimal';
 import conversationResolvers from './conversations/resolvers';
 import conversationTypes from './conversations/schemas';
 import activityResolver from './activity/resolvers/activityResolver';
@@ -38,6 +39,7 @@ export const resolvers = [
     analyticsDashboardResolver,
     examplesResolver,
     projectResolver,
+    { Upload: GraphQLUpload },
 ];
 
 const typeList = [
@@ -53,6 +55,7 @@ const typeList = [
     storiesTypes,
     analyticsDashboardTypes,
     projectTypes,
+    gql`scalar Upload`,
 ];
 
 export const typeDefs = mergeTypeDefs(typeList, { all: true });

@@ -4,8 +4,18 @@ import { WebApp } from 'meteor/webapp';
 import { getUser } from 'meteor/apollo';
 import { Accounts } from 'meteor/accounts-base';
 import axios from 'axios';
+import { processRequest } from 'graphql-upload-minimal';
 import { typeDefs, resolvers } from '../../api/graphql/index';
 import { can } from '../../lib/scopes';
+
+const handleUploads = options => async (req, res, next) => {
+    const contentType = req.headers['content-type'];
+    const isUpload = contentType && contentType.startsWith('multipart/form-data');
+    if (isUpload) {
+        req.body = await processRequest(req, res, options);
+    }
+    next();
+};
 
 const MONGO_URL = process.env.MONGO_URL || `mongodb://localhost:${(process.env.METEOR_PORT || 3000) + 1}/meteor`;
 
@@ -26,6 +36,7 @@ export const runAppolloServer = () => {
     const server = new ApolloServer({
         typeDefs,
         resolvers,
+        uploads: false,
         context: async ({ req }) => {
             const { headers: { authorization } } = req;
             let user = await getUser(authorization);
@@ -47,10 +58,16 @@ export const runAppolloServer = () => {
         },
     });
 
+    WebApp.connectHandlers.use(
+        handleUploads({ maxFileSize: 10000000, maxFiles: 50 }),
+    );
+
     server.applyMiddleware({
         app: WebApp.connectHandlers,
         path: '/graphql',
-        bodyParserConfig: { limit: process.env.GRAPHQL_REQUEST_SIZE_LIMIT || '200kb' },
+        bodyParserConfig: {
+            limit: '10mb',
+        },
     });
 
     WebApp.connectHandlers.use('/graphql', (req, res) => {
