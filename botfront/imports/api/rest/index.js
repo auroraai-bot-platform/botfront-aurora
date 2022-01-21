@@ -19,8 +19,8 @@ export const adminPassword = process.env.ADMIN_PASSWORD;
 const FILE_SIZE_LIMIT = parseInt(process.env.FILE_SIZE_LIMIT) || 1024 * 1024;
 
 const fileBucket = process.env.FILE_BUCKET;
+const modelBucket = process.env.MODEL_BUCKET;
 const filePrefix = process.env.FILE_PREFIX || 'files/';
-const globalPrefix = process.env.PREFIX || 'local-';
 
 const port = process.env.REST_API_PORT || 3030;
 const restApiToken = process.env.REST_API_TOKEN;
@@ -337,7 +337,6 @@ app.delete('/api/images', async (req, res, next) => {
 app.post('/api/deploy', async (req, res, next) => {
   const projectId = req.body.projectId;
   const path = req.body.path || '/app/models';
-  const modelBucket = `${globalPrefix}models-${projectId}`;
 
   let data;
   
