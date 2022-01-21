@@ -26,9 +26,11 @@ export const connectToDb = () => {
         useFindAndModify: 0,
         useNewUrlParser: 1,
         useCreateIndex: 1,
-    });
-    mongoose.connection.on('error', () => {
-        throw new Error(`unable to connect to database: ${MONGO_URL}`);
+    }).catch(
+        error => {throw new Error(`unable to connect to database: ${MONGO_URL}, Message: ${error}`)}
+    );
+    mongoose.connection.on('error', err => {
+        throw new Error(`Connection error: ${MONGO_URL}, error: ${err}`);
     });
 };
 
