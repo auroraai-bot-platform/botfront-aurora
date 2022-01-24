@@ -84,7 +84,7 @@ export const defaultTemplate = (template) => {
         return { __typename: 'CustomPayload', custom: {} };
     case 'ImagePayload':
         return {
-            image: '', __typename: 'ImagePayload',
+            text: '', image: '', __typename: 'ImagePayload',
         };
     case 'CarouselPayload':
         return {
