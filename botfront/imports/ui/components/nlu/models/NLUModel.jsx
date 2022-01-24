@@ -59,7 +59,7 @@ function NLUModel(props) {
     const { model } = useTracker(() => {
         Meteor.subscribe('nlu_models', projectId);
         return { model: NLUModels.findOne({ projectId, language: workingLanguage }) };
-    });
+    }, []);
 
     const [filters, setFilters] = useState({ sortKey: 'intent', order: 'ASC' });
     const variables = useMemo(() => ({
