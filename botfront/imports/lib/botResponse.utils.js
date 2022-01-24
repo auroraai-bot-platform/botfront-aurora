@@ -88,6 +88,7 @@ export const defaultTemplate = (template) => {
         };
     case 'CarouselPayload':
         return {
+            text: '',
             elements: [defaultCarouselSlide()],
             __typename: 'CarouselPayload',
         };
