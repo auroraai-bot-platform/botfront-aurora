@@ -1051,22 +1051,29 @@ Migrations.add({
 
 Migrations.add({
     version: 28,
-    // add text variable to bot responses if it doesn't exist
-    up: () => {
-        BotResponses.find(
-            {'values.sequence.content': { $not: { $regex: 'text:'}}})
-            .lean()
-            .then(responses => responses.forEach((response) => {
-                const content = response.values[0].sequence[0].content + 'text: \'\'\n'
-                const { projectId, key} = response;
-                BotResponses.updateOne(
-                    { projectId, key },
-                    { $set: { "values.0.sequence.0.content": content }}
-                    ).exec();
-            }));
+    // add text variable to image and carousel bot responses if it doesn't exist
+    up: async () => {
+        const containsTextFilter = {'values': { $elemMatch: {'sequence.content': { $not: { $regex: 'text:'}}}}};
+        const responses = await BotResponses.find(containsTextFilter, containsTextFilter)
+        
+        const rows = responses.reduce((valueList, response) => {
+            const valuesPerResponse = response.values.map((value) => { return { _id: response._id, lang: value.lang, content: `${value.sequence[0].content}text: ''\n`}});
+            return valueList.concat(valuesPerResponse);
+        }, []);
+
+        const updatePromises = rows.map((row) => {
+            return BotResponses.updateOne(
+                {'_id': row._id, 'values.lang': row.lang},
+                {'$set': { 'values.$.sequence.0.content': row.content}}
+                ).exec();
+        });
+
+        await Promise.all(updatePromises);
     },
 });
 
 Meteor.startup(() => {
     Migrations.migrateTo('latest');
 });
+
+
