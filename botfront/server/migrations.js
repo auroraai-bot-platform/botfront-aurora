@@ -1049,6 +1049,24 @@ Migrations.add({
     },
 });
 
+Migrations.add({
+    version: 28,
+    // add text variable to bot responses if it doesn't exist
+    up: () => {
+        BotResponses.find(
+            {'values.sequence.content': { $not: { $regex: 'text:'}}})
+            .lean()
+            .then(responses => responses.forEach((response) => {
+                const content = response.values[0].sequence[0].content + 'text: \'\'\n'
+                const { projectId, key} = response;
+                BotResponses.updateOne(
+                    { projectId, key },
+                    { $set: { "values.0.sequence.0.content": content }}
+                    ).exec();
+            }));
+    },
+});
+
 Meteor.startup(() => {
     Migrations.migrateTo('latest');
 });
