@@ -1063,7 +1063,7 @@ Migrations.add({
                 const rowsPerResponse = response.values
                     .map((row) => {
                         const content = jsYaml.load(row.sequence[0].content);
-                        return { _id: response._id, lang: row.lang, content: content};
+                        return { _id: response._id, lang: row.lang, content: content, contentId: row.sequence[0].content};
                     })
                     .filter((row) => row.content.text == undefined)
                     .map((row) => {
@@ -1076,7 +1076,7 @@ Migrations.add({
 
             const updatePromises = rows.map((row) => {
                 return BotResponses.updateOne(
-                    {'_id': row._id, 'values.lang': row.lang},
+                    {'_id': row._id, 'values.sequence.0.content': row.contentId},
                     {'$set': { 'values.$.sequence.0.content': row.content}}
                     ).exec();
             });
