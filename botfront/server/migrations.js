@@ -1054,12 +1054,10 @@ Migrations.add({
 Migrations.add({
     version: 28,
     // add text variable to image and carousel bot responses if it doesn't exist
-    // filter for possible matches with regex
-    // filter positive matches by checking the yaml
+    // get all botResponses and filter by their yaml content
     up: async () => {
         try {
-            const containsNoTextFilter = {'values': { $elemMatch: {'sequence.content': { $not: { $regex: 'text:'}}}}};
-            const responses = await BotResponses.find(containsNoTextFilter, containsNoTextFilter)
+            const responses = await BotResponses.find();
             
             const rows = responses.reduce((valueList, response) => {
                 const rowsPerResponse = response.values
