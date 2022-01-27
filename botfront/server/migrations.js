@@ -27,6 +27,8 @@ import Forms from '../imports/api/graphql/forms/forms.model';
 import BotResponses from '../imports/api/graphql/botResponses/botResponses.model';
 import { Evaluations } from '../imports/api/nlu_evaluation';
 
+import * as jsYaml from 'js-yaml';
+
 /* globals Migrations */
 
 Migrations.add({
@@ -1052,28 +1054,42 @@ Migrations.add({
 Migrations.add({
     version: 28,
     // add text variable to image and carousel bot responses if it doesn't exist
+    // filter for possible matches with regex
+    // filter positive matches by checking the yaml
     up: async () => {
-        const containsTextFilter = {'values': { $elemMatch: {'sequence.content': { $not: { $regex: 'text:'}}}}};
-        const responses = await BotResponses.find(containsTextFilter, containsTextFilter)
-        
-        const rows = responses.reduce((valueList, response) => {
-            const valuesPerResponse = response.values.map((value) => { return { _id: response._id, lang: value.lang, content: `${value.sequence[0].content}text: ''\n`}});
-            return valueList.concat(valuesPerResponse);
-        }, []);
+        try {
+            const containsNoTextFilter = {'values': { $elemMatch: {'sequence.content': { $not: { $regex: 'text:'}}}}};
+            const responses = await BotResponses.find(containsNoTextFilter, containsNoTextFilter)
+            
+            const rows = responses.reduce((valueList, response) => {
+                const rowsPerResponse = response.values
+                    .map((row) => {
+                        const content = jsYaml.load(row.sequence[0].content);
+                        return { _id: response._id, lang: row.lang, content: content};
+                    })
+                    .filter((row) => row.content.text == undefined)
+                    .map((row) => {
+                        row.content.text = '';
+                        row.content = jsYaml.dump(row.content);
+                        return row;
+                    });
+                return valueList.concat(rowsPerResponse);
+            }, []);
 
-        const updatePromises = rows.map((row) => {
-            return BotResponses.updateOne(
-                {'_id': row._id, 'values.lang': row.lang},
-                {'$set': { 'values.$.sequence.0.content': row.content}}
-                ).exec();
-        });
+            const updatePromises = rows.map((row) => {
+                return BotResponses.updateOne(
+                    {'_id': row._id, 'values.lang': row.lang},
+                    {'$set': { 'values.$.sequence.0.content': row.content}}
+                    ).exec();
+            });
 
-        await Promise.all(updatePromises);
+            await Promise.all(updatePromises);
+        } catch (error) {
+            console.error('Migration 28 failed');
+        }
     },
 });
 
-Meteor.startup(() => {
+Meteor.startup(async () => {
     Migrations.migrateTo('latest');
 });
-
-
