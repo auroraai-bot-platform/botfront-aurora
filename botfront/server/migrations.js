@@ -1088,6 +1088,24 @@ Migrations.add({
     },
 });
 
+Migrations.add({
+    version: 29,
+    up: async () => {
+        try {
+            await new Promise((resolve, reject) => {
+                Slots.update(
+                    { 'influenceConversation': { '$exists': false } },
+                    { '$set': { 'influenceConversation': true } },
+                    { updateMany: true },
+                    (error) => error ? reject(error) : resolve(true)
+                );
+            });
+        } catch (error) {
+            console.error('Migration 29 failed');
+        }
+    },
+});
+
 Meteor.startup(async () => {
     Migrations.migrateTo('latest');
 });
