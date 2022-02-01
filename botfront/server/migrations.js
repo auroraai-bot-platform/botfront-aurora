@@ -26,7 +26,7 @@ import Forms from '../imports/api/graphql/forms/forms.model';
 
 import BotResponses from '../imports/api/graphql/botResponses/botResponses.model';
 import { Evaluations } from '../imports/api/nlu_evaluation';
-
+import { Slots } from '../imports/api/slots/slots.collection';
 import * as jsYaml from 'js-yaml';
 
 /* globals Migrations */
@@ -1101,11 +1101,11 @@ Migrations.add({
                 );
             });
         } catch (error) {
-            console.error('Migration 29 failed');
+            console.error(`Migration 29 failed: ${error}`);
         }
     },
 });
-
+//
 Meteor.startup(async () => {
     Migrations.migrateTo('latest');
 });
