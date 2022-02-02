@@ -24,6 +24,7 @@ import AnalyticsDashboards from '../imports/api/graphql/analyticsDashboards/anal
 import { defaultDashboard } from '../imports/api/graphql/analyticsDashboards/generateDefaults';
 import Forms from '../imports/api/graphql/forms/forms.model';
 
+import ProjectsMongoose from '../imports/api/graphql/project/project.model';
 import BotResponses from '../imports/api/graphql/botResponses/botResponses.model';
 import { Evaluations } from '../imports/api/nlu_evaluation';
 import { Slots } from '../imports/api/slots/slots.collection';
@@ -1092,20 +1093,47 @@ Migrations.add({
     version: 29,
     up: async () => {
         try {
-            await new Promise((resolve, reject) => {
-                Slots.update(
-                    { 'influenceConversation': { '$exists': false } },
-                    { '$set': { 'influenceConversation': true } },
-                    { updateMany: true },
-                    (error) => error ? reject(error) : resolve(true)
-                );
-            });
+            await Slots.rawCollection().updateMany(
+                { 'type': 'unfeaturized' },
+                { '$set': { 'type': 'any' } }
+            );
         } catch (error) {
             console.error(`Migration 29 failed: ${error}`);
         }
     },
 });
-//
+
+Migrations.add({
+    version: 30,
+    up: async () => {
+        try {
+            await Slots.rawCollection().updateMany(
+                { 'influenceConversation': { '$exists': false }, 'type': { '$not': { '$regex': 'any'} } },
+                { '$set': { 'influenceConversation': true } }
+            );
+
+
+            await Slots.update(
+                { 'influenceConversation': { '$exists': false }, 'type': 'any' },
+                { '$set': { 'influenceConversation': false } }
+            );
+
+            await Projects.rawCollection().updateMany(
+                { "defaultDomain.content": { $regex: /unfeaturized/ } },
+                [{ '$set': { "defaultDomain.content":{ '$replaceOne': { 'input': '$defaultDomain.content', find: 'unfeaturized', replacement: 'any'} } } }]
+            );
+        
+            await GlobalSettings.rawCollection().updateMany(
+                { "settings.private.defaultDefaultDomain": { $regex: /unfeaturized/ } },
+                [{ '$set': { "settings.private.defaultDefaultDomain":{ '$replaceOne': { 'input': '$settings.private.defaultDefaultDomain', find: 'unfeaturized', replacement: 'any'} } } }]
+            );
+
+        } catch (error) {
+            console.error(`Migration 30 failed: ${error}`);
+        }
+    },
+});
+
 Meteor.startup(async () => {
     Migrations.migrateTo('latest');
 });

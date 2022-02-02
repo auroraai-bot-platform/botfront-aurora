@@ -212,6 +212,7 @@ export const getDefaultDomainAndLanguage = (projectId) => {
 
 const addRequestedSlot = async (slots, projectId) => {
     const newSlots = slots.filter(slot => slot.name !== 'requested_slot');
+    const existingRequestedSlot = slots.find((slot) => slot.name === 'requested_slot');
     const bfForms = await getForms(projectId);
     let requestedSlotCategories = [];
 
@@ -226,6 +227,7 @@ const addRequestedSlot = async (slots, projectId) => {
         projectId,
         type: 'categorical',
         categories: [...new Set(requestedSlotCategories)],
+        influenceConversation: existingRequestedSlot.influenceConversation,
     };
 
     newSlots.push(requestedSlot);
@@ -320,6 +322,7 @@ export const getFragmentsAndDomain = async (projectId, language, env = 'developm
     appMethodLogger.debug('Generating domain');
     const responses = await getAllResponses(projectId, language, env);
     let slots = Slots.find({ projectId }).fetch();
+
     const project = Projects.findOne({ _id: projectId }, { allowContextualQuestions: 1 });
     if (project.allowContextualQuestions) {
         slots = await addRequestedSlot(slots, projectId);
