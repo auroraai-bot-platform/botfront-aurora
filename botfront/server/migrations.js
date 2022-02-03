@@ -24,7 +24,6 @@ import AnalyticsDashboards from '../imports/api/graphql/analyticsDashboards/anal
 import { defaultDashboard } from '../imports/api/graphql/analyticsDashboards/generateDefaults';
 import Forms from '../imports/api/graphql/forms/forms.model';
 
-import ProjectsMongoose from '../imports/api/graphql/project/project.model';
 import BotResponses from '../imports/api/graphql/botResponses/botResponses.model';
 import { Evaluations } from '../imports/api/nlu_evaluation';
 import { Slots } from '../imports/api/slots/slots.collection';
