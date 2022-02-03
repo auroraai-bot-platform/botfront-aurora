@@ -1097,26 +1097,6 @@ Migrations.add({
                 { 'type': 'unfeaturized' },
                 { '$set': { 'type': 'any' } }
             );
-        } catch (error) {
-            console.error(`Migration 29 failed: ${error}`);
-        }
-    },
-});
-
-Migrations.add({
-    version: 30,
-    up: async () => {
-        try {
-            await Slots.rawCollection().updateMany(
-                { 'influenceConversation': { '$exists': false }, 'type': { '$not': { '$regex': 'any'} } },
-                { '$set': { 'influenceConversation': true } }
-            );
-
-
-            await Slots.rawCollection().updateMany(
-                { 'influenceConversation': { '$exists': false }, 'type': 'any' },
-                { '$set': { 'influenceConversation': false } }
-            );
 
             await Projects.rawCollection().updateMany(
                 { "defaultDomain.content": { $regex: /unfeaturized/ } },
@@ -1127,7 +1107,26 @@ Migrations.add({
                 { "settings.private.defaultDefaultDomain": { $regex: /unfeaturized/ } },
                 [{ '$set': { "settings.private.defaultDefaultDomain":{ '$replaceOne': { 'input': '$settings.private.defaultDefaultDomain', find: 'unfeaturized', replacement: 'any'} } } }]
             );
+        } catch (error) {
+            console.error(`Migration 29 failed: ${error}`);
+        }
+    },
+});
 
+Migrations.add({
+    version: 30,
+    // add influenceConversation field
+    up: async () => {
+        try {
+            await Slots.rawCollection().updateMany(
+                { 'influenceConversation': { '$exists': false }, 'type': { '$not': { '$regex': 'any'} } },
+                { '$set': { 'influenceConversation': true } }
+            );
+
+            await Slots.rawCollection().updateMany(
+                { 'influenceConversation': { '$exists': false }, 'type': 'any' },
+                { '$set': { 'influenceConversation': false } }
+            );
         } catch (error) {
             console.error(`Migration 30 failed: ${error}`);
         }
