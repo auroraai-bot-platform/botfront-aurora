@@ -1090,6 +1090,7 @@ Migrations.add({
 
 Migrations.add({
     version: 29,
+    // convert unfeaturized slot type to any
     up: async () => {
         try {
             await Slots.rawCollection().updateMany(
@@ -1112,7 +1113,7 @@ Migrations.add({
             );
 
 
-            await Slots.update(
+            await Slots.rawCollection().updateMany(
                 { 'influenceConversation': { '$exists': false }, 'type': 'any' },
                 { '$set': { 'influenceConversation': false } }
             );
