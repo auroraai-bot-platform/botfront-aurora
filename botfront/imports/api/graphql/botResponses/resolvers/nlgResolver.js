@@ -85,6 +85,10 @@ export default {
         text: ({ text }) => text,
         image: ({ image }) => image,
     },
+    VideoPayload: {
+        text: ({ text }) => text,
+        custom: ({ custom }) => custom,
+    },
     CarouselPayload: {
         text: ({ text }) => text,
         elements: ({ elements }) => elements,

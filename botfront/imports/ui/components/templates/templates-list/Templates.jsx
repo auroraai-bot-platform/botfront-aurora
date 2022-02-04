@@ -62,6 +62,11 @@ class Templates extends React.Component {
                     data-cy='add-image-response'
                 />
                 <Dropdown.Item
+                    text='Video'
+                    onClick={() => this.setState({ newResponse: { open: true, type: 'VideoPayload' } })}
+                    data-cy='add-video-response'
+                />
+                <Dropdown.Item
                     text='Custom'
                     onClick={() => this.setState({ newResponse: { open: true, type: 'CustomPayload' } })}
                     data-cy='add-custom-response'

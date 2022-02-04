@@ -86,6 +86,16 @@ export const defaultTemplate = (template) => {
         return {
             text: '', image: '', __typename: 'ImagePayload',
         };
+    case 'VideoPayload':
+        return {
+            text: '',
+            custom: {
+                attachment: {
+                    autoplay: false, type: 'video', payload: { src: '' },
+                },
+            },
+            __typename: 'VideoPayload',
+        };
     case 'CarouselPayload':
         return {
             text: '',
@@ -141,6 +151,7 @@ export const parseContentType = (content) => {
         )),
     ].some(f => !f)): return 'CustomPayload';
     case excludeAllButOneKey(content, 'image'): return 'ImagePayload';
+    case (content?.custom?.attachment?.type === 'video'): return 'VideoPayload';
     case excludeAllButOneKey(content, 'quick_replies'): return 'QuickRepliesPayload';
     case excludeAllButOneKey(content, 'buttons'): return 'TextWithButtonsPayload';
     case excludeAllButOneKey(content, 'elements'): return 'CarouselPayload';
@@ -252,6 +263,11 @@ export const setTypeImage = (content) => {
     return { ...defaultTemplate('ImagePayload'), metadata };
 };
 
+export const setTypeVideo = (content) => {
+    const { metadata } = content;
+    return { ...defaultTemplate('VideoPayload'), metadata };
+};
+
 export const setTypeCarousel = (content) => {
     const { metadata } = content;
     return { ...defaultTemplate('CarouselPayload'), metadata };
@@ -267,6 +283,8 @@ export const changeContentType = (content, newType) => {
         return setTypeTextWithButtons(content);
     case 'ImagePayload':
         return setTypeImage(content);
+    case 'VideoPayload':
+        return setTypeVideo(content);
     case 'CustomPayload':
         return setTypeCustom(content);
     case 'CarouselPayload':
