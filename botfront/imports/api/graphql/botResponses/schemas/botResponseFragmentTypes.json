@@ -16,6 +16,9 @@
                 "name": "ImagePayload"
             },
             {
+                "name": "VideoPayload"
+            },
+            {
                 "name": "CarouselPayload"
             },
             {

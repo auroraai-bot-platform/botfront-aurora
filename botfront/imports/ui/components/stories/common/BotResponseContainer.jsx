@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import { Button } from 'semantic-ui-react';
 import TextareaAutosize from 'react-autosize-textarea';
 import ImageThumbnail from './ImageThumbnail';
+import VideoThumbnail from './VideoThumbnail';
 import CarouselEditor from './CarouselEditor';
 import QuickReplies from './QuickReplies';
 
@@ -23,6 +24,7 @@ const BotResponseContainer = (props) => {
     const isButtonsResponse = value.__typename === 'TextWithButtonsPayload';
     const isCarouselResponse = value.__typename === 'CarouselPayload';
     const isImageResponse = value.__typename === 'ImagePayload';
+    const isVideoResponse = value.__typename === 'VideoPayload';
     const hasText = Object.keys(value).includes('text') && value.text !== null;
 
 
@@ -45,6 +47,19 @@ const BotResponseContainer = (props) => {
 
     const setText = () => onChange({ ...value, text: formatNewlines(input) }, false);
     const setImage = image => onChange({ ...value, image }, false);
+    const setVideo = src => onChange({
+        ...value,
+        custom: {
+            ...value.custom,
+            attachment: {
+                ...value?.custom?.attachment,
+                payload: {
+                    ...value?.custom?.attachment?.payload,
+                    src,
+                },
+            },
+        },
+    }, false);
 
     function handleTextBlur(e) {
         const tagRegex = new RegExp(tag);
@@ -110,7 +125,7 @@ const BotResponseContainer = (props) => {
     );
 
     let extraClass = '';
-    if (isImageResponse) extraClass = `${extraClass} image-response-container`;
+    if (isImageResponse || isVideoResponse) extraClass = `${extraClass} image-response-container`;
     if (isCarouselResponse) extraClass = `${extraClass} carousel-response-container`;
     const metadataClass = hasMetadata ? 'metadata-response' : '';
 
@@ -133,8 +148,9 @@ const BotResponseContainer = (props) => {
             {...getCustomStyle()}
         >
             <div className={`${hasMetadata ? 'metadata-response' : ''} ${editable ? '' : 'read-only'}`}>
-                {hasText && !isImageResponse && renderText()}
+                {hasText && !isImageResponse && !isVideoResponse && renderText()}
                 {isImageResponse && <ImageThumbnail value={value.image} onChange={setImage} />}
+                {isVideoResponse && <VideoThumbnail value={value?.custom?.attachment?.payload?.src} onChange={setVideo} />}
                 {isCarouselResponse && <CarouselEditor value={value} onChange={onChange} />}
                 {isButtonsResponse && renderButtons()}
                 {isQRResponse && renderQuickReply()}

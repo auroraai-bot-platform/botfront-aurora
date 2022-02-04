@@ -141,6 +141,13 @@ type ImagePayload implements BotResponsePayload {
     metadata: Any
 }
 
+type VideoPayload implements BotResponsePayload {
+    key: String
+    text: String
+    custom: Any
+    metadata: Any
+}
+
 type CarouselPayload implements BotResponsePayload {
     key: String
     text: String
