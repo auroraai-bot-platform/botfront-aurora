@@ -121,7 +121,6 @@ export default {
         async switchCanonical(_, args, context) {
             checkIfCan('nlu-data:w', args.projectId, context.user._id);
             const response = await switchCanonical(args);
-            insertChanges('dev', args.projectId, context.user.emails[0].address, 'example_update', args['examples'][0]['_id'], JSON.stringify(args.example), JSON.stringify(response[0]));
             auditLog('deleted examples', {
                 user: context.user,
                 type: 'deleted',

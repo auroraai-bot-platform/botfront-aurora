@@ -56,5 +56,66 @@ const Categories = {
         'item_type':'nlu',
         'item_sub_type':'examples',
         'action_type':'update'
-    }
+    },
+    'entity_synonym_add':{
+        'item_type':'nlu',
+        'item_sub_type':'entity_synonym',
+        'action_type':'add'
+    },       
+    'entity_synonym_delete':{
+        'item_type':'nlu',
+        'item_sub_type':'entity_synonym',
+        'action_type':'delete'
+    },    
+    'entity_synonym_update':{
+        'item_type':'nlu',
+        'item_sub_type':'entity_synonym',
+        'action_type':'update'
+    },
+    'entity_gazette_add':{
+        'item_type':'nlu',
+        'item_sub_type':'entity_gazette',
+        'action_type':'add'
+    },       
+    'entity_gazette_delete':{
+        'item_type':'nlu',
+        'item_sub_type':'entity_gazette',
+        'action_type':'delete'
+    },    
+    'entity_gazette_update':{
+        'item_type':'nlu',
+        'item_sub_type':'entity_gazette',
+        'action_type':'update'
+    },
+    'regex_feature_add':{
+        'item_type':'nlu',
+        'item_sub_type':'regex_feature',
+        'action_type':'add'
+    },       
+    'regex_feature_delete':{
+        'item_type':'nlu',
+        'item_sub_type':'regex_feature',
+        'action_type':'delete'
+    },    
+    'regex_feature_update':{
+        'item_type':'nlu',
+        'item_sub_type':'regex_feature',
+        'action_type':'update'
+    },
+    'story_add':{
+        'item_type':'dialogue',
+        'item_sub_type':'story',
+        'action_type':'add'
+    },       
+    'story_delete':{
+        'item_type':'dialogue',
+        'item_sub_type':'story',
+        'action_type':'delete'
+    },    
+    'story_update':{
+        'item_type':'dialogue',
+        'item_sub_type':'story',
+        'action_type':'update'
+    }             
 }
+

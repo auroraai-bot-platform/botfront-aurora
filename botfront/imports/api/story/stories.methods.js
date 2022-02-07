@@ -16,6 +16,7 @@ import { deleteResponsesRemovedFromStories } from '../graphql/botResponses/mongo
 
 import { getTriggerIntents } from '../graphql/story/mongo/stories';
 import { convertTrackerToStory } from '../../lib/test_case.utils';
+import { insertChanges } from '../changes/changes.methods';
 
 
 import { langFromCode } from '../../lib/languages';
@@ -57,6 +58,7 @@ Meteor.methods({
             result = [Stories.insert({ ...story, ...indexStory(story) })];
             storyGroups[story.storyGroupId] = result;
         }
+        insertChanges('dev', projectId, Meteor.user()['emails'][0]['address'], 'story_add', story._id, 'none', JSON.stringify(story));
         auditLogIfOnServer('Stories created', {
             user: Meteor.user(),
             type: 'created',
@@ -168,6 +170,7 @@ Meteor.methods({
         );
         Stories.remove(story);
         await deleteResponsesRemovedFromStories(storyInDb.events, story.projectId, Meteor.user());
+        insertChanges('dev', story.projectId, Meteor.user()['emails'][0]['address'], 'story_delete', story._id, JSON.stringify(storyInDb), 'none');
         auditLogIfOnServer('Story deleted', {
             resId: story._id,
             user: Meteor.user(),
