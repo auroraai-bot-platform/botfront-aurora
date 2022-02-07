@@ -16,10 +16,10 @@ export const ChangesSchema = new SimpleSchema({
         type: String,
         optional: true
     },
-    category: {
-        type: String,
-        optional: true
-    },
+    category: Object,
+    'category.item_type': { type: String, optional: true  },
+    'category.item_sub_type': { type: String, optional: true  },
+    'category.action_type': { type: String, optional: true },
     item_id: {
         type: String,
         optional: true
