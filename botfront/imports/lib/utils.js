@@ -238,7 +238,7 @@ if (Meteor.isServer) {
             check(target, String);
             check(projectId, String);
             check(isTest, Boolean);
-            await Meteor.callWithPromise('rasa.train', projectId, 'development');
+            const modelFileName = await Meteor.callWithPromise('rasa.train', projectId, 'development');
             await deployProdUpdateResponses(projectId); // update prod responses to match with dev
             const { namespace, gitSettings } = await Projects.findOne({ _id: projectId }, { fields: { namespace: 1, gitSettings: 1 } });
             // only push project to git if git repo configured in bf project
@@ -251,6 +251,7 @@ if (Meteor.isServer) {
             }
             const data = {
                 projectId,
+                modelFileName,
                 namespace,
                 environment: target,
                 gitString: gitSettings?.gitString,
