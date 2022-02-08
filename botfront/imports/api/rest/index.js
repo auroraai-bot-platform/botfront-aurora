@@ -337,11 +337,12 @@ app.delete('/api/images', async (req, res, next) => {
 app.post('/api/deploy', async (req, res, next) => {
   const projectId = req.body.projectId;
   const path = req.body.path || '/app/models';
+  const modelFileName = req.body.modelFileName;
 
   let data;
   
   try {
-    data = await fs.readFile(`${path}/model-${projectId}.tar.gz`);
+    data = await fs.readFile(`${path}/${modelFileName}`);
   } catch (error) {
     console.log(error);
   }
@@ -357,8 +358,7 @@ app.post('/api/deploy', async (req, res, next) => {
     const fileUrl = await uploadFile(modelBucket, key, data);
     res.json({ uri: fileUrl });
   } catch (error) {
-    console.log({ error });
-    res.sendStatus(400);
+    res.status(400).send('Upload failed');
   }
 });
 
