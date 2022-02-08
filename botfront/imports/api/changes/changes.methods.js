@@ -116,6 +116,21 @@ const Categories = {
         'item_type':'dialogue',
         'item_sub_type':'story',
         'action_type':'update'
+    },
+    'story_group_add':{
+        'item_type':'dialogue',
+        'item_sub_type':'story_group',
+        'action_type':'add'
+    },       
+    'story_group_delete':{
+        'item_type':'dialogue',
+        'item_sub_type':'story_group',
+        'action_type':'delete'
+    },    
+    'story_group_update':{
+        'item_type':'dialogue',
+        'item_sub_type':'story_group',
+        'action_type':'update'
     }             
 }
 
