@@ -1090,22 +1090,49 @@ Migrations.add({
 
 Migrations.add({
     version: 29,
+    // convert unfeaturized slot type to any
     up: async () => {
         try {
-            await new Promise((resolve, reject) => {
-                Slots.update(
-                    { 'influenceConversation': { '$exists': false } },
-                    { '$set': { 'influenceConversation': true } },
-                    { updateMany: true },
-                    (error) => error ? reject(error) : resolve(true)
-                );
-            });
+            await Slots.rawCollection().updateMany(
+                { 'type': 'unfeaturized' },
+                { '$set': { 'type': 'any' } }
+            );
+
+            await Projects.rawCollection().updateMany(
+                { "defaultDomain.content": { $regex: /unfeaturized/ } },
+                [{ '$set': { "defaultDomain.content":{ '$replaceOne': { 'input': '$defaultDomain.content', find: 'unfeaturized', replacement: 'any'} } } }]
+            );
+        
+            await GlobalSettings.rawCollection().updateMany(
+                { "settings.private.defaultDefaultDomain": { $regex: /unfeaturized/ } },
+                [{ '$set': { "settings.private.defaultDefaultDomain":{ '$replaceOne': { 'input': '$settings.private.defaultDefaultDomain', find: 'unfeaturized', replacement: 'any'} } } }]
+            );
         } catch (error) {
             console.error(`Migration 29 failed: ${error}`);
         }
     },
 });
-//
+
+Migrations.add({
+    version: 30,
+    // add influenceConversation field
+    up: async () => {
+        try {
+            await Slots.rawCollection().updateMany(
+                { 'influenceConversation': { '$exists': false }, 'type': { '$not': { '$regex': 'any'} } },
+                { '$set': { 'influenceConversation': true } }
+            );
+
+            await Slots.rawCollection().updateMany(
+                { 'influenceConversation': { '$exists': false }, 'type': 'any' },
+                { '$set': { 'influenceConversation': false } }
+            );
+        } catch (error) {
+            console.error(`Migration 30 failed: ${error}`);
+        }
+    },
+});
+
 Meteor.startup(async () => {
     Migrations.migrateTo('latest');
 });
