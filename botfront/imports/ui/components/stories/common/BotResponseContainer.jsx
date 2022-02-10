@@ -125,7 +125,8 @@ const BotResponseContainer = (props) => {
     );
 
     let extraClass = '';
-    if (isImageResponse || isVideoResponse) extraClass = `${extraClass} image-response-container`;
+    if (isImageResponse) extraClass = `${extraClass} image-response-container`;
+    if (isVideoResponse) extraClass = `${extraClass} video-response-container`;
     if (isCarouselResponse) extraClass = `${extraClass} carousel-response-container`;
     const metadataClass = hasMetadata ? 'metadata-response' : '';
 
