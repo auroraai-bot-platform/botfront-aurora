@@ -22,6 +22,18 @@ Cypress.Commands.add('setImage', (url, n = 0) => {
         .and('equal', url);
 });
 
+Cypress.Commands.add('setVideo', (url, n = 0) => {
+    cy.dataCy('video-container').then(els => expect(els).to.have.length.of.at.least(n + 1));
+    cy.wait(100);
+    cy.dataCy('video-container').eq(n)
+        .findCy('set-video')
+        .click();
+    cy.dataCy('video-url-input').find('input').type(`${url}{enter}`);
+    cy.dataCy('video-container').eq(n)
+        .find('img').should('have.attr', 'src')
+        .and('include.text', 'youtube');
+});
+
 Cypress.Commands.add('setTitleAndSubtitle', (title, subtitle, n = 0) => {
     cy.get('.carousel-slide').then(els => expect(els).to.have.length.of.at.least(n + 1));
     cy.get('.carousel-slide').eq(n)
