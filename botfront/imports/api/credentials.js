@@ -72,7 +72,7 @@ export const CredentialsSchema = new SimpleSchema(
 
 Meteor.startup(() => {
     if (Meteor.isServer) {
-        Credentials._ensureIndex({ projectId: 1, updatedAt: -1 });
+        Credentials.createIndex({ projectId: 1, updatedAt: -1 });
     }
 });
 

@@ -21,7 +21,7 @@ Instances.deny({
 if (Meteor.isServer) {
     import { auditLog } from '../../../server/logger';
 
-    Instances._ensureIndex({ projectId: 1 });
+    Instances.createIndex({ projectId: 1 });
     Meteor.publish('nlu_instances', function(projectId) {
         try {
             checkIfCan(['nlu-data:r', 'resources:r', 'responses:r'], projectId);

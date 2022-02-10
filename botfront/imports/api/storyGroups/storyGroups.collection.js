@@ -22,7 +22,7 @@ StoryGroups.deny({
 
 Meteor.startup(() => {
     if (Meteor.isServer) {
-        StoryGroups._ensureIndex({ projectId: 1, name: 1 }, { unique: true });
+        StoryGroups.createIndex({ projectId: 1, name: 1 }, { unique: true });
     }
 });
 
