@@ -30,12 +30,15 @@ responses:
           forceClose: true
 slots:
     fallback_language:
+      influenceConversation: false
       type: any
       initial_value: en
     a_language:
+      influenceConversation: false
       type: any
       initial_value: fr
     test_message:
+      influenceConversation: false
       type: any
 forms:
     restaurant_form:
@@ -76,6 +79,7 @@ slots:
       type: any
       initial_value: en
     a_language:
+      influenceConversation: false
       type: any
       initial_value: fr
     test_message:
@@ -135,11 +139,13 @@ export const validDomainParsed = {
     ],
     slots: [
         {
+            influenceConversation: false,
             name: 'a_language',
             type: 'any',
             initialValue: 'fr',
         },
         {
+            influenceConversation: false,
             name: 'test_message',
             type: 'any',
         },
@@ -198,15 +204,18 @@ export const validDomainFrParsed = {
     ],
     slots: [
         {
+            influenceConversation: false,
             name: 'a_language',
             type: 'any',
             initialValue: 'fr',
         },
         {
+            influenceConversation: false,
             name: 'test_message',
             type: 'any',
         },
         {
+            influenceConversation: false,
             name: 'bla_message',
             type: 'any',
         },
@@ -239,6 +248,7 @@ export const validDomainsMerged = {
                
                 {
                     lang: 'fr',
+                    env: 'development',
                     sequence: [
                         {
                             content: 'text: Salut!\n',
@@ -247,6 +257,7 @@ export const validDomainsMerged = {
                 },
                 {
                     lang: 'en',
+                    env: 'development',
                     sequence: [
                         {
                             content: 'text: Hey there!\n',
@@ -255,6 +266,7 @@ export const validDomainsMerged = {
                 },
                 {
                     lang: 'ru',
+                    env: 'development',
                     sequence: [
                         {
                             content: 'text: Здравствуйте\n',
@@ -275,6 +287,7 @@ export const validDomainsMerged = {
             values: [
                 {
                     lang: 'fr',
+                    env: 'development',
                     sequence: [
                         {
                             content: 'text: aaaa\n',
@@ -283,6 +296,7 @@ export const validDomainsMerged = {
                 },
                 {
                     lang: 'en',
+                    env: 'development',
                     sequence: [
                         {
                             content: 'text: aaaa\n',
@@ -295,17 +309,20 @@ export const validDomainsMerged = {
     ],
     slots: [
         {
+            influenceConversation: false,
             projectId: 'bf',
             name: 'a_language',
             type: 'any',
             initialValue: 'fr',
         },
         {
+            influenceConversation: false,
             projectId: 'bf',
             name: 'bla_message',
             type: 'any',
         },
         {
+            influenceConversation: false,
             projectId: 'bf',
             name: 'test_message',
             type: 'any',
