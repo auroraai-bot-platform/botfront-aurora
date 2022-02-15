@@ -11,19 +11,6 @@ describe('users endpoint basic functionality', () => {
     cy.deleteUser(email);
   });
 
-  it('it should respond with error missing token', () => {
-    cy.request({
-      url: endpoint,
-      method: 'PUT',
-      failOnStatusCode: false
-    })
-    .as('users');
-
-    cy.get('@users').should((res) => {
-      expect(res.status).to.eq(401);
-    });
-  });
-
   it('should respond with error invalid json', () => {
     cy.request({
       url: endpoint,

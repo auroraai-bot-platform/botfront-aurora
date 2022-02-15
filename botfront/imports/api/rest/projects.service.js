@@ -71,7 +71,7 @@ export async function importProject(zipFile, projectId) {
     try {
         files = await unZip(zipFile);
     } catch (error) {
-        const newError = new Error('Failed to extract zip file');
+        const newError = new Error(`Failed to extract zip file: ${JSON.stringify(error)}`);
         newError.statusCode = 400;
         throw newError;
     }

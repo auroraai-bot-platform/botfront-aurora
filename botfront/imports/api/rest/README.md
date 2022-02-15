@@ -59,8 +59,6 @@ This rest api provides a simple way to interact with the botfront container with
 *  **Headers**
 
    **Required:**
-
-   `Authorization=[string]`
   
 *  **URL Params**
 
@@ -129,8 +127,6 @@ This rest api provides a simple way to interact with the botfront container with
 *  **Headers**
 
    **Required:**
-
-   `Authorization=[string]`
   
 *  **URL Params**
 
@@ -192,8 +188,6 @@ This rest api provides a simple way to interact with the botfront container with
 *  **Headers**
 
    **Required:**
-
-   `Authorization=[string]`
   
 *  **URL Params**
 

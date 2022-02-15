@@ -1,14 +1,14 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
-import {promises as fs} from 'fs';
-import { authMW, setStaticWebhooks } from './utilities.service';
+import { promises as fs } from 'fs';
+import { safeLoad, safeDump } from 'js-yaml';
+import { v4 as uuidv4 } from 'uuid';
+import { setStaticWebhooks } from './utilities.service';
 import { createUser } from './users.service';
 import projectsService, { importProject } from './projects.service';
 import { deleteFile, uploadFile } from './files.service';
-import { safeLoad, safeDump } from 'js-yaml';
 import { GlobalSettings } from '../globalSettings/globalSettings.collection';
-
-import { v4 as uuidv4 } from 'uuid';
+import { DeleteBucketTaggingRequest } from '@aws-sdk/client-s3';
 
 
 export const region = process.env.region || 'eu-north-1';
@@ -16,25 +16,24 @@ export const region = process.env.region || 'eu-north-1';
 export const adminEmail = process.env.ADMIN_USER;
 export const adminPassword = process.env.ADMIN_PASSWORD;
 
-const FILE_SIZE_LIMIT = parseInt(process.env.FILE_SIZE_LIMIT) || 1024 * 1024;
+const FILE_SIZE_LIMIT = parseInt(process.env.FILE_SIZE_LIMIT, 10) || 1024 * 1024;
 
 const fileBucket = process.env.FILE_BUCKET;
 const modelBucket = process.env.MODEL_BUCKET;
 const filePrefix = process.env.FILE_PREFIX || 'files/';
 
 const port = process.env.REST_API_PORT || 3030;
-const restApiToken = process.env.REST_API_TOKEN;
 
 
 // make sure the database hase been initialised completely before creating the user
 Meteor.startup(() => {
-  console.log("Startup: Create Admin User & Set Image Webhooks");
+    console.log('Startup: Create Admin User & Set Image Webhooks');
 
-  createAdminUser();
-  
-  const images = `http://localhost:${port}/api/images`;
-  const deploy = `http://localhost:${port}/api/deploy`;
-  setStaticWebhooks(images, deploy);
+    createAdminUser();
+    
+    const images = `http://localhost:${port}/api/images`;
+    const deploy = `http://localhost:${port}/api/deploy`;
+    setStaticWebhooks(images, deploy);
 });
 
 async function createGlobalSettings() {
@@ -73,11 +72,13 @@ async function createAdminUser() {
                 profile: { firstName: 'admin', lastName: 'admin', preferredLanguage: 'en' },
             }, adminPassword);
         } catch (error) {
+            console.log('Error while admin user creation', {error});
         }
-        const currentGlobalSettings = GlobalSettings.findOne({ _id: 'SETTINGS' });
-        if (currentGlobalSettings == null) {
-            await createGlobalSettings();
-        }
+    }
+
+    const currentGlobalSettings = GlobalSettings.findOne({ _id: 'SETTINGS' });
+    if (currentGlobalSettings == null) {
+        await createGlobalSettings();
     }
 }
 
@@ -114,7 +115,7 @@ app.get('/api', (req, res, next) => {
         }
  *
 */
-app.put('/api/users', authMW(restApiToken), async (req, res, next) => {
+app.put('/api/users', async (req, res, next) => {
   const inputs = req.body;
 
   if (inputs.email == null || inputs.password == null) {
@@ -130,7 +131,7 @@ app.put('/api/users', authMW(restApiToken), async (req, res, next) => {
   const user = {
     email: inputs.email,
     roles: inputs.roles ?? [{ roles: ['global-admin'], project: 'GLOBAL' }],
-    profile: inputs.profile ?? { firstName: 'generated', 'lastName': 'generated', preferredLanguage: 'en' }
+    profile: inputs.profile ?? { firstName: 'generated', lastName: 'generated', preferredLanguage: 'en' }
   };
 
   try {
@@ -156,8 +157,8 @@ app.put('/api/users', authMW(restApiToken), async (req, res, next) => {
         }
  *
 */
-app.put('/api/projects', authMW(restApiToken), async (req, res, next) => {
-  const inputs = req.body;
+app.put('/api/projects', async (req, res, next) => {
+    const inputs = req.body;
 
     if (inputs.name == null || typeof inputs.name !== 'string' || inputs.name.match(/^[a-zA-Z0-9]+$/) == null
     || inputs.nameSpace == null || typeof inputs.nameSpace !== 'string' || inputs.nameSpace.match(/^bf-[a-zA-Z0-9-]+$/) == null
@@ -196,7 +197,7 @@ app.put('/api/projects', authMW(restApiToken), async (req, res, next) => {
         }
  *
 */
-app.post('/api/projects/import', authMW(restApiToken), async (req, res, next) => {
+app.post('/api/projects/import', async (req, res, next) => {
   if (req.body.projectId == null || req.body.projectId.length < 1) {
     res.status(400).send({ error: 'Provide a projectId' });
     return;

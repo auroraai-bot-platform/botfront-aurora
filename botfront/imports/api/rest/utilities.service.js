@@ -1,4 +1,3 @@
-import { formatError } from '../../lib/utils';
 import { GlobalSettings } from '../globalSettings/globalSettings.collection';
 
 export function getUser() {
@@ -13,21 +12,6 @@ export function getUser() {
   };
 }
 
-export function authMW(token) {
-  return (function (req, res, next) {
-    if (token == null || token.length < 1) {
-      res.status(500).json({ error: 'Token configuration missing' });
-      return;
-    }
-
-    if (req.headers.authorization !== token) {
-      res.sendStatus(401);
-      return;
-    }
-
-    next();
-  });
-}
 
 export function getS3Url(region, bucket, key) {
   return `https://s3.${region}.amazonaws.com/${bucket}/${key}`;
