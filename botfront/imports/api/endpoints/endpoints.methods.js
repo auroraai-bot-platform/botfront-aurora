@@ -8,19 +8,29 @@ import { GlobalSettings } from '../globalSettings/globalSettings.collection';
 
 import { ENVIRONMENT_OPTIONS } from '../../ui/components/constants.json';
 
-export const createEndpoints = async (project) => {
+export const createEndpoints = async (project, actionEndpoint, prodActionEndpoint) => {
     if (!Meteor.isServer) throw Meteor.Error(401, 'Not Authorized');
     const {
         settings: { private: { defaultEndpoints: endpoints } } = {},
     } = GlobalSettings.findOne({}, { 'settings.private.defaultEndpoints': 1 });
     if (endpoints) {
-        ENVIRONMENT_OPTIONS.forEach(environment => Endpoints.insert({
+        Endpoints.insert({
             endpoints: endpoints
                 .replace(/{PROJECT_NAMESPACE}/g, project.namespace)
-                .replace(/{BF_PROJECT_ID}/g, project._id),
+                .replace(/{BF_PROJECT_ID}/g, project._id)
+                .replace(/(action_endpoint:\n {2}url: )'.+'/, `$1 '${actionEndpoint}'`),
             projectId: project._id,
-            environment,
-        }));
+            environment: 'development',
+        });
+
+        Endpoints.insert({
+            endpoints: endpoints
+                .replace(/{PROJECT_NAMESPACE}/g, project.namespace)
+                .replace(/{BF_PROJECT_ID}/g, project._id)
+                .replace(/(action_endpoint:\n {2}url: )'.+'/, `$1 '${prodActionEndpoint ?? actionEndpoint}'`),
+            projectId: project._id,
+            environment: 'production',
+        });
     }
 };
 

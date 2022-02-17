@@ -5,10 +5,9 @@ import { safeLoad, safeDump } from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 import { setStaticWebhooks } from './utilities.service';
 import { createUser } from './users.service';
-import projectsService, { importProject } from './projects.service';
+import { createProject, importProject } from './projects.service';
 import { deleteFile, uploadFile } from './files.service';
 import { GlobalSettings } from '../globalSettings/globalSettings.collection';
-import { DeleteBucketTaggingRequest } from '@aws-sdk/client-s3';
 
 
 export const region = process.env.region || 'eu-north-1';
@@ -160,25 +159,38 @@ app.put('/api/users', async (req, res, next) => {
 app.put('/api/projects', async (req, res, next) => {
     const inputs = req.body;
 
-    if (inputs.name == null || typeof inputs.name !== 'string' || inputs.name.match(/^[a-zA-Z0-9]+$/) == null
-    || inputs.nameSpace == null || typeof inputs.nameSpace !== 'string' || inputs.nameSpace.match(/^bf-[a-zA-Z0-9-]+$/) == null
-    || inputs.baseUrl == null || typeof inputs.baseUrl !== 'string' || inputs.baseUrl.match(/^(http|https):\/\//) == null
-    || (inputs.projectId != null && (typeof inputs.projectId !== 'string' || inputs.projectId.length < 1))
+    const isNameInvalid = inputs.name == null || typeof inputs.name !== 'string' || inputs.name.match(/^[a-zA-Z0-9]+$/) == null;
+    const isNameSpaceInvalid = inputs.nameSpace == null || typeof inputs.nameSpace !== 'string' || inputs.nameSpace.match(/^bf-[a-zA-Z0-9-]+$/) == null;
+    const isProjectIdInvalid = inputs.projectId != null && (typeof inputs.projectId !== 'string' || inputs.projectId.length < 1);
+    const isBaseUrlInvalid = inputs.baseUrl == null || typeof inputs.baseUrl !== 'string' || inputs.baseUrl.match(/^(http|https):\/\//) == null;
+    const isHostInvalid = inputs.host == null || typeof inputs.host !== 'string' || inputs.host.match(/^(http|https):\/\//) == null;
+    const isTokenInvalid = (inputs.token != null && (typeof inputs.token !== 'string' || inputs.token.length < 1));
+    const isActionEndpointInvalid = inputs.actionEndpoint == null || typeof inputs.actionEndpoint !== 'string' || inputs.actionEndpoint.match(/^(http|https):\/\//) == null;
+
+    const hasProd = inputs.hasProd === true;
+    const isProdBaseUrlInvalid = inputs.prodBaseUrl == null || typeof inputs.prodBaseUrl !== 'string' || inputs.prodBaseUrl.match(/^(http|https):\/\//) == null;
+    const isProdHostInvalid = inputs.prodHost == null || typeof inputs.prodHost !== 'string' || inputs.prodHost.match(/^(http|https):\/\//) == null;
+    const isProdTokenInvalid = (inputs.prodToken != null && (typeof inputs.prodToken !== 'string' || inputs.prodToken.length < 1));
+    const isProdActionEndpointInvalid = inputs.prodActionEndpoint == null || typeof inputs.prodActionEndpoint !== 'string' || inputs.prodActionEndpoint.match(/^(http|https):\/\//) == null;
+
+    if (isNameInvalid || isNameSpaceInvalid || isProjectIdInvalid || isBaseUrlInvalid || isHostInvalid || isTokenInvalid || isActionEndpointInvalid
+      // prod options
+      || (hasProd && (isProdBaseUrlInvalid || isProdHostInvalid || isProdTokenInvalid || isProdActionEndpointInvalid))
     ) {
         res.status(400).send('Malformed or missing inputs');
         return;
     }
 
     try {
-        const projectId = await projectsService.createProject(inputs.name, inputs.nameSpace, inputs.baseUrl, inputs.projectId);
-
-        if (projectId == null) {
-            res.send({ projectId, alreadyExists: true });
-            return;
-        }
-
+        const projectId = await createProject(inputs);
         res.send({ projectId });
     } catch (error) {
+        const errorMessage = error?.writeErrors?.[0].err.errmsg;
+        if (errorMessage.match(/duplicate key error/)) {
+            res.send({ projectId: inputs.projectId, alreadyExists: true });
+            return;
+        }
+  
         console.log({ error });
         res.status(500).send({ error });
     }
@@ -221,6 +233,7 @@ app.post('/api/projects/import', async (req, res, next) => {
 
         res.send({ projectId });
     } catch (error) {
+        console.log({ error });
         const statusCode = error.statusCode || 500;
         res.status(statusCode).send({ error: error.message });
     }

@@ -3,6 +3,7 @@ import { Meteor } from 'meteor/meteor';
 import JSZIP from 'jszip';
 import axios from 'axios';
 import { print } from 'graphql';
+
 import { auditLog } from '../../../server/logger';
 import { Projects } from '../project/project.collection';
 
@@ -21,7 +22,7 @@ import { ENVIRONMENT_OPTIONS } from '../../ui/components/constants.json';
 
 
 import { importFilesMutation } from '../../ui/components/settings/graphql';
-import { adminEmail, adminPassword } from '.';
+import { adminEmail, adminPassword } from './index';
 
 const TOKEN_EXPIRATION = 1000 * 60 * 60;
 
@@ -31,39 +32,35 @@ const defaultLanguage = 'en';
 const graphQLEndpoint = 'http://localhost:3000/graphql';
 
 
-export async function createProject(name, nameSpace, baseUrl, id) {
+export function createProject(project) { //name, nameSpace, baseUrl, projectId, baseUrl, host, token, actionEndpoint) {
     const item = {
         disabled: false,
-        name,
-        namespace: nameSpace,
+        name: project.name,
+        namespace: project.nameSpace,
         defaultLanguage,
     };
 
-    if (id != null) {
-        item._id = id;
+    if (project.projectId != null) {
+        item._id = project.projectId;
     }
 
-    let _id;
-    try {
-        _id = insertProject(item);
+    const _id = insertProject(item);
 
-        AnalyticsDashboards.create(defaultDashboard({ _id, ...item }));
-        createEndpoints({ _id, ...item });
-        createCredentials(_id, baseUrl);
-        createPolicies({ _id, ...item });
-        await createNLUInstance({ _id, ...item }, baseUrl);
-        auditLog('Created project', {
-            user: getUser(),
-            resId: _id,
-            type: 'created',
-            operation: 'project-created',
-            after: { project: item },
-            resType: 'project',
-        });
-        return _id;
-    } catch (error) {
-        console.log({ error });
-    }
+    AnalyticsDashboards.create(defaultDashboard({ _id, ...item }));
+    createEndpoints({ _id, ...item }, project.actionEndpoint, project.prodActionEndpoint);
+    createCredentials(_id, project.baseUrl, project.prodBaseUrl);
+    createPolicies({ _id, ...item });
+    createNLUInstance({ _id, ...item }, project.host, project.token, project.prodHost, project.prodToken);
+    auditLog('Created project', {
+        user: getUser(),
+        resId: _id,
+        type: 'created',
+        operation: 'project-created',
+        after: { project: item },
+        resType: 'project',
+    });
+    return _id;
+
 }
 
 export async function importProject(zipFile, projectId) {
@@ -199,75 +196,58 @@ function insertProject(item) {
     return projectId;
 }
 
-function createCredentials(projectId, baseUrl) {
-    const credentials = `rasa_addons.core.channels.webchat.WebchatInput:
-  session_persistence: true
-  base_url: '${baseUrl}'
-  socket_path: /socket.io/
-  rasa_addons.core.channels.bot_regression_test.BotRegressionTestInput: {}`;
 
-    ENVIRONMENT_OPTIONS.forEach(environment => Credentials.insert({
-        projectId,
-        environment,
-        credentials,
-    }));
+function generateCredentials(baseUrl) {
+    return `rasa_addons.core.channels.webchat.WebchatInput:
+    session_persistence: true
+    base_url: '${baseUrl}'
+    socket_path: /socket.io/
+    rasa_addons.core.channels.bot_regression_test.BotRegressionTestInput: {}`;
 }
 
-function createStoriesWithTriggersGroup(projectId) {
-    storyGroup = {
-        name: 'Stories with triggers',
+function createCredentials(projectId, baseUrl, prodBaseUrl) {
+    Credentials.insert({
         projectId,
-        smartGroup: { prefix: 'withTriggers', query: '{ "rules.0": { "$exists": true } }' },
-        isExpanded: true,
-        pinned: true,
-    };
+        environment: 'development',
+        credentials: generateCredentials(baseUrl),
+    });
 
-    createStoryGroup(projectId, storyGroup);
-}
-
-function createUnpublishedStoriesGroup(projectId) {
-    const storyGroup = {
-        name: 'Unpublished stories',
-        projectId,
-        smartGroup: { prefix: 'unpublish', query: '{ "status": "unpublished" }' },
-        isExpanded: false,
-        pinned: true,
-    };
-
-    createStoryGroup(projectId, storyGroup);
-}
-
-function createStoryGroup(projectId, storyGroup) {
-    try {
-        const id = StoryGroups.insert({
-            ...storyGroup,
-            children: [],
+    if (prodBaseUrl) {
+        Credentials.insert({
+            projectId,
+            environment: 'production',
+            credentials: generateCredentials(prodBaseUrl),
         });
-        const $position = 0;
-
-        Projects.update(
-            { _id: projectId },
-            { $push: { storyGroups: { $each: [id], $position } } },
-        );
-        auditLog('Created a story group', {
-            resId: id,
-            user: getUser(),
-            projectId: storyGroup.projectId,
-            type: 'created',
-            operation: 'story-group-created',
-            after: { storyGroup },
-            resType: 'story-group',
-        });
-        return id;
-    } catch (error) {
-        console.log({ error });
     }
 }
 
-function createNLUInstance(project, host) {
-    return Instances.insert({
+
+function createNLUInstance(project, host, token, prodHost, prodToken) {
+    const nluInstance = {
         name: 'Default Instance',
         host: host.replace(/{PROJECT_NAMESPACE}/g, project.namespace),
         projectId: project._id,
-    });
+        environment: 'development',
+    };
+
+    if (token) {
+        nluInstance.token = token;
+    }
+
+    Instances.insert(nluInstance);
+
+    if (prodHost) {
+        const nluProdInstance = {
+            name: 'Default Instance',
+            host: host.replace(/{PROJECT_NAMESPACE}/g, project.namespace),
+            projectId: project._id,
+            environment: 'production',
+        };
+    
+        if (token) {
+            nluInstance.token = prodToken;
+        }
+
+        Instances.insert(nluProdInstance);
+    }
 }
