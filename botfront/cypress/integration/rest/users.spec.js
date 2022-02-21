@@ -1,6 +1,3 @@
-/* global cy:true */
-const token = Cypress.env('REST_API_TOKEN');
-
 const endpoint = 'http://localhost:3030/api/users';
 const email = 'test@example.org';
 const password = 'Aaaaaaaa00';
@@ -15,7 +12,6 @@ describe('users endpoint basic functionality', () => {
     cy.request({
       url: endpoint,
       method: 'PUT',
-      headers: { Authorization: token },
       body: 'test',
       failOnStatusCode: false
     })
@@ -30,7 +26,6 @@ describe('users endpoint basic functionality', () => {
     cy.request({
       url: endpoint,
       method: 'PUT',
-      headers: { Authorization: token },
       body: { email, password },
       failOnStatusCode: false
     })
@@ -56,7 +51,6 @@ describe('users endpoint fails on duplicate', () => {
     cy.request({
       url: endpoint,
       method: 'PUT',
-      headers: { Authorization: token },
       body: { email, password },
       failOnStatusCode: false
     })
@@ -67,7 +61,6 @@ describe('users endpoint fails on duplicate', () => {
     cy.request({
       url: endpoint,
       method: 'PUT',
-      headers: { Authorization: token },
       body: { email, password },
       failOnStatusCode: false
     })
