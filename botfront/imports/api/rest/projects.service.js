@@ -50,7 +50,7 @@ export function createProject(project) { //name, nameSpace, baseUrl, projectId, 
     createEndpoints({ _id, ...item }, project.actionEndpoint, project.prodActionEndpoint);
     createCredentials(_id, project.baseUrl, project.prodBaseUrl);
     createPolicies({ _id, ...item });
-    createNLUInstance({ _id, ...item }, project.host, project.token, project.prodHost, project.prodToken);
+    createNLUInstance({ _id, ...item }, project.host, project.token);
     auditLog('Created project', {
         user: getUser(),
         resId: _id,
@@ -222,7 +222,7 @@ function createCredentials(projectId, baseUrl, prodBaseUrl) {
 }
 
 
-function createNLUInstance(project, host, token, prodHost, prodToken) {
+function createNLUInstance(project, host, token) {
     const nluInstance = {
         name: 'Default Instance',
         host: host.replace(/{PROJECT_NAMESPACE}/g, project.namespace),
@@ -235,19 +235,4 @@ function createNLUInstance(project, host, token, prodHost, prodToken) {
     }
 
     Instances.insert(nluInstance);
-
-    if (prodHost) {
-        const nluProdInstance = {
-            name: 'Default Instance',
-            host: host.replace(/{PROJECT_NAMESPACE}/g, project.namespace),
-            projectId: project._id,
-            environment: 'production',
-        };
-    
-        if (token) {
-            nluInstance.token = prodToken;
-        }
-
-        Instances.insert(nluProdInstance);
-    }
 }
