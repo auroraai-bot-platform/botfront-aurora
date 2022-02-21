@@ -338,7 +338,8 @@ app.post('/api/deploy', async (req, res, next) => {
   const projectId = req.body.projectId;
   const path = req.body.path || '/app/models';
   const modelFileName = req.body.modelFileName;
-
+  const key = `model-${projectId}.tar.gz`;
+  
   let data;
   
   try {
@@ -351,8 +352,6 @@ app.post('/api/deploy', async (req, res, next) => {
     res.status(400).send('Model has not content');
     return;
   }
-
-  const key = `model-${projectId}.tar.gz`;
 
   try {
     const fileUrl = await uploadFile(modelBucket, key, data);

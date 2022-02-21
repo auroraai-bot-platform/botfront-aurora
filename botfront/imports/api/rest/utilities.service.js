@@ -30,7 +30,7 @@ export function authMW(token) {
 }
 
 export function getS3Url(region, bucket, key) {
-  return `https://s3.${region}.amazonaws.com/${bucket}/${key}`;
+  return process.env.AWS_LOCAL? `${process.env.AWS_ENDPOINT}/${bucket}/${key}`: `https://s3.${region}.amazonaws.com/${bucket}/${key}`;
 }
 
 
