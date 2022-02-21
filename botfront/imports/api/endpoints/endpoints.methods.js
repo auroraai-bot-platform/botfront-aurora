@@ -23,14 +23,16 @@ export const createEndpoints = async (project, actionEndpoint, prodActionEndpoin
             environment: 'development',
         });
 
-        Endpoints.insert({
-            endpoints: endpoints
-                .replace(/{PROJECT_NAMESPACE}/g, project.namespace)
-                .replace(/{BF_PROJECT_ID}/g, project._id)
-                .replace(/(action_endpoint:\n {2}url: )'.+'/, `$1 '${prodActionEndpoint ?? actionEndpoint}'`),
-            projectId: project._id,
-            environment: 'production',
-        });
+        if (prodActionEndpoint) {
+            Endpoints.insert({
+                endpoints: endpoints
+                    .replace(/{PROJECT_NAMESPACE}/g, project.namespace)
+                    .replace(/{BF_PROJECT_ID}/g, project._id)
+                    .replace(/(action_endpoint:\n {2}url: )'.+'/, `$1 '${prodActionEndpoint}'`),
+                projectId: project._id,
+                environment: 'production',
+            });
+        }
     }
 };
 
