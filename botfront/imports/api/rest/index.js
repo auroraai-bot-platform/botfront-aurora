@@ -1,13 +1,11 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
 import { promises as fs } from 'fs';
-import { safeLoad, safeDump } from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
-import { setStaticWebhooks } from './utilities.service';
+import { createGlobalSettings, setStaticWebhooks, informCdkSuccess, waitUntilDatabaseIsReady } from './utilities.service';
 import { createUser } from './users.service';
 import { createProject, importProject } from './projects.service';
 import { deleteFile, uploadFile } from './files.service';
-import { GlobalSettings } from '../globalSettings/globalSettings.collection';
 
 
 export const region = process.env.region || 'eu-north-1';
@@ -23,43 +21,27 @@ const filePrefix = process.env.FILE_PREFIX || 'files/';
 
 const port = process.env.REST_API_PORT || 3030;
 
+const signalUrl = process.env.SIGNAL_URL;
+
 
 // make sure the database hase been initialised completely before creating the user
-Meteor.startup(() => {
-    console.log('Startup: Create Admin User & Set Image Webhooks');
+Meteor.startup(async () => {
+    try {
+      // wait for all migrations to finish first
+      await waitUntilDatabaseIsReady();
+      await createGlobalSettings();
 
-    createAdminUser();
-    
-    const images = `http://localhost:${port}/api/images`;
-    const deploy = `http://localhost:${port}/api/deploy`;
-    setStaticWebhooks(images, deploy);
+      informCdkSuccess(signalUrl);
+      createAdminUser();
+      
+      const images = `http://localhost:${port}/api/images`;
+      const deploy = `http://localhost:${port}/api/deploy`;
+      setStaticWebhooks(images, deploy);
+
+    } catch (error) {
+      console.log({ error });
+    }
 });
-
-async function createGlobalSettings() {
-    const publicSettings = safeLoad(Assets.getText('defaults/public.yaml'));
-    const privateSettings = safeLoad(Assets.getText(
-        process.env.MODE === 'development'
-            ? 'defaults/private.dev.yaml'
-            : process.env.ORCHESTRATOR === 'gke' ? 'defaults/private.gke.yaml' : 'defaults/private.yaml',
-    ));
-
-    const settings = {
-        public: {
-            backgroundImages: publicSettings.backgroundImages || [],
-            defaultNLUConfig: safeDump({ pipeline: publicSettings.pipeline }),
-        },
-        private: {
-            bfApiHost: privateSettings.bfApiHost || '',
-            defaultEndpoints: safeDump(privateSettings.endpoints),
-            defaultCredentials: safeDump(privateSettings.credentials)
-                .replace(/{SOCKET_HOST}/g, process.env.SOCKET_HOST || 'botfront.io'),
-            defaultPolicies: safeDump({ policies: privateSettings.policies }),
-            defaultDefaultDomain: safeDump(privateSettings.defaultDomain),
-            webhooks: privateSettings.webhooks,
-        },
-    };
-    await GlobalSettings.insert({ _id: 'SETTINGS', settings });
-}
 
 async function createAdminUser() {
     // create admin on startup
@@ -70,14 +52,7 @@ async function createAdminUser() {
                 roles: [{ roles: ['global-admin'], project: 'GLOBAL' }],
                 profile: { firstName: 'admin', lastName: 'admin', preferredLanguage: 'en' },
             }, adminPassword);
-        } catch (error) {
-            console.log('Error while admin user creation', {error});
-        }
-    }
-
-    const currentGlobalSettings = GlobalSettings.findOne({ _id: 'SETTINGS' });
-    if (currentGlobalSettings == null) {
-        await createGlobalSettings();
+        } catch (error) {}
     }
 }
 
@@ -169,13 +144,11 @@ app.put('/api/projects', async (req, res, next) => {
 
     const hasProd = inputs.hasProd === true;
     const isProdBaseUrlInvalid = inputs.prodBaseUrl == null || typeof inputs.prodBaseUrl !== 'string' || inputs.prodBaseUrl.match(/^(http|https):\/\//) == null;
-    const isProdHostInvalid = inputs.prodHost == null || typeof inputs.prodHost !== 'string' || inputs.prodHost.match(/^(http|https):\/\//) == null;
-    const isProdTokenInvalid = (inputs.prodToken != null && (typeof inputs.prodToken !== 'string' || inputs.prodToken.length < 1));
     const isProdActionEndpointInvalid = inputs.prodActionEndpoint == null || typeof inputs.prodActionEndpoint !== 'string' || inputs.prodActionEndpoint.match(/^(http|https):\/\//) == null;
 
     if (isNameInvalid || isNameSpaceInvalid || isProjectIdInvalid || isBaseUrlInvalid || isHostInvalid || isTokenInvalid || isActionEndpointInvalid
       // prod options
-      || (hasProd && (isProdBaseUrlInvalid || isProdHostInvalid || isProdTokenInvalid || isProdActionEndpointInvalid))
+      || (hasProd && (isProdBaseUrlInvalid || isProdActionEndpointInvalid))
     ) {
         res.status(400).send('Malformed or missing inputs');
         return;
@@ -186,7 +159,7 @@ app.put('/api/projects', async (req, res, next) => {
         res.send({ projectId });
     } catch (error) {
         const errorMessage = error?.writeErrors?.[0].err.errmsg;
-        if (errorMessage.match(/duplicate key error/)) {
+        if (errorMessage && errorMessage.match(/duplicate key error/)) {
             res.send({ projectId: inputs.projectId, alreadyExists: true });
             return;
         }

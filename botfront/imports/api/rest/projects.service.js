@@ -47,8 +47,8 @@ export function createProject(project) { //name, nameSpace, baseUrl, projectId, 
     const _id = insertProject(item);
 
     AnalyticsDashboards.create(defaultDashboard({ _id, ...item }));
-    createEndpoints({ _id, ...item }, project.actionEndpoint, project.prodActionEndpoint);
-    createCredentials(_id, project.baseUrl, project.prodBaseUrl);
+    createEndpoints({ _id, ...item }, project.actionEndpoint, project.prodActionEndpoint, project.hasProd);
+    createCredentials(_id, project.baseUrl, project.prodBaseUrl, project.hasProd);
     createPolicies({ _id, ...item });
     createNLUInstance({ _id, ...item }, project.host, project.token);
     auditLog('Created project', {
@@ -205,14 +205,14 @@ function generateCredentials(baseUrl) {
     rasa_addons.core.channels.bot_regression_test.BotRegressionTestInput: {}`;
 }
 
-function createCredentials(projectId, baseUrl, prodBaseUrl) {
+function createCredentials(projectId, baseUrl, prodBaseUrl, hasProd) {
     Credentials.insert({
         projectId,
         environment: 'development',
         credentials: generateCredentials(baseUrl),
     });
 
-    if (prodBaseUrl) {
+    if (hasProd && prodBaseUrl) {
         Credentials.insert({
             projectId,
             environment: 'production',

@@ -8,7 +8,7 @@ import { GlobalSettings } from '../globalSettings/globalSettings.collection';
 
 import { ENVIRONMENT_OPTIONS } from '../../ui/components/constants.json';
 
-export const createEndpoints = async (project, actionEndpoint, prodActionEndpoint) => {
+export const createEndpoints = async (project, actionEndpoint, prodActionEndpoint, hasProd) => {
     if (!Meteor.isServer) throw Meteor.Error(401, 'Not Authorized');
     const {
         settings: { private: { defaultEndpoints: endpoints } } = {},
@@ -23,7 +23,7 @@ export const createEndpoints = async (project, actionEndpoint, prodActionEndpoin
             environment: 'development',
         });
 
-        if (prodActionEndpoint) {
+        if (hasProd && prodActionEndpoint) {
             Endpoints.insert({
                 endpoints: endpoints
                     .replace(/{PROJECT_NAMESPACE}/g, project.namespace)
