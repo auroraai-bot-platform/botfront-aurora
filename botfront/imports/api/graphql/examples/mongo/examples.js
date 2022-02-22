@@ -309,3 +309,23 @@ export const switchCanonical = async ({ projectId, language, example }) => {
         examples: [{ ...example, metadata: { ...example.metadata, canonical: false } }],
     });
 };
+
+export const getExamplesCount = async projectId => Examples.aggregate([
+    { 
+        $group: { 
+            _id: "$intent",
+            count: { $sum: 1 }
+        } 
+    },
+    { 
+        $match: { 
+            count: { $lt: 3 } 
+        } 
+    },
+    { 
+        $project: { 
+            _id: projectId, 
+            count: 1
+        }
+    }
+])

@@ -16,7 +16,7 @@ import {
     getProjectModelFileName,
 } from '../../lib/utils';
 import { NLUModels } from '../nlu_model/nlu_model.collection';
-import { getExamples } from '../graphql/examples/mongo/examples';
+import { getExamples, getExamplesCount } from '../graphql/examples/mongo/examples';
 import { Instances } from './instances.collection';
 import { CorePolicies } from '../core_policies';
 import { Evaluations } from '../nlu_evaluation';
@@ -178,6 +178,11 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
     };
     return nlu_and_config;
 };
+
+// export const getExamplesCountTot = async (projectId) => {
+//     const excounts = await getExamplesCount(projectId);
+//     return excounts
+// };
 
 if (Meteor.isServer) {
     import {
@@ -355,6 +360,13 @@ if (Meteor.isServer) {
             appMethodLogger.debug(`Training project ${projectId}...`);
             const t0 = performance.now();
             try {
+
+                const invalids = await getExamplesCount(projectId);
+
+                if (invalids.length > 0) {
+                    throw new Meteor.Error("There are intents that have less than three examples.")
+                };
+                
                 const payload = await Meteor.call('rasa.getTrainingPayload', projectId, { env });
 
                 // Currently (21.10.2021) Rasa's model/train endpoint expects
