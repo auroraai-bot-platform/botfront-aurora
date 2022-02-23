@@ -70,7 +70,7 @@ const Intent = React.forwardRef((props, ref) => {
 
     const [selection, setSelection] = useState(dataToDisplay.slice(0, 1).map(i => i.intent));
 
-    const hasInvalidChars = intentName => intentName.match(/[ +/{}/]/);
+    const hasInvalidChars = intentName => intentName.match(/[ +{}]/);
 
     const handleTypeInput = (_e, { value: newInput }) => {
         if (!hasInvalidChars(newInput)) setTypeInput(newInput);
