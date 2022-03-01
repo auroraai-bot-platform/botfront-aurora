@@ -195,7 +195,7 @@ function insertProject(item) {
         resType: 'project',
         resId: item.name,
     });
-    debugger;
+
     const projectExists = item._id !== undefined ? Projects.findOne({ _id: item._id }) !== undefined : false;
     if (projectExists) {
         Projects.update({ _id: item._id }, {
