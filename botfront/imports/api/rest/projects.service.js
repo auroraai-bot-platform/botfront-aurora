@@ -44,7 +44,23 @@ export function createProject(project) { //name, nameSpace, baseUrl, projectId, 
         item._id = project.projectId;
     }
 
-    const _id = insertProject(item);
+    if (project.hasProd) {
+        item.deploymentEnvironments = ['production'];
+    }
+
+    let _id;
+
+    try {
+        _id = insertProject(item);
+    } catch (error) {
+        const errorMessage = error?.writeErrors?.[0].err.errmsg;
+        if (errorMessage && errorMessage.match(/duplicate key error/)) {
+            console.log('already exists, update project in place');
+        } else throw error;
+    }
+
+    // in case project existed, project creation failed resulting in undefined _id
+    _id = _id || project.projectId;
 
     AnalyticsDashboards.create(defaultDashboard({ _id, ...item }));
     createEndpoints({ _id, ...item }, project.actionEndpoint, project.prodActionEndpoint, project.hasProd);
@@ -177,8 +193,19 @@ function insertProject(item) {
         operation: 'project-created',
         after: { project: item },
         resType: 'project',
-        resId: item.id,
+        resId: item.name,
     });
+    debugger;
+    const projectExists = item._id !== undefined ? Projects.findOne({ _id: item._id }) !== undefined : false;
+    if (projectExists) {
+        Projects.update({ _id: item._id }, {
+            $set: {
+                ...item,
+            },
+        });
+
+        return item._id;
+    }
 
     const projectId = Projects.insert({
         ...item,
@@ -186,7 +213,7 @@ function insertProject(item) {
         languages: [defaultLanguage],
         chatWidgetSettings: {
             title: item.name,
-            subtitle: 'Happy to help',
+            subtitle: '',
             inputTextFieldHint: 'Type your message...',
             initPayload: '/get_started',
             hideWhenNotConnected: true,
@@ -206,17 +233,21 @@ function generateCredentials(baseUrl) {
 }
 
 function createCredentials(projectId, baseUrl, prodBaseUrl, hasProd) {
-    Credentials.insert({
-        projectId,
-        environment: 'development',
-        credentials: generateCredentials(baseUrl),
+    Credentials.upsert({ projectId, environment: 'development' }, {
+        $set: {
+            projectId,
+            environment: 'development',
+            credentials: generateCredentials(baseUrl),
+        },
     });
 
     if (hasProd && prodBaseUrl) {
-        Credentials.insert({
-            projectId,
-            environment: 'production',
-            credentials: generateCredentials(prodBaseUrl),
+        Credentials.upsert({ projectId, environment: 'production' }, {
+            $set: {
+                projectId,
+                environment: 'production',
+                credentials: generateCredentials(prodBaseUrl),
+            }
         });
     }
 }
@@ -227,12 +258,11 @@ function createNLUInstance(project, host, token) {
         name: 'Default Instance',
         host: host.replace(/{PROJECT_NAMESPACE}/g, project.namespace),
         projectId: project._id,
-        environment: 'development',
     };
 
     if (token) {
         nluInstance.token = token;
     }
 
-    Instances.insert(nluInstance);
+    Instances.upsert({ projectId: project._id }, { $set: nluInstance });
 }

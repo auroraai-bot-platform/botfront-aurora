@@ -14,23 +14,27 @@ export const createEndpoints = async (project, actionEndpoint, prodActionEndpoin
         settings: { private: { defaultEndpoints: endpoints } } = {},
     } = GlobalSettings.findOne({}, { 'settings.private.defaultEndpoints': 1 });
     if (endpoints) {
-        Endpoints.insert({
-            endpoints: endpoints
-                .replace(/{PROJECT_NAMESPACE}/g, project.namespace)
-                .replace(/{BF_PROJECT_ID}/g, project._id)
-                .replace(/(action_endpoint:\n {2}url: )'.+'/, `$1 '${actionEndpoint}'`),
-            projectId: project._id,
-            environment: 'development',
-        });
-
-        if (hasProd && prodActionEndpoint) {
-            Endpoints.insert({
+        Endpoints.upsert({ projectId: project._id, environment: 'development' }, {
+            $set: {
                 endpoints: endpoints
                     .replace(/{PROJECT_NAMESPACE}/g, project.namespace)
                     .replace(/{BF_PROJECT_ID}/g, project._id)
-                    .replace(/(action_endpoint:\n {2}url: )'.+'/, `$1 '${prodActionEndpoint}'`),
+                    .replace(/(action_endpoint:\n {2}url: )'.+'/, `$1 '${actionEndpoint}'`),
                 projectId: project._id,
-                environment: 'production',
+                environment: 'development',
+            },
+        });
+
+        if (hasProd && prodActionEndpoint) {
+            Endpoints.upsert({ projectId: project._id, environment: 'production' }, {
+                $set: {
+                    endpoints: endpoints
+                        .replace(/{PROJECT_NAMESPACE}/g, project.namespace)
+                        .replace(/{BF_PROJECT_ID}/g, project._id)
+                        .replace(/(action_endpoint:\n {2}url: )'.+'/, `$1 '${prodActionEndpoint}'`),
+                    projectId: project._id,
+                    environment: 'production',
+                },
             });
         }
     }

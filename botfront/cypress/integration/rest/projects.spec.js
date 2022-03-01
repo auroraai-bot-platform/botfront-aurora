@@ -185,7 +185,7 @@ describe('/api/projects endpoint', () => {
     cy.request({
       url: endpoint,
       method: 'PUT',
-      body: { name, nameSpace, baseUrl, host, token, actionEndpoint, projectId: fixedProjectId, prodBaseUrl: baseUrl, prodHost: host, prodToken: token, prodActionEndpoint: actionEndpoint },
+      body: { name, nameSpace, baseUrl, host, token, actionEndpoint, projectId: fixedProjectId, prodBaseUrl: baseUrl, prodHost: host, prodToken: token, prodActionEndpoint: actionEndpoint, hasProd: true },
       failOnStatusCode: false
     })
       .as('projects');
