@@ -10,19 +10,14 @@ import { Projects } from '../project/project.collection';
 import { createEndpoints } from '../endpoints/endpoints.methods';
 import { Credentials } from '../credentials';
 import { createPolicies } from '../core_policies';
-import { StoryGroups } from '../storyGroups/storyGroups.methods';
-
 import { Instances } from '../instances/instances.collection';
 
 import AnalyticsDashboards from '../graphql/analyticsDashboards/analyticsDashboards.model';
 import { defaultDashboard } from '../graphql/analyticsDashboards/generateDefaults';
 import { getUser } from './utilities.service';
 
-import { ENVIRONMENT_OPTIONS } from '../../ui/components/constants.json';
-
-
 import { importFilesMutation } from '../../ui/components/settings/graphql';
-import { adminEmail, adminPassword } from './index';
+import { adminEmail } from './index';
 
 const TOKEN_EXPIRATION = 1000 * 60 * 60;
 
@@ -32,7 +27,7 @@ const defaultLanguage = 'en';
 const graphQLEndpoint = 'http://localhost:3000/graphql';
 
 
-export function createProject(project) { //name, nameSpace, baseUrl, projectId, baseUrl, host, token, actionEndpoint) {
+export function createProject(project) {
     const item = {
         disabled: false,
         name: project.name,
