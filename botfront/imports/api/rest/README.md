@@ -114,7 +114,7 @@ This rest api provides a simple way to interact with the botfront container with
 <details>
 
 ----
-  Creates a new project. The projectId can be provided to make it easier to target specific projects with updates, without the need of looking them up.
+  Creates a new project or updates an existing project in place. The projectId can be provided to make it easier to target specific projects with updates, without the need of looking them up.
 
 * **URL**
 
