@@ -3,25 +3,21 @@ import { Meteor } from 'meteor/meteor';
 import JSZIP from 'jszip';
 import axios from 'axios';
 import { print } from 'graphql';
+
 import { auditLog } from '../../../server/logger';
 import { Projects } from '../project/project.collection';
 
 import { createEndpoints } from '../endpoints/endpoints.methods';
 import { Credentials } from '../credentials';
 import { createPolicies } from '../core_policies';
-import { StoryGroups } from '../storyGroups/storyGroups.methods';
-
 import { Instances } from '../instances/instances.collection';
 
 import AnalyticsDashboards from '../graphql/analyticsDashboards/analyticsDashboards.model';
 import { defaultDashboard } from '../graphql/analyticsDashboards/generateDefaults';
 import { getUser } from './utilities.service';
 
-import { ENVIRONMENT_OPTIONS } from '../../ui/components/constants.json';
-
-
 import { importFilesMutation } from '../../ui/components/settings/graphql';
-import { adminEmail, adminPassword } from '.';
+import { adminEmail } from './index';
 
 const TOKEN_EXPIRATION = 1000 * 60 * 60;
 
@@ -31,39 +27,51 @@ const defaultLanguage = 'en';
 const graphQLEndpoint = 'http://localhost:3000/graphql';
 
 
-export async function createProject(name, nameSpace, baseUrl, id) {
+export function createProject(project) {
     const item = {
         disabled: false,
-        name,
-        namespace: nameSpace,
+        name: project.name,
+        namespace: project.nameSpace,
         defaultLanguage,
     };
 
-    if (id != null) {
-        item._id = id;
+    if (project.projectId != null) {
+        item._id = project.projectId;
+    }
+
+    if (project.hasProd) {
+        item.deploymentEnvironments = ['production'];
     }
 
     let _id;
+
     try {
         _id = insertProject(item);
-
-        AnalyticsDashboards.create(defaultDashboard({ _id, ...item }));
-        createEndpoints({ _id, ...item });
-        createCredentials(_id, baseUrl);
-        createPolicies({ _id, ...item });
-        await createNLUInstance({ _id, ...item }, baseUrl);
-        auditLog('Created project', {
-            user: getUser(),
-            resId: _id,
-            type: 'created',
-            operation: 'project-created',
-            after: { project: item },
-            resType: 'project',
-        });
-        return _id;
     } catch (error) {
-        console.log({ error });
+        const errorMessage = error?.writeErrors?.[0].err.errmsg;
+        if (errorMessage && errorMessage.match(/duplicate key error/)) {
+            console.log('already exists, update project in place');
+        } else throw error;
     }
+
+    // in case project existed, project creation failed resulting in undefined _id
+    _id = _id || project.projectId;
+
+    AnalyticsDashboards.create(defaultDashboard({ _id, ...item }));
+    createEndpoints({ _id, ...item }, project.actionEndpoint, project.prodActionEndpoint, project.hasProd);
+    createCredentials(_id, project.baseUrl, project.prodBaseUrl, project.hasProd);
+    createPolicies({ _id, ...item });
+    createNLUInstance({ _id, ...item }, project.host, project.token);
+    auditLog('Created project', {
+        user: getUser(),
+        resId: _id,
+        type: 'created',
+        operation: 'project-created',
+        after: { project: item },
+        resType: 'project',
+    });
+    return _id;
+
 }
 
 export async function importProject(zipFile, projectId) {
@@ -71,7 +79,7 @@ export async function importProject(zipFile, projectId) {
     try {
         files = await unZip(zipFile);
     } catch (error) {
-        const newError = new Error('Failed to extract zip file');
+        const newError = new Error(`Failed to extract zip file: ${JSON.stringify(error)}`);
         newError.statusCode = 400;
         throw newError;
     }
@@ -180,8 +188,19 @@ function insertProject(item) {
         operation: 'project-created',
         after: { project: item },
         resType: 'project',
-        resId: item.id,
+        resId: item.name,
     });
+
+    const projectExists = item._id !== undefined ? Projects.findOne({ _id: item._id }) !== undefined : false;
+    if (projectExists) {
+        Projects.update({ _id: item._id }, {
+            $set: {
+                ...item,
+            },
+        });
+
+        return item._id;
+    }
 
     const projectId = Projects.insert({
         ...item,
@@ -189,7 +208,7 @@ function insertProject(item) {
         languages: [defaultLanguage],
         chatWidgetSettings: {
             title: item.name,
-            subtitle: 'Happy to help',
+            subtitle: '',
             inputTextFieldHint: 'Type your message...',
             initPayload: '/get_started',
             hideWhenNotConnected: true,
@@ -199,75 +218,46 @@ function insertProject(item) {
     return projectId;
 }
 
-function createCredentials(projectId, baseUrl) {
-    const credentials = `rasa_addons.core.channels.webchat.WebchatInput:
-  session_persistence: true
-  base_url: '${baseUrl}'
-  socket_path: /socket.io/
-  rasa_addons.core.channels.bot_regression_test.BotRegressionTestInput: {}`;
 
-    ENVIRONMENT_OPTIONS.forEach(environment => Credentials.insert({
-        projectId,
-        environment,
-        credentials,
-    }));
+function generateCredentials(baseUrl) {
+    return `rasa_addons.core.channels.webchat.WebchatInput:
+    session_persistence: true
+    base_url: '${baseUrl}'
+    socket_path: /socket.io/
+    rasa_addons.core.channels.bot_regression_test.BotRegressionTestInput: {}`;
 }
 
-function createStoriesWithTriggersGroup(projectId) {
-    storyGroup = {
-        name: 'Stories with triggers',
-        projectId,
-        smartGroup: { prefix: 'withTriggers', query: '{ "rules.0": { "$exists": true } }' },
-        isExpanded: true,
-        pinned: true,
-    };
+function createCredentials(projectId, baseUrl, prodBaseUrl, hasProd) {
+    Credentials.upsert({ projectId, environment: 'development' }, {
+        $set: {
+            projectId,
+            environment: 'development',
+            credentials: generateCredentials(baseUrl),
+        },
+    });
 
-    createStoryGroup(projectId, storyGroup);
-}
-
-function createUnpublishedStoriesGroup(projectId) {
-    const storyGroup = {
-        name: 'Unpublished stories',
-        projectId,
-        smartGroup: { prefix: 'unpublish', query: '{ "status": "unpublished" }' },
-        isExpanded: false,
-        pinned: true,
-    };
-
-    createStoryGroup(projectId, storyGroup);
-}
-
-function createStoryGroup(projectId, storyGroup) {
-    try {
-        const id = StoryGroups.insert({
-            ...storyGroup,
-            children: [],
+    if (hasProd && prodBaseUrl) {
+        Credentials.upsert({ projectId, environment: 'production' }, {
+            $set: {
+                projectId,
+                environment: 'production',
+                credentials: generateCredentials(prodBaseUrl),
+            }
         });
-        const $position = 0;
-
-        Projects.update(
-            { _id: projectId },
-            { $push: { storyGroups: { $each: [id], $position } } },
-        );
-        auditLog('Created a story group', {
-            resId: id,
-            user: getUser(),
-            projectId: storyGroup.projectId,
-            type: 'created',
-            operation: 'story-group-created',
-            after: { storyGroup },
-            resType: 'story-group',
-        });
-        return id;
-    } catch (error) {
-        console.log({ error });
     }
 }
 
-function createNLUInstance(project, host) {
-    return Instances.insert({
+
+function createNLUInstance(project, host, token) {
+    const nluInstance = {
         name: 'Default Instance',
         host: host.replace(/{PROJECT_NAMESPACE}/g, project.namespace),
         projectId: project._id,
-    });
+    };
+
+    if (token) {
+        nluInstance.token = token;
+    }
+
+    Instances.upsert({ projectId: project._id }, { $set: nluInstance });
 }

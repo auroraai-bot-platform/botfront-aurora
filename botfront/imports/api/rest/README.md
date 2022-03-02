@@ -59,8 +59,6 @@ This rest api provides a simple way to interact with the botfront container with
 *  **Headers**
 
    **Required:**
-
-   `Authorization=[string]`
   
 *  **URL Params**
 
@@ -116,7 +114,7 @@ This rest api provides a simple way to interact with the botfront container with
 <details>
 
 ----
-  Creates a new project. The projectId can be provided to make it easier to target specific projects with updates, without the need of looking them up.
+  Creates a new project or updates an existing project in place. The projectId can be provided to make it easier to target specific projects with updates, without the need of looking them up.
 
 * **URL**
 
@@ -129,8 +127,6 @@ This rest api provides a simple way to interact with the botfront container with
 *  **Headers**
 
    **Required:**
-
-   `Authorization=[string]`
   
 *  **URL Params**
 
@@ -143,8 +139,17 @@ This rest api provides a simple way to interact with the botfront container with
   ```json
   name: string;
   nameSpace: string; // MUST START with `bf-`
-  baseUrl: string; // the url under which the rasa bot instance is reachable
+  baseUrl: string; // the url under which the rasa bot instance is reachable in public
+  host: string; // the url under which the rasa container is reachable for botfront
+  actionEndpoint: string // the endpoint where the actions container is reachable
+  token?: string  // OPTIONAL, the token to restrict access to the rasa bot endpoint
   projectId?: string // OPTIONAL, the projectId  used for creating the project
+
+  hasProd?: boolean // if TRUE also needs following parameters
+  prodBaseUrl: string
+  prodHost: string
+  prodToken?: string // OPTIONAL
+  prodActionEndpoint
   ```
 
 * **Success Response:**
@@ -192,8 +197,6 @@ This rest api provides a simple way to interact with the botfront container with
 *  **Headers**
 
    **Required:**
-
-   `Authorization=[string]`
   
 *  **URL Params**
 

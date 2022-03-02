@@ -1,14 +1,11 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
-import {promises as fs} from 'fs';
-import { authMW, setStaticWebhooks } from './utilities.service';
-import { createUser } from './users.service';
-import projectsService, { importProject } from './projects.service';
-import { deleteFile, uploadFile } from './files.service';
-import { safeLoad, safeDump } from 'js-yaml';
-import { GlobalSettings } from '../globalSettings/globalSettings.collection';
-
+import { promises as fs } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { createGlobalSettings, setStaticWebhooks, informCdkSuccess, waitUntilDatabaseIsReady } from './utilities.service';
+import { createUser } from './users.service';
+import { createProject, importProject } from './projects.service';
+import { deleteFile, uploadFile } from './files.service';
 
 
 export const region = process.env.region || 'eu-north-1';
@@ -16,52 +13,35 @@ export const region = process.env.region || 'eu-north-1';
 export const adminEmail = process.env.ADMIN_USER;
 export const adminPassword = process.env.ADMIN_PASSWORD;
 
-const FILE_SIZE_LIMIT = parseInt(process.env.FILE_SIZE_LIMIT) || 1024 * 1024;
+const FILE_SIZE_LIMIT = parseInt(process.env.FILE_SIZE_LIMIT, 10) || 1024 * 1024;
 
 const fileBucket = process.env.FILE_BUCKET;
 const modelBucket = process.env.MODEL_BUCKET;
 const filePrefix = process.env.FILE_PREFIX || 'files/';
 
 const port = process.env.REST_API_PORT || 3030;
-const restApiToken = process.env.REST_API_TOKEN;
+
+const signalUrl = process.env.SIGNAL_URL;
 
 
 // make sure the database hase been initialised completely before creating the user
-Meteor.startup(() => {
-  console.log("Startup: Create Admin User & Set Image Webhooks");
+Meteor.startup(async () => {
+    try {
+      // wait for all migrations to finish first
+      await waitUntilDatabaseIsReady();
+      await createGlobalSettings();
 
-  createAdminUser();
-  
-  const images = `http://localhost:${port}/api/images`;
-  const deploy = `http://localhost:${port}/api/deploy`;
-  setStaticWebhooks(images, deploy);
+      informCdkSuccess(signalUrl);
+      createAdminUser();
+      
+      const images = `http://localhost:${port}/api/images`;
+      const deploy = `http://localhost:${port}/api/deploy`;
+      setStaticWebhooks(images, deploy);
+
+    } catch (error) {
+      console.log({ error });
+    }
 });
-
-async function createGlobalSettings() {
-    const publicSettings = safeLoad(Assets.getText('defaults/public.yaml'));
-    const privateSettings = safeLoad(Assets.getText(
-        process.env.MODE === 'development'
-            ? 'defaults/private.dev.yaml'
-            : process.env.ORCHESTRATOR === 'gke' ? 'defaults/private.gke.yaml' : 'defaults/private.yaml',
-    ));
-
-    const settings = {
-        public: {
-            backgroundImages: publicSettings.backgroundImages || [],
-            defaultNLUConfig: safeDump({ pipeline: publicSettings.pipeline }),
-        },
-        private: {
-            bfApiHost: privateSettings.bfApiHost || '',
-            defaultEndpoints: safeDump(privateSettings.endpoints),
-            defaultCredentials: safeDump(privateSettings.credentials)
-                .replace(/{SOCKET_HOST}/g, process.env.SOCKET_HOST || 'botfront.io'),
-            defaultPolicies: safeDump({ policies: privateSettings.policies }),
-            defaultDefaultDomain: safeDump(privateSettings.defaultDomain),
-            webhooks: privateSettings.webhooks,
-        },
-    };
-    await GlobalSettings.insert({ _id: 'SETTINGS', settings });
-}
 
 async function createAdminUser() {
     // create admin on startup
@@ -72,12 +52,7 @@ async function createAdminUser() {
                 roles: [{ roles: ['global-admin'], project: 'GLOBAL' }],
                 profile: { firstName: 'admin', lastName: 'admin', preferredLanguage: 'en' },
             }, adminPassword);
-        } catch (error) {
-        }
-        const currentGlobalSettings = GlobalSettings.findOne({ _id: 'SETTINGS' });
-        if (currentGlobalSettings == null) {
-            await createGlobalSettings();
-        }
+        } catch (error) {}
     }
 }
 
@@ -114,7 +89,7 @@ app.get('/api', (req, res, next) => {
         }
  *
 */
-app.put('/api/users', authMW(restApiToken), async (req, res, next) => {
+app.put('/api/users', async (req, res, next) => {
   const inputs = req.body;
 
   if (inputs.email == null || inputs.password == null) {
@@ -130,7 +105,7 @@ app.put('/api/users', authMW(restApiToken), async (req, res, next) => {
   const user = {
     email: inputs.email,
     roles: inputs.roles ?? [{ roles: ['global-admin'], project: 'GLOBAL' }],
-    profile: inputs.profile ?? { firstName: 'generated', 'lastName': 'generated', preferredLanguage: 'en' }
+    profile: inputs.profile ?? { firstName: 'generated', lastName: 'generated', preferredLanguage: 'en' }
   };
 
   try {
@@ -156,28 +131,39 @@ app.put('/api/users', authMW(restApiToken), async (req, res, next) => {
         }
  *
 */
-app.put('/api/projects', authMW(restApiToken), async (req, res, next) => {
-  const inputs = req.body;
+app.put('/api/projects', async (req, res, next) => {
+    const inputs = req.body;
 
-    if (inputs.name == null || typeof inputs.name !== 'string' || inputs.name.match(/^[a-zA-Z0-9]+$/) == null
-    || inputs.nameSpace == null || typeof inputs.nameSpace !== 'string' || inputs.nameSpace.match(/^bf-[a-zA-Z0-9-]+$/) == null
-    || inputs.baseUrl == null || typeof inputs.baseUrl !== 'string' || inputs.baseUrl.match(/^(http|https):\/\//) == null
-    || (inputs.projectId != null && (typeof inputs.projectId !== 'string' || inputs.projectId.length < 1))
+    const isNameInvalid = inputs.name == null || typeof inputs.name !== 'string' || inputs.name.match(/^[a-zA-Z0-9]+$/) == null;
+    const isNameSpaceInvalid = inputs.nameSpace == null || typeof inputs.nameSpace !== 'string' || inputs.nameSpace.match(/^bf-[a-zA-Z0-9-]+$/) == null;
+    const isProjectIdInvalid = inputs.projectId != null && (typeof inputs.projectId !== 'string' || inputs.projectId.length < 1);
+    const isBaseUrlInvalid = inputs.baseUrl == null || typeof inputs.baseUrl !== 'string' || inputs.baseUrl.match(/^(http|https):\/\//) == null;
+    const isHostInvalid = inputs.host == null || typeof inputs.host !== 'string' || inputs.host.match(/^(http|https):\/\//) == null;
+    const isTokenInvalid = (inputs.token != null && (typeof inputs.token !== 'string' || inputs.token.length < 1));
+    const isActionEndpointInvalid = inputs.actionEndpoint == null || typeof inputs.actionEndpoint !== 'string' || inputs.actionEndpoint.match(/^(http|https):\/\//) == null;
+
+    const hasProd = inputs.hasProd === true;
+    const isProdBaseUrlInvalid = inputs.prodBaseUrl == null || typeof inputs.prodBaseUrl !== 'string' || inputs.prodBaseUrl.match(/^(http|https):\/\//) == null;
+    const isProdActionEndpointInvalid = inputs.prodActionEndpoint == null || typeof inputs.prodActionEndpoint !== 'string' || inputs.prodActionEndpoint.match(/^(http|https):\/\//) == null;
+
+    if (isNameInvalid || isNameSpaceInvalid || isProjectIdInvalid || isBaseUrlInvalid || isHostInvalid || isTokenInvalid || isActionEndpointInvalid
+      // prod options
+      || (hasProd && (isProdBaseUrlInvalid || isProdActionEndpointInvalid))
     ) {
         res.status(400).send('Malformed or missing inputs');
         return;
     }
 
     try {
-        const projectId = await projectsService.createProject(inputs.name, inputs.nameSpace, inputs.baseUrl, inputs.projectId);
-
-        if (projectId == null) {
-            res.send({ projectId, alreadyExists: true });
-            return;
-        }
-
+        const projectId = await createProject(inputs);
         res.send({ projectId });
     } catch (error) {
+        const errorMessage = error?.writeErrors?.[0].err.errmsg;
+        if (errorMessage && errorMessage.match(/duplicate key error/)) {
+            res.send({ projectId: inputs.projectId, alreadyExists: true });
+            return;
+        }
+  
         console.log({ error });
         res.status(500).send({ error });
     }
@@ -196,7 +182,7 @@ app.put('/api/projects', authMW(restApiToken), async (req, res, next) => {
         }
  *
 */
-app.post('/api/projects/import', authMW(restApiToken), async (req, res, next) => {
+app.post('/api/projects/import', async (req, res, next) => {
   if (req.body.projectId == null || req.body.projectId.length < 1) {
     res.status(400).send({ error: 'Provide a projectId' });
     return;
@@ -220,6 +206,7 @@ app.post('/api/projects/import', authMW(restApiToken), async (req, res, next) =>
 
         res.send({ projectId });
     } catch (error) {
+        console.log({ error });
         const statusCode = error.statusCode || 500;
         res.status(statusCode).send({ error: error.message });
     }
