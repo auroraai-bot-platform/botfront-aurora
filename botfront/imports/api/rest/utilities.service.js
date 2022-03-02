@@ -96,7 +96,7 @@ function sleep(ms) {
 }
 
 export async function waitUntilDatabaseIsReady() {
-  const sleepInterval = 2000;
+  const sleepInterval = 4000;
   let i = 10;
   while (await isDatabaseReady() === false && i > 0) {
     await sleep(sleepInterval);
