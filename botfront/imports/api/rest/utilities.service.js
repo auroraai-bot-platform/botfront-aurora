@@ -1,5 +1,7 @@
 import { formatError } from '../../lib/utils';
 import { GlobalSettings } from '../globalSettings/globalSettings.collection';
+import { S3Client, CreateBucketCommand } from '@aws-sdk/client-s3';
+import { region, endpoint } from './index';
 
 export function getUser() {
   return {
@@ -30,7 +32,7 @@ export function authMW(token) {
 }
 
 export function getS3Url(region, bucket, key) {
-  return process.env.AWS_LOCAL? `${process.env.AWS_ENDPOINT}/${bucket}/${key}`: `https://s3.${region}.amazonaws.com/${bucket}/${key}`;
+  return endpoint? `${endpoint}/${bucket}/${key}`: `https://s3.${region}.amazonaws.com/${bucket}/${key}`;
 }
 
 
@@ -57,5 +59,16 @@ export function setStaticWebhooks(images, deploy) {
     GlobalSettings.update({ _id: 'SETTINGS' }, { $set: settings });
   } catch (error) {
     console.log({ error })
+  }
+}
+
+export async function createDummyBuckets(value) {
+  const client = new S3Client({endpoint, region});
+  try {
+    const data = await client.send(new CreateBucketCommand({Bucket: value}));
+    console.log('Success', data);
+    return data;
+  } catch (err) {
+    console.log('error', err);
   }
 }

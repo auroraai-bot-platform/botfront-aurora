@@ -1,7 +1,7 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
 import {promises as fs} from 'fs';
-import { authMW, setStaticWebhooks } from './utilities.service';
+import { authMW, createDummyBuckets, setStaticWebhooks } from './utilities.service';
 import { createUser } from './users.service';
 import projectsService, { importProject } from './projects.service';
 import { deleteFile, uploadFile } from './files.service';
@@ -11,7 +11,7 @@ import { GlobalSettings } from '../globalSettings/globalSettings.collection';
 import { v4 as uuidv4 } from 'uuid';
 
 
-export const region = process.env.region || 'eu-north-1';
+export const region = process.env.AWS_DEFAULT_REGION || 'eu-north-1';
 
 export const adminEmail = process.env.ADMIN_USER;
 export const adminPassword = process.env.ADMIN_PASSWORD;
@@ -35,6 +35,10 @@ Meteor.startup(() => {
   const images = `http://localhost:${port}/api/images`;
   const deploy = `http://localhost:${port}/api/deploy`;
   setStaticWebhooks(images, deploy);
+  if (endpoint) {
+    const buckets = [fileBucket, modelBucket];
+    buckets.forEach(createDummyBuckets);
+  }
 });
 
 async function createGlobalSettings() {
