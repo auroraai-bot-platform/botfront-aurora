@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 
 export const region = process.env.AWS_DEFAULT_REGION || 'eu-north-1';
+export const endpoint = process.env.AWS_ENDPOINT || '';
 
 export const adminEmail = process.env.ADMIN_USER;
 export const adminPassword = process.env.ADMIN_PASSWORD;
