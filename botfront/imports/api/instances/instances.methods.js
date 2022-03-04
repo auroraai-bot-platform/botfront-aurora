@@ -26,7 +26,7 @@ import { getFragmentsAndDomain } from '../../lib/story.utils';
 import { dropNullValuesFromObject } from '../../lib/client.safe.utils';
 import { Projects } from '../project/project.collection';
 
-const removeUserFromEntitySteps = (stories_or_rules) => {
+export const removeUserFromEntitySteps = (stories_or_rules) => {
     stories_or_rules.forEach(story => {
         story.steps.forEach(step => {
             if (step?.entities?.length > 0)
@@ -455,17 +455,6 @@ if (Meteor.isServer) {
                 rasa_payload.forms = reformatted_form;
                 
                 // Form restructuring ends.
-
-
-                // TODO: what are fragments in rasa-for-botfront? Official rasa
-                // doesn't recognize these.
-                /*
-                payload.fragments = yaml.safeDump(
-                    { stories, rules },
-                    { skipInvalid: true },
-                );
-                payload.load_model_after = true;
-                */
 
                 const trainingClient = await createAxiosForRasa(projectId,
                     { timeout: process.env.TRAINING_TIMEOUT || 0, responseType: 'arraybuffer' });

@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import { Meteor } from 'meteor/meteor';
 import { expect } from 'chai';
-import { getNluDataAndConfig } from './instances.methods';
+import { getNluDataAndConfig, removeUserFromEntitySteps } from './instances.methods';
 import { Projects } from '../project/project.collection';
 import { createTestUser } from '../testUtils';
 // eslint-disable-next-line import/named
@@ -11,6 +11,7 @@ import { Instances } from './instances.collection';
 import { createAxiosForRasa } from '../../lib/utils';
 import { insertExamples } from '../graphql/examples/mongo/examples';
 import Examples from '../graphql/examples/examples.model';
+import { off } from 'process';
 
 const nluModel = {
     _id: 'test_model',
@@ -69,23 +70,21 @@ const nluModel = {
 
 const allExamples = [
     {
-        text: 'that\'s all goodbye',
         intent: 'chitchat.bye',
-        metadata: { canonical: true, language: 'en' },
-        entities: [],
+        examples: ["that's all goodbye"]
     },
     {
-        text: 'hello good evening',
         intent: 'chitchat.greet',
-        metadata: { canonical: true, language: 'en' },
-        entities: [],
+        examples: ['hello good evening']
     },
     {
-        text: 'tt',
         intent: 'chitchat.tell_me_a_joke',
-        metadata: { canonical: true, language: 'en' },
-        entities: [],
+        examples: ['tt']
     },
+    {
+        examples: ['New-York', 'the big apple'],
+        synonym: 'NYC'
+    }
 ];
 
 const testProject = {
@@ -105,18 +104,91 @@ const testProject = {
     training: { instanceStatus: 'notTraining' },
 };
 
-const selectedExamples = allExamples.filter(({ intent }) => ['chitchat.greet', 'chitchat.bye'].includes(intent));
+const selectedExamples = [
+    { intent: 'chitchat.bye', examples: ["that's all goodbye"] },
+    { intent: 'chitchat.greet', examples: [ 'hello good evening' ] },
+    { synonym: 'NYC', examples: [ 'New-York', 'the big apple' ] }
+];
 const selectedExampleAndDummy = [
-    ...allExamples.filter(({ intent }) => ['chitchat.greet'].includes(intent)),
-    {
-        text: '0dummy0azerty0',
-        intent: 'dumdum0',
-        metadata: { canonical: true, language: 'en' },
-        entities: [],
-    },
+    { intent: 'chitchat.greet', examples: [ 'hello good evening' ] },   
+    { intent: 'dumdum0', examples: [ '0dummy0azerty0' ] },
+    { synonym: 'NYC', examples: [ 'New-York', 'the big apple' ] }
 ];
 
 if (Meteor.isTest) {
+
+    describe('removeUserFromEntitySteps', function () {
+        this.timeout(15000);
+        it('should remove user field from steps with entities', async function () {
+            const stories = [
+                { 
+                    story: 'story 1',
+                    steps: [
+                        {
+                            intent: 'greet',
+                            user: 'hello hello from Tampere',
+                            entities: [ { city: 'Tampere' } ]
+                        },
+                        { action: 'utter_greet' },
+                        {
+                            intent: 'bye',
+                            user: 'bye bye',
+                            entities: []
+                        }
+                    ],
+                    story: 'story 2',
+                    steps: [
+                        {
+                            intent: 'greet',
+                            user: 'hello hello from Oulu',
+                            entities: [ { city: 'Oulu' } ]
+                        },
+                        { action: 'utter_greet' },
+                        {
+                            intent: 'bye',
+                            user: 'bye bye',
+                            entities: []
+                        }
+                    ]
+                }
+            ];
+
+            const stories_expected = [
+                { 
+                    story: 'story 1',
+                    steps: [
+                        {
+                            intent: 'greet',
+                            entities: [ { city: 'Tampere' } ]
+                        },
+                        { action: 'utter_greet' },
+                        {
+                            intent: 'bye',
+                            user: 'bye bye',
+                            entities: []
+                        }
+                    ],
+                    story: 'story 2',
+                    steps: [
+                        {
+                            intent: 'greet',
+                            entities: [ { city: 'Oulu' } ]
+                        },
+                        { action: 'utter_greet' },
+                        {
+                            intent: 'bye',
+                            user: 'bye bye',
+                            entities: []
+                        }
+                    ]
+                }
+            ];
+
+            removeUserFromEntitySteps(stories)
+            expect(stories).to.deep.equal(stories_expected);
+        });
+    });
+
     describe('getNluDataAndConfig', function () {
         this.timeout(15000);
         if (Meteor.isServer) {
@@ -140,27 +212,25 @@ if (Meteor.isTest) {
             });
 
             it('should generate a payload with all the nlu when there are no selected intents', async function () {
-                const {
-                    rasa_nlu_data: { common_examples },
-                } = await getNluDataAndConfig('test', 'en');
-                expect(common_examples).to.deep.equal(allExamples);
+                const data = await getNluDataAndConfig('test', 'en')
+                expect(data.nlu).to.deep.equal(allExamples);
             });
 
             it('should generate a payload with only selected the nlu when there are selected intents', async function () {
-                const {
-                    rasa_nlu_data: { common_examples },
-                } = await getNluDataAndConfig('test', 'en', [
+                const data = await getNluDataAndConfig('test', 'en', [
                     'chitchat.greet',
                     'chitchat.bye',
                 ]);
-                expect(common_examples).to.deep.equal(selectedExamples);
+                expect(data.nlu).to.deep.equal(selectedExamples);
             });
 
             it('should generate a payload with only one selected intent and a dummy one ', async function () {
-                const {
-                    rasa_nlu_data: { common_examples },
-                } = await getNluDataAndConfig('test', 'en', ['chitchat.greet']);
-                expect(common_examples).to.deep.equal(selectedExampleAndDummy);
+                const data = await getNluDataAndConfig('test', 'en', ['chitchat.greet']);
+                const util = require('util');
+                console.log(util.inspect(data.nlu, {showHidden: false, depth: null, colors: true}));
+                console.log("---"); 
+                console.log(selectedExampleAndDummy);
+                expect(data.nlu).to.deep.equal(selectedExampleAndDummy);
             });
         }
     });
