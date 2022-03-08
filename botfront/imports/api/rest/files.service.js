@@ -1,8 +1,6 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getS3Url } from './utilities.service';
-import { region } from './index';
-
-const endpoint = process.env.AWS_ENDPOINT || '';
+import { region, endpoint } from './index';
 
 export async function uploadFile(outputBucket, key, data) {
 
