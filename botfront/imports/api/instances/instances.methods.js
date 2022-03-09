@@ -26,6 +26,14 @@ import { getFragmentsAndDomain } from '../../lib/story.utils';
 import { dropNullValuesFromObject } from '../../lib/client.safe.utils';
 import { Projects } from '../project/project.collection';
 
+export const removeUserFromEntitySteps = (stories_or_rules) => {
+    stories_or_rules.forEach(story => {
+        story.steps.forEach(step => {
+            if (step?.entities?.length > 0)
+                delete step["user"];
+        })
+    });
+}
 
 const replaceMongoReservedChars = (input) => {
     if (Array.isArray(input)) return input.map(replaceMongoReservedChars);
@@ -153,9 +161,6 @@ export const getNluDataAndConfig = async (projectId, language, intents) => {
         examples,
     }));
 
-    /* Teemu Hirsimäki 14.10.2021: Currently we create a simplified payload without
-    entities and other extra features.
-    */
     common_examples = common_examples.map(
         ({
             text, intent, entities = [], metadata: { canonical, ...metadata } = {},
@@ -371,6 +376,12 @@ if (Meteor.isServer) {
                     gazette: Object.values(payload.gazette), // atm shelf-rasa only supports one language
                 };
 
+                // AAIC-323 3.3.2022: Rasa fails to process entities in story steps correctly, if
+                // the step contains both entities and "user" field. Thus, we remove the user field
+                // from steps that contain entities.
+                removeUserFromEntitySteps(rasa_payload.stories);
+                removeUserFromEntitySteps(rasa_payload.rules);
+
                 // Form restructuring start:
                 // Form definition in domain updated to support current version of Rasa 2.8
                 // We stack slots under required_slots
@@ -444,17 +455,6 @@ if (Meteor.isServer) {
                 rasa_payload.forms = reformatted_form;
                 
                 // Form restructuring ends.
-
-
-                // TODO: what are fragments in rasa-for-botfront? Official rasa
-                // doesn't recognize these.
-                /*
-                payload.fragments = yaml.safeDump(
-                    { stories, rules },
-                    { skipInvalid: true },
-                );
-                payload.load_model_after = true;
-                */
 
                 const trainingClient = await createAxiosForRasa(projectId,
                     { timeout: process.env.TRAINING_TIMEOUT || 0, responseType: 'arraybuffer' });
