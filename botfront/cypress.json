@@ -20,7 +20,6 @@
     "env": {
         "RASA_URL": "http://localhost:5005",
         "VIDEO": "false",
-        "SCREENSHOTS": "true",
-        "REST_API_TOKEN": "TEST_TOKEN"
+        "SCREENSHOTS": "true"
     }
 }

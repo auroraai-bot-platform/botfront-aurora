@@ -489,7 +489,10 @@ Migrations.add({
                 pinned: true,
             });
         });
-        Stories.update({}, { $set: { status: 'published' } }, { multi: true });
+        
+        try {
+            Stories.update({}, { $set: { status: 'published' } }, { multi: true });
+        } catch {}
     },
 });
 
