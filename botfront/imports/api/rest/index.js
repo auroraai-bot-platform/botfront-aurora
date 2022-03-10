@@ -2,13 +2,14 @@ import express from 'express';
 import fileUpload from 'express-fileupload';
 import { promises as fs } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import { createGlobalSettings, setStaticWebhooks, informCdkSuccess, waitUntilDatabaseIsReady } from './utilities.service';
+import { createGlobalSettings, createDummyBuckets, setStaticWebhooks, informCdkSuccess, waitUntilDatabaseIsReady } from './utilities.service';
 import { createUser } from './users.service';
 import { createProject, importProject } from './projects.service';
 import { deleteFile, uploadFile } from './files.service';
 
 
-export const region = process.env.region || 'eu-north-1';
+export const region = process.env.AWS_DEFAULT_REGION || 'eu-north-1';
+export const endpoint = process.env.AWS_ENDPOINT || '';
 
 export const adminEmail = process.env.ADMIN_USER;
 export const adminPassword = process.env.ADMIN_PASSWORD;
@@ -37,6 +38,10 @@ Meteor.startup(async () => {
       const images = `http://localhost:${port}/api/images`;
       const deploy = `http://localhost:${port}/api/deploy`;
       setStaticWebhooks(images, deploy);
+      if (endpoint) {
+        const buckets = [fileBucket, modelBucket];
+        buckets.forEach(createDummyBuckets);
+      }
 
     } catch (error) {
       console.log({ error });
@@ -324,11 +329,13 @@ app.delete('/api/images', async (req, res, next) => {
 app.post('/api/deploy', async (req, res, next) => {
   const projectId = req.body.projectId;
   const path = req.body.path || '/app/models';
-
+  const modelFileName = req.body.modelFileName;
+  const key = `model-${projectId}.tar.gz`;
+  
   let data;
   
   try {
-    data = await fs.readFile(`${path}/model-${projectId}.tar.gz`);
+    data = await fs.readFile(`${path}/${modelFileName}`);
   } catch (error) {
     console.log(error);
   }
@@ -338,14 +345,11 @@ app.post('/api/deploy', async (req, res, next) => {
     return;
   }
 
-  const key = `model-${projectId}.tar.gz`;
-
   try {
     const fileUrl = await uploadFile(modelBucket, key, data);
     res.json({ uri: fileUrl });
   } catch (error) {
-    console.log({ error });
-    res.sendStatus(400);
+    res.status(400).send('Upload failed');
   }
 });
 

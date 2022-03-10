@@ -493,6 +493,7 @@ if (Meteor.isServer) {
                 }
 
                 Meteor.call('project.markTrainingStopped', projectId, 'success');
+                return trainingResponse.headers.filename;
             } catch (e) {
                 console.log(e); // eslint-disable-line no-console
                 const error = `${e.message || e.reason} ${(

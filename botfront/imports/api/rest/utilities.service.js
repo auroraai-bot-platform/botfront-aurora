@@ -2,6 +2,8 @@ import axios from 'axios';
 import { safeLoad, safeDump } from 'js-yaml';
 import { MongoInternals } from 'meteor/mongo';
 import { GlobalSettings } from '../globalSettings/globalSettings.collection';
+import { S3Client, CreateBucketCommand } from '@aws-sdk/client-s3';
+import { region, endpoint } from './index';
 
 export function getUser() {
   return {
@@ -17,7 +19,7 @@ export function getUser() {
 
 
 export function getS3Url(region, bucket, key) {
-  return `https://s3.${region}.amazonaws.com/${bucket}/${key}`;
+  return endpoint? `${endpoint}/${bucket}/${key}`: `https://s3.${region}.amazonaws.com/${bucket}/${key}`;
 }
 
 export async function createGlobalSettings() {
@@ -83,6 +85,16 @@ export function setStaticWebhooks(images, deploy) {
   }
 }
 
+export async function createDummyBuckets(value) {
+  const client = new S3Client({endpoint, region});
+  try {
+    const data = await client.send(new CreateBucketCommand({Bucket: value}));
+    console.log('Success', data);
+    return data;
+  } catch (err) {
+    console.log('error', err);
+  }
+}
 
 export async function informCdkSuccess(url) {
   if (url) {

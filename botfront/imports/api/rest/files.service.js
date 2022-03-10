@@ -1,6 +1,6 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getS3Url } from './utilities.service';
-import { region } from './index';
+import { region, endpoint } from './index';
 
 export async function uploadFile(outputBucket, key, data) {
 
@@ -8,13 +8,13 @@ export async function uploadFile(outputBucket, key, data) {
 
   const fileUrl = getS3Url(region, outputBucket, key);
 
-  const s3 = new S3Client({ region });
+  const s3 = new S3Client({ region, endpoint, forcePathStyle: endpoint? true : false });
   await s3.send(new PutObjectCommand({ Bucket: outputBucket, Key: key, Body: buffer }));
 
   return fileUrl;
 }
 
 export async function deleteFile(bucket, key) {
-  const s3 = new S3Client({ region });
+  const s3 = new S3Client({ region, endpoint, forcePathStyle: endpoint? true : false });
   await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 }
