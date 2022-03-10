@@ -49,7 +49,7 @@ export const CorePolicySchema = new SimpleSchema({
 
 Meteor.startup(() => {
     if (Meteor.isServer) {
-        CorePolicies._ensureIndex({ projectId: 1, updatedAt: -1 });
+        CorePolicies.createIndex({ projectId: 1, updatedAt: -1 });
     }
 });
 

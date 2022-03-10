@@ -14,7 +14,7 @@ Endpoints.deny({
 
 Meteor.startup(() => {
     if (Meteor.isServer) {
-        Endpoints._ensureIndex({ projectId: 1, updatedAt: -1 });
+        Endpoints.createIndex({ projectId: 1, updatedAt: -1 });
     }
 });
 

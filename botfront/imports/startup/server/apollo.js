@@ -20,13 +20,17 @@ const handleUploads = options => async (req, res, next) => {
 const MONGO_URL = process.env.MONGO_URL || `mongodb://localhost:${(process.env.METEOR_PORT || 3000) + 1}/meteor`;
 
 export const connectToDb = () => {
-    mongoose.connect(MONGO_URL, {
-        keepAlive: 1,
-        useUnifiedTopology: 1,
-        useFindAndModify: 0,
-        useNewUrlParser: 1,
-        useCreateIndex: 1,
-    }).catch(
+    const options = {
+        useUnifiedTopology: true,
+        useFindAndModify: false,
+        useNewUrlParser: true,
+        useCreateIndex: true,
+        poolSize: 10,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        family: 4
+    };
+    mongoose.connect(MONGO_URL, options).catch(
         error => {throw new Error(`unable to connect to database: ${MONGO_URL}, Message: ${error}`)}
     );
     mongoose.connection.on('error', err => {

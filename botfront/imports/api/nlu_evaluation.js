@@ -25,8 +25,8 @@ export const EvaluationSchema = new SimpleSchema({
 });
 
 if (Meteor.isServer) {
-    Evaluations._ensureIndex({ modelId: 1, projectId: 1, language: 1 });
-    Evaluations._ensureIndex({ projectId: 1, language: 1 });
+    Evaluations.createIndex({ modelId: 1, projectId: 1, language: 1 });
+    Evaluations.createIndex({ projectId: 1, language: 1 });
     Meteor.publish('nlu_evaluations', function(projectId, language) { // eslint-disable-line
         checkIfCan('nlu-data:r', projectId);
         check(projectId, String);

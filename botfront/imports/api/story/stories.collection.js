@@ -27,7 +27,7 @@ Meteor.startup(() => {
         } catch {
             // don't delete it if it doesn't exist
         }
-        Stories._ensureIndex({ textIndex: 'text' });
+        Stories.createIndex({ textIndex: 'text' });
     }
 });
 
