@@ -32,7 +32,6 @@ export function createProject(project) {
         disabled: false,
         name: project.name,
         namespace: project.nameSpace,
-        defaultLanguage,
     };
 
     if (project.projectId != null) {
@@ -206,6 +205,8 @@ function insertProject(item) {
         ...item,
         defaultDomain: { content: 'slots:\n  disambiguation_message:\n    type: any\n    influence_conversation: false\nactions:\n  - action_botfront_disambiguation\n  - action_botfront_disambiguation_followup\n  - action_botfront_fallback\n  - action_botfront_mapping' },
         languages: [defaultLanguage],
+        defaultLanguage,
+        disabled: false,
         chatWidgetSettings: {
             title: item.name,
             subtitle: '',
