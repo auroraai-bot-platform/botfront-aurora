@@ -73,6 +73,7 @@ if (Meteor.isServer) {
         Roles.addRolesToParent('nlu-data:r', 'nlu-data:w');
 
         createRole('nlu-data:x', 'Can train a model.');
+        createRole('deploy:x', 'Can deploy model to production.')
     
         createRole('responses:r', 'Can read bot responses.');
         createRole('responses:w', 'Can create, delete and edit bot responses. Extends responses:r.');
