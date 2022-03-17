@@ -73,8 +73,7 @@ if (Meteor.isServer) {
         Roles.addRolesToParent('nlu-data:r', 'nlu-data:w');
 
         createRole('nlu-data:x', 'Can train a model.');
-        createRole('deploy:x', 'Can deploy model to production.')
-    
+        
         createRole('responses:r', 'Can read bot responses.');
         createRole('responses:w', 'Can create, delete and edit bot responses. Extends responses:r.');
         Roles.addRolesToParent('responses:r', 'responses:w');
@@ -116,6 +115,9 @@ if (Meteor.isServer) {
         );
         Roles.addRolesToParent(['projects:r', 'nlu-data:x', 'analytics:w', 'incoming:w', 'triggers:w', 'stories:w', 'responses:w', 'nlu-data:w', 'import:x', 'share:x', 'git-credentials:w'], 'projects:w');
 
+        createRole('deploy:x', 'Can deploy model to production. Extends projects:w')
+        Roles.addRolesToParent('projects:w', 'deploy:x')
+
         createRole('resources:r', 'Can access project deployment environment, instance, and endpoint settings. Extends projects:r');
         Roles.addRolesToParent('projects:r', 'resources:r');
         createRole('resources:w', 'Can access and edit project deployment environment, instance, and endpoint settings. extends `projects:w`, `resources:r`');
@@ -136,7 +138,7 @@ if (Meteor.isServer) {
         Roles.addRolesToParent(['users:r'], 'users:w');
 
         createRole('project-admin', 'Can access and edit all resources of a project. Extends `projects:w`, `users:w`  ');
-        Roles.addRolesToParent(['projects:w', 'users:w'], 'project-admin');
+        Roles.addRolesToParent(['projects:w', 'users:w', 'deploy:x'], 'project-admin');
         createRole('global-admin', 'Can access and edit all resources of all projects and edit global settigs. Extends All permissions ');
         Roles.addRolesToParent(['project-admin', 'roles:w', 'global-settings:w', 'resources:w'], 'global-admin');
     };

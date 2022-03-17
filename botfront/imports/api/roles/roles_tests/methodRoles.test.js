@@ -59,6 +59,11 @@ if (Meteor.isServer) {
 */
     const methods = [
         {
+            name: 'deploy.model',
+            roles: ['deploy:x', 'project-admin', 'global-admin'],
+            args: [projectId]
+        },
+        {
             name: 'conversations.markAsRead',
             roles: readers.incoming,
             before: async (done) => {
@@ -503,7 +508,6 @@ if (Meteor.isServer) {
         },
     ];
 
-
     const setUserScopes = async (userRoles, scope) => {
         await setScopes(formatRoles(userRoles, scope), userId);
     };
@@ -569,9 +573,10 @@ if (Meteor.isServer) {
                 } else done();
             });
             roles.forEach((role) => {
-                it(`calling ${method.name} as ${role} global scope`, (done) => {
+                let should_succeed = method.roles.includes(role);
+                it(`calling ${method.name} as ${role} global scope, expecting ${should_succeed}`, (done) => {
                     testMethod(method.name, role, 'GLOBAL', method.args, (e = {}) => {
-                        if (method.roles.includes(role)) {
+                        if (should_succeed) {
                             expect(e.error).to.not.equal('403');
                         } else {
                             expect(e.error).to.be.equal('403');
@@ -579,9 +584,10 @@ if (Meteor.isServer) {
                         done();
                     });
                 });
-                it(`calling ${method.name} as ${role} project scope`, (done) => {
+                should_succeed = method.roles.includes(role) && !method.rejectProjectScope;
+                it(`calling ${method.name} as ${role} project scope, expecting ${should_succeed}`, (done) => {    
                     testMethod(method.name, role, 'bf', method.args, (e = {}) => {
-                        if (method.roles.includes(role) && !method.rejectProjectScope) {
+                        if (should_succeed) {
                             expect(e.error).to.not.equal('403');
                         } else {
                             expect(e.error).to.be.equal('403');
@@ -589,7 +595,7 @@ if (Meteor.isServer) {
                         done();
                     });
                 });
-                it(`calling ${method.name} as ${role} wrong project scope`, (done) => {
+                it(`calling ${method.name} as ${role} wrong project scope, expecting false`, (done) => {
                     testMethod(method.name, role, 'DNE', method.args, (e = {}) => {
                         expect(e.error).to.be.equal('403');
                         done();
