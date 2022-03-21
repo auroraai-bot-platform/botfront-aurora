@@ -395,6 +395,7 @@ if (Meteor.isServer) {
                 const data = {
                     fr: JSON.parse(Assets.getText('nlu/nlu-chitchat-fr.json')),
                     en: JSON.parse(Assets.getText('nlu/nlu-chitchat-en.json')),
+                    fi: JSON.parse(Assets.getText('nlu/nlu-chitchat-fi.json')),
                 };
                 const projectId = await Meteor.callWithPromise('project.insert', {
                     name: 'Chitchat',
