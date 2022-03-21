@@ -197,6 +197,7 @@ class TrainButton extends React.Component {
                 <Dropdown.Menu>
                     {this.renderTestingOptions()}
                     {deployOptions.map(opt => (
+                        <Can I="deploy:x">
                         <React.Fragment key={opt.key}>
                             <Dropdown.Item
                                 data-cy='trigger-deployment'
@@ -221,6 +222,7 @@ class TrainButton extends React.Component {
                                 content={`Do you really want to deploy your project to ${opt.value}`}
                             />
                         </React.Fragment>
+                        </Can>
                     ))}
                 </Dropdown.Menu>
             </Dropdown>

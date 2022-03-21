@@ -26,6 +26,20 @@
         {
             "type": "node",
             "request": "launch",
+            "cwd": "${workspaceFolder}/botfront",
+            "name": "Meteor: Test Rest",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "test-rest"
+            ],
+            "outputCapture": "std",
+            "port": 9229,
+            "timeout": 90000
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Debug API compose",
             "program": "${workspaceFolder}/api/app.js",
             "console": "integratedTerminal",

@@ -235,6 +235,7 @@ if (Meteor.isServer) {
 
         async 'deploy.model'(projectId, target, isTest = false) {
             checkIfCan('nlu-data:x', projectId);
+            checkIfCan('deploy:x', projectId);
             check(target, String);
             check(projectId, String);
             check(isTest, Boolean);
