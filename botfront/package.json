@@ -56,6 +56,7 @@
     "deep-equal-in-any-order": "^1.0.28",
     "dotenv": "^7.0.0",
     "emoji-tree": "^1.1.2",
+    "express": "^4.17.3",
     "express-fileupload": "^1.2.1",
     "fast-crc32c": "^1.0.4",
     "file-saver": "^2.0.2",

@@ -25,10 +25,7 @@ export const connectToDb = () => {
         useFindAndModify: false,
         useNewUrlParser: true,
         useCreateIndex: true,
-        poolSize: 10,
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
-        family: 4
+        autoIndex: true
     };
     mongoose.connect(MONGO_URL, options).catch(
         error => {throw new Error(`unable to connect to database: ${MONGO_URL}, Message: ${error}`)}

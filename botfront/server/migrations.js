@@ -294,11 +294,19 @@ Migrations.add({
     // Migrates to roles v3
     up: () => {
         // eslint-disable-next-line no-underscore-dangle
-        Roles._forwardMigrate2();
+        try {
+            Roles._forwardMigrate2();
+        } catch (error) {
+            console.error('Migration 9 up failed');
+        }
     },
     down: () => {
         // eslint-disable-next-line no-underscore-dangle
-        Roles._backwardMigrate2();
+        try {
+            Roles._backwardMigrate2();
+        } catch (error) {
+            console.error('Migration 9 down failed');
+        }
     },
 });
 

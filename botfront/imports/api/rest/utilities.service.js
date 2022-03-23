@@ -55,7 +55,7 @@ export async function createGlobalSettings() {
           webhooks: privateSettings.webhooks,
       },
   };
-  await GlobalSettings.insert({ _id: 'SETTINGS', settings });
+  GlobalSettings.insert({ _id: 'SETTINGS', settings });
 }
 
 
