@@ -79,7 +79,7 @@
     "prop-types": "^15.7.2",
     "query-string": "^5.1.0",
     "random-seed": "^0.3.0",
-    "rasa-webchat": "github:auroraai-bot-platform/rasa-webchat#master",
+    "rasa-webchat": "github:auroraai-bot-platform/rasa-webchat#main",
     "react": "^16.13.1",
     "react-ace": "^6.1.4",
     "react-apollo": "^2.5.8",
