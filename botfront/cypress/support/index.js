@@ -75,7 +75,7 @@ afterEach(abortEarly);
 Cypress.Commands.add(
     'login',
     ({
-        visit = true, email, password = 'Aaaaaaaa00', admin = true,
+        visit = true, email, password = 'Test1234!', admin = true,
     } = {}) => {
         const withEmail = email || admin ? ADMIN_EMAIL : SPECIAL_USER_EMAIL;
         if (visit) cy.visit('/');
@@ -226,9 +226,17 @@ Cypress.Commands.add('deleteResponse', (projectId, responseName) => {
     cy.get('[data-cy=remove-response-0]').click();
 });
 
-Cypress.Commands.add('deleteProject', projectId => cy
+/* Cypress.Commands.add('deleteProject', projectId => cy
     .visit('/')
     .then(() => cy.login())
+    .then(() => cy.window())
+    .then(({ Meteor }) => Meteor.callWithPromise('project.delete', projectId, {
+        failSilently: true,
+        bypassWithCI: true,
+    }))); */
+
+Cypress.Commands.add('deleteProject', projectId => cy
+    .login()
     .then(() => cy.window())
     .then(({ Meteor }) => Meteor.callWithPromise('project.delete', projectId, {
         failSilently: true,
@@ -392,7 +400,7 @@ Cypress.Commands.add('createUser', (lastName, email, roles, projectId) => {
         )
         .then(
             ({ Meteor, result }) => new Cypress.Promise((resolve, reject) => {
-                Meteor.call('user.changePassword', result, 'Aaaaaaaa00', (err) => {
+                Meteor.call('user.changePassword', result, 'Test1234!', (err) => {
                     if (err) {
                         reject(err);
                     }
