@@ -224,7 +224,7 @@ function generateCredentials(baseUrl) {
     session_persistence: true
     base_url: '${baseUrl}'
     socket_path: /socket.io/
-    rasa_addons.core.channels.bot_regression_test.BotRegressionTestInput: {}`;
+rasa_addons.core.channels.bot_regression_test.BotRegressionTestInput: {}`;
 }
 
 function createCredentials(projectId, baseUrl, prodBaseUrl, hasProd) {
