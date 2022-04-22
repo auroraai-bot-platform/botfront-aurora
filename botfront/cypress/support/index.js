@@ -226,15 +226,6 @@ Cypress.Commands.add('deleteResponse', (projectId, responseName) => {
     cy.get('[data-cy=remove-response-0]').click();
 });
 
-/* Cypress.Commands.add('deleteProject', projectId => cy
-    .visit('/')
-    .then(() => cy.login())
-    .then(() => cy.window())
-    .then(({ Meteor }) => Meteor.callWithPromise('project.delete', projectId, {
-        failSilently: true,
-        bypassWithCI: true,
-    }))); */
-
 Cypress.Commands.add('deleteProject', projectId => cy
     .login()
     .then(() => cy.window())

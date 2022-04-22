@@ -1,4 +1,4 @@
-name: testingbot
+name: testbot
 namespace: bf-tb
 defaultLanguage: fi
 nluThreshold: 0.75

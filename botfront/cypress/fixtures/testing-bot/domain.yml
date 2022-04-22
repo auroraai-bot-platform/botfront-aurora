@@ -129,7 +129,8 @@ responses:
           type: postback
       text: Selvä juttu! Tässä osa yksi! Sano kyllä tai ei jatkaaksesi!
   utter_carousel:
-    - elements:
+    - text: ''
+      elements:
         - buttons: []
           image_url: ''
           subtitle: Karuselli kuvaus 1
