@@ -75,7 +75,7 @@ afterEach(abortEarly);
 Cypress.Commands.add(
     'login',
     ({
-        visit = true, email, password = 'Test1234!', admin = true,
+        visit = true, email, password = 'Aaaaaaaa00', admin = true,
     } = {}) => {
         const withEmail = email || admin ? ADMIN_EMAIL : SPECIAL_USER_EMAIL;
         if (visit) cy.visit('/');
@@ -391,7 +391,7 @@ Cypress.Commands.add('createUser', (lastName, email, roles, projectId) => {
         )
         .then(
             ({ Meteor, result }) => new Cypress.Promise((resolve, reject) => {
-                Meteor.call('user.changePassword', result, 'Test1234!', (err) => {
+                Meteor.call('user.changePassword', result, 'Aaaaaaaa00', (err) => {
                     if (err) {
                         reject(err);
                     }

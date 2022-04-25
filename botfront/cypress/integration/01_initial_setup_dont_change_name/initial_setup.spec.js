@@ -19,8 +19,8 @@ describe('Initial setup', () => {
         cy.get('#uniforms-0001-0001').type('Test')
         cy.get('#uniforms-0001-0003').type('Tester')
         cy.get('#uniforms-0001-0005').type('test@test.com')
-        cy.get('#uniforms-0001-0007').type('Test1234!')
-        cy.get('#uniforms-0001-0009').type('Test1234!')
+        cy.get('#uniforms-0001-0007').type('Aaaaaaaa00')
+        cy.get('#uniforms-0001-0009').type('Aaaaaaaa00')
         cy.get('[data-cy="account-create-button"]').click()
     })
 
