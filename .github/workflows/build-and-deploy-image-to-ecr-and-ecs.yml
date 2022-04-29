@@ -1,4 +1,4 @@
-name: Build and deploy botfront docker image to AWS ECR
+name: Build and deploy botfront docker image to AWS ECR and to demo ECS
 
 # Only build on merge/push to main
 on:
@@ -38,9 +38,31 @@ jobs:
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-      
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
     - name: Tag ECR image with latest as well
       run: |
         MANIFEST=$(aws ecr batch-get-image --repository-name $ECR_REPOSITORY --image-ids imageTag=$IMAGE_TAG --output json | jq --raw-output --join-output '.images[0].imageManifest')
         aws ecr put-image --repository-name $ECR_REPOSITORY --image-tag latest --image-manifest "$MANIFEST"
+
+# TODO: Create predictive naming on task definition name
+# TODO: Fix IAM user / role in tandem with this fix
+    - name: Download current task definition
+      run: |
+        aws ecs describe-task-definition --task-definition demobotfrontstackdemoecsbftaskdefinitionbotfront8340887D --query taskDefinition > task-definition.json
+
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: botfront
+        image: ${{ steps.build-image.outputs.image }}
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: demo-service-botfront
+        cluster: demo-cluster
+        wait-for-service-stability: false
