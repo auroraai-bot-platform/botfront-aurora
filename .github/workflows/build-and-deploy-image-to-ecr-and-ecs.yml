@@ -7,7 +7,6 @@ on:
     - main
     tags:
     - '*'
-  pull_request:
 
 env:
   ECR_REPOSITORY: botfront-private
@@ -46,6 +45,9 @@ jobs:
       run: |
         MANIFEST=$(aws ecr batch-get-image --repository-name $ECR_REPOSITORY --image-ids imageTag=$IMAGE_TAG --output json | jq --raw-output --join-output '.images[0].imageManifest')
         aws ecr put-image --repository-name $ECR_REPOSITORY --image-tag latest --image-manifest "$MANIFEST"
+    
+    - name: Fill systems manager parameter with latest version id
+      run: aws ssm put-parameter --name botfront-image-id-latest --type String --value $IMAGE_TAG --overwrite
 
 # TODO: Create predictive naming on task definition name
 # TODO: Fix IAM user / role in tandem with this fix
