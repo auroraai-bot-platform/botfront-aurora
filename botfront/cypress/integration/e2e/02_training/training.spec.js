@@ -1,20 +1,29 @@
+/* global cy Cypress:true */
 describe('Training', function() {
     before(function() {
+        // just in case it's not deleted
         cy.deleteProject('bf');
     });
 
     beforeEach(function() {
-        cy.createProject('bf', 'My Project', 'en');
+        cy.createProject('bf', 'My Project', 'en').then(() => {
+            cy.login();
+        });
         cy.waitForResolve(Cypress.env('RASA_URL'));
         cy.wait(1000);
         cy.request('DELETE', `${Cypress.env('RASA_URL')}/model`);
         cy.visit('/project/bf/dialogue');
     });
-
+    
+    afterEach(function() {
+        cy.logout();
+        cy.deleteProject('bf');
+    });
+    
     it('Should train and serve a model containing only stories (no NLU) and adding a language should work', function() {
         cy.train();
         cy.newChatSesh();
-        cy.testChatInput('/chitchat.greet', 'hi');
+        cy.testChatInput('/chitchat.greet', 'utter_hi');
         cy.import('bf', 'nlu_sample_en.json', 'en');
         cy.train();
         cy.newChatSesh();
