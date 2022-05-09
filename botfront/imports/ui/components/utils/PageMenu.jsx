@@ -37,6 +37,7 @@ export default function PageMenu(props) {
                                         name='check'
                                         fitted
                                         circular
+                                        timestamp={`${endTime}`}
                                         style={{ color: '#2c662d' }}
                                     />
                                 )}
