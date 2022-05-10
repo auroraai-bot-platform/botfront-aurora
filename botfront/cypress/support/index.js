@@ -622,14 +622,15 @@ Cypress.Commands.add(
 
 Cypress.Commands.add('train', (waitTime = 300000) => {
     cy.visit('/project/bf/dialogue');
-    cy.dataCy('train-button').should('exist').should('not.have.class', 'disabled');
-    cy.wait(1500);
-    cy.dataCy('train-button').click({ force: true });
-    cy.dataCy('train-button').should('have.class', 'disabled');
-    cy.get('[data-cy=train-button]', { timeout: waitTime }).should(
-        'not.have.class',
-        'disabled',
-    );
+    cy.dataCy('train-button')
+        .should('exist').should('not.have.class', 'disabled')
+        .invoke('attr', 'data-cy-timestamp').as('old-timestamp').then(oldTimestamp => {
+            cy.dataCy('train-button').click({ force: true });
+            cy.get('[data-cy=train-button]', { timeout: waitTime })
+                .should('have.attr', 'data-cy-timestamp')
+                .and('not.equal', oldTimestamp);
+        });
+    cy.pause();
 });
 
 const MONTHS = [
