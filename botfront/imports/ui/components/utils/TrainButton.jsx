@@ -308,7 +308,7 @@ class TrainButton extends React.Component {
 
     renderButton = () => {
         const { instance } = this.context;
-        const { popupContent, status, partialTrainning } = this.props;
+        const { popupContent, status, partialTrainning, timestamp } = this.props;
         return (
             <Popup
                 content={popupContent}
@@ -328,6 +328,7 @@ class TrainButton extends React.Component {
                                 this.train();
                             }}
                             data-cy='train-button'
+                            data-cy-timestamp={timestamp}
                         />
                         {this.renderDropdownMenu()}
                     </Button.Group>

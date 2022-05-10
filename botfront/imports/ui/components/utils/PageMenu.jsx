@@ -37,7 +37,6 @@ export default function PageMenu(props) {
                                         name='check'
                                         fitted
                                         circular
-                                        data-cy-timestamp={`${endTime}`}
                                         style={{ color: '#2c662d' }}
                                     />
                                 )}
@@ -66,7 +65,6 @@ export default function PageMenu(props) {
                                         color='red'
                                         fitted
                                         circular
-                                        data-cy-timestamp={`${endTime}`}
                                     />
                                 )}
                                 content={(
@@ -90,6 +88,7 @@ export default function PageMenu(props) {
                             project={project}
                             instance={instance}
                             projectId={projectId}
+                            timestamp={endTime}
                         />
                     </Menu.Item>
                 </>
