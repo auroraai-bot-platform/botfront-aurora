@@ -1,5 +1,13 @@
 pipeline:
-    - name: WhitespaceTokenizer
-    - name: CRFEntityExtractor
-    - name: CountVectorsFeaturizer
-    - name: KeywordIntentClassifier
+  - name: WhitespaceTokenizer
+  - name: LexicalSyntacticFeaturizer
+  - name: CountVectorsFeaturizer
+  - name: CountVectorsFeaturizer
+    analyzer: char_wb
+    min_ngram: 1
+    max_ngram: 4
+  - name: DIETClassifier
+    epochs: 200
+#  - name: >-
+#      rasa_addons.nlu.components.intent_ranking_canonical_example_injector.IntentRankingCanonicalExampleInjector
+  - name: EntitySynonymMapper
