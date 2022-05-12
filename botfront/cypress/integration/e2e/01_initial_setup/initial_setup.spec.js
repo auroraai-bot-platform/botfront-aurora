@@ -27,6 +27,7 @@ describe('Initial setup', () => {
     })
 
     it('Create project', () => {
+        cy.login()
         cy.deleteProject('chitchat-*')
         cy.createProject('bf', 'trial', 'en')
     })

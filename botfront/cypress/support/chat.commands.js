@@ -6,7 +6,7 @@ Cypress.Commands.add('newChatSesh', (lang) => {
         const button = body.find('[data-cy=open-chat]:visible');
         if (button.length === 1) button.click(); // open chat if needed
     });
-    cy.dataCy('open-chat').should('not.be.visible');
+    cy.dataCy('open-chat').should('not.exist');
     cy.get('span.rw-loading', { timeout: 10000 }).should('not.exist');
     cy.get('textarea.rw-new-message').should('not.be.disabled');
     cy.dataCy('restart-chat').click();

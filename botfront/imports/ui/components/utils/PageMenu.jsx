@@ -88,6 +88,7 @@ export default function PageMenu(props) {
                             project={project}
                             instance={instance}
                             projectId={projectId}
+                            timestamp={endTime}
                         />
                     </Menu.Item>
                 </>
