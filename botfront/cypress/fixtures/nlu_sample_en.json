@@ -7,7 +7,12 @@
         "entities": []
       },
       {
-        "text": "goodbye",
+        "text": "good bye",
+        "intent": "chitchat.bye",
+        "entities": []
+      },
+      {
+        "text": "bye bye",
         "intent": "chitchat.bye",
         "entities": []
       },
@@ -38,6 +43,16 @@
       },
       {
         "text": "Let's get started!",
+        "intent": "get_started",
+        "entities": []
+      },
+      {
+        "text": "I'm chatbot. Let's get started!",
+        "intent": "get_started",
+        "entities": []
+      },
+      {
+        "text": "How can I help you?",
         "intent": "get_started",
         "entities": []
       }

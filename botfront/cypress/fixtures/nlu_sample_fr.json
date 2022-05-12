@@ -17,6 +17,11 @@
         "entities": []
       },
       {
+        "text": "adieu",
+        "intent": "chitchat.bye",
+        "entities": []
+      },
+      {
         "text": "salut",
         "intent": "chitchat.greet",
         "entities": []
