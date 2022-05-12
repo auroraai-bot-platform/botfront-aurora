@@ -1,0 +1,10 @@
+name: testbot
+namespace: bf-tb
+defaultLanguage: fi
+nluThreshold: 0.75
+timezoneOffset: 0
+allowContextualQuestions: false
+instance:
+  name: Default Instance
+  host: 'http://localhost:5005'
+  projectId: bf

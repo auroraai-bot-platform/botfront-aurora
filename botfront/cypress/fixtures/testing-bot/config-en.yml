@@ -11,3 +11,15 @@ pipeline:
 #  - name: >-
 #      rasa_addons.nlu.components.intent_ranking_canonical_example_injector.IntentRankingCanonicalExampleInjector
   - name: EntitySynonymMapper
+language: en
+
+
+policies:
+  - name: TEDPolicy
+    epochs: 50
+    max_history: 5
+    batch_size:
+      - 32
+      - 64
+  - name: RulePolicy
+  - name: AugmentedMemoizationPolicy

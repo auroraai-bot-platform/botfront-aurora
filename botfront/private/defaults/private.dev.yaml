@@ -9,12 +9,12 @@ bfApiHost: http://localhost:8080
 endpoints:
   nlg:
     type: rasa_addons.core.nlg.GraphQLNaturalLanguageGenerator
-    url: http://host.docker.internal:3000/graphql
+    url: http://localhost:3000/graphql
   action_endpoint:
-    url: http://host.docker.internal:5055/webhook
+    url: http://localhost:5055/webhook
   tracker_store:
-    store_type:  rasa_addons.core.tracker_stores.botfront.BotfrontTrackerStore
-    url: http://host.docker.internal:3000/graphql
+    store_type: rasa_addons.core.tracker_stores.anonymized_tracker_store.botfront_anonymized_tracker_store.BotfrontAnonymizedTrackerStore
+    url: http://localhost:3000/graphql
 policies:
   - name: TEDPolicy
     epochs: 50
