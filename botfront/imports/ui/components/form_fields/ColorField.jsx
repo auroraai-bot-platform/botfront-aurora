@@ -10,20 +10,35 @@ import {
 function Color({
     value, onChange, label, id, required,
 }) {
+    const [isOpen, setIsOpen] = React.useState(false);
+    const [newValue, setNewValue] = React.useState(value);
+
+    const saveColor = (color) => {
+        onChange(color);
+        setIsOpen(!isOpen);
+    };
+
     return (
         <div className={`${required ? 'required' : ''} field`}>
             <span>
                 <Popup
                     trigger={<Button className='color-pick-button' style={{ background: value }} onClick={(e) => { e.preventDefault(); }} />}
                     on='click'
+                    open={isOpen}
+                    onOpen={() => setIsOpen(!isOpen)}
+                    onClose={() => setIsOpen(!isOpen)}
                     className='no-padding-popup'
                     content={(
-                        <ChromePicker
-                            disableAlpha
-                            id={id}
-                            color={value}
-                            onChangeComplete={c => onChange(c.hex)}
-                        />
+                        <div>
+                            <ChromePicker
+                                disableAlpha
+                                id={id}
+                                color={value}
+                                onChangeComplete={c => onChange(c.hex)}
+                            />
+
+                            <Button type='button' onClick={() => saveColor('')} style={{ marginTop: '10px', width: '100%' }}>Reset Color</Button>
+                        </div>
                     )}
                 />
 
