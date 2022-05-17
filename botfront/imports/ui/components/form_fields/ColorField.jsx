@@ -11,7 +11,6 @@ function Color({
     value, onChange, label, id, required,
 }) {
     const [isOpen, setIsOpen] = React.useState(false);
-    const [newValue, setNewValue] = React.useState(value);
 
     const saveColor = (color) => {
         onChange(color);
@@ -22,7 +21,11 @@ function Color({
         <div className={`${required ? 'required' : ''} field`}>
             <span>
                 <Popup
-                    trigger={<Button className='color-pick-button' style={{ background: value }} onClick={(e) => { e.preventDefault(); }} />}
+                    trigger={(
+                        <Button className='color-pick-button' style={{ background: value, color: value, padding: '8px 14px' }} onClick={(e) => { e.preventDefault(); }}>
+                            Default
+                        </Button>
+                    )}
                     on='click'
                     open={isOpen}
                     onOpen={() => setIsOpen(!isOpen)}

@@ -108,10 +108,6 @@ class ChatWidgetForm extends React.Component {
         this.setState({ advancedVisible: !advancedVisible });
     };
 
-    resetColor = () => {
-        this.settings.mainColor = '#111';
-    };
-
     onSave = (settings) => {
         const newSettings = settings;
         const { projectId } = this.props;
@@ -283,7 +279,6 @@ class ChatWidgetForm extends React.Component {
                         label='Assistant message background color'
                         name='assistBackgoundColor'
                     />
-                    <button type='button' onClick={() => { this.settings.mainColor = '#567890'; console.log({ settings: this.settings }); }}>Reset</button>
 
                     <Divider />
 
