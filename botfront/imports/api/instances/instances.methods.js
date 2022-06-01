@@ -542,17 +542,18 @@ if (Meteor.isServer) {
             );
             try {
                 this.unblock();
-                const examples = testData || {
-                    rasa_nlu_data: (await getNluDataAndConfig(projectId, language))
-                        .rasa_nlu_data,
-                };
+                const examples = testData || await getNluDataAndConfig(projectId, language);
                 const client = await createAxiosForRasa(projectId, { timeout: 60 * 60 * 1000 }, { language });
                 addLoggingInterceptors(client, appMethodLogger);
                 axiosRetry(client, {
                     retries: 3,
                     retryDelay: axiosRetry.exponentialDelay,
                 });
-                let results = Promise.await(client.post('/model/test/intents', examples));
+                let results = Promise.await(client.post(
+                    '/model/test/intents', 
+                    yaml.safeDump(examples, { skipInvalid: true, lineWidth: -1 }).replace(new RegExp('examples:', 'g'), 'examples: |'),
+                    { headers: { 'Content-type': 'application/x-yaml' } }
+                ));
 
                 results = replaceMongoReservedChars({
                     intent_evaluation: results.data.intent_evaluation || {},
