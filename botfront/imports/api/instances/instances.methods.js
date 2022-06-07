@@ -385,7 +385,7 @@ if (Meteor.isServer) {
                     rules: payload.rules,
                     ...config,
                     stories: payload.stories,
-                    gazette: Object.values(payload.gazette), // atm shelf-rasa only supports one language
+                    gazette: payload.gazette[payload.languages[0]], // atm shelf-rasa only supports one language
                 };
 
                 // AAIC-323 3.3.2022: Rasa fails to process entities in story steps correctly, if
