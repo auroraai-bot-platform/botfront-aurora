@@ -24,7 +24,7 @@ export const deleteForms = async ({ projectId, ids }) => {
 
 const addNewSlots = async (projectId, slots) => {
     slots.forEach(({ name }) => {
-        const slotData = { name, type: 'any', projectId };
+        const slotData = { name, type: 'any', influenceConversation: false, projectId };
         try {
             const newId = Slots.insert(slotData);
             auditLogIfOnServer('Inserted slot', {
