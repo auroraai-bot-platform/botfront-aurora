@@ -80,7 +80,7 @@ Cypress.Commands.add('addCustomConversation', (
     const conversation = {
         sender_id: senderId,
         slots: {
-            disambiguation_message: null,
+            disambiguation_message: null
         },
         latest_message: {
             intent: {},
@@ -105,20 +105,17 @@ Cypress.Commands.add('addCustomConversation', (
     cy.updateConversation(projectId, conversationId, conversationB, env);
 });
 
-Cypress.Commands.add('addConversationFromTemplate', (projectId = 'bf', template = 'default', conversationId, options = {}) => {
-    const {
-        duration, startTime, env, language,
-    } = options;
+Cypress.Commands.add('addConversationFromTemplate', (projectId = 'bf', template = 'default', conversationId, { env = 'development', language = 'en', duration = 1, startTime = new Date().getTime() / 1000 }) => {
     cy.fixture('conversation_event_templates.json', 'utf8').then((templates) => {
         cy.addCustomConversation(
             projectId,
             conversationId,
             {
                 events: templates[template],
-                duration,
-                startTime,
-                env,
-                language,
+                duration: duration,
+                startTime: startTime,
+                env: env,
+                language: language,
             },
         );
     });
