@@ -10,27 +10,27 @@ export const ChangesSchema = new SimpleSchema({
         optional: true,
     },
     projectId: {
-        type: String 
+        type: String,
     },
     user: {
         type: String,
-        optional: true
+        optional: true,
     },
     category: Object,
-    'category.item_type': { type: String, optional: true  },
-    'category.item_sub_type': { type: String, optional: true  },
+    'category.item_type': { type: String, optional: true },
+    'category.item_sub_type': { type: String, optional: true },
     'category.action_type': { type: String, optional: true },
     item_id: {
         type: String,
-        optional: true
-    },        
+        optional: true,
+    },
     before: {
         type: String,
-        optional: true
+        optional: true,
     },
     after: {
         type: String,
-        optional: true
-    },    
+        optional: true,
+    },
 
 }, { tracker: Tracker });
