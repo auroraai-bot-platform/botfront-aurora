@@ -22,6 +22,7 @@ import Gazette from '../../synonyms/Gazette';
 import RegexFeatures from '../../synonyms/RegexFeatures';
 import NLUPipeline from './settings/NLUPipeline';
 import Statistics from './Statistics';
+import ChangeLog from './ChangeLog';
 import OutOfScope from './OutOfScope';
 import DeleteModel from './DeleteModel';
 import { clearTypenameField } from '../../../../lib/client.safe.utils';
@@ -290,11 +291,28 @@ function NLUModel(props) {
                     <Evaluation validationRender={validationRender} />
                 )}
                 {activeItem === 'Statistics' && (
-                    <Statistics
-                        synonyms={model.training_data.entity_synonyms.length}
-                        gazettes={model.training_data.fuzzy_gazette.length}
-                        intents={intents}
-                        entities={entities}
+                    <Tab
+                        menu={{ pointing: true, secondary: true }}
+                        // activeIndex === 0 is the example tab, we want to refetch data everytime we land on it
+                        // as it may have changed from the chitchat tab
+                        onTabChange={(e, { activeIndex }) => { if (activeIndex === 0) refetch(); }}
+                        panes={[
+                            {
+                                menuItem: 'Statistics',
+                                render: () => (
+                                    <Statistics
+                                        synonyms={model.training_data.entity_synonyms.length}
+                                        gazettes={model.training_data.fuzzy_gazette.length}
+                                        intents={intents}
+                                        entities={entities}
+                                    />
+                                ),
+                            },
+                            {
+                                menuItem: 'Change Log',
+                                render: () => <ChangeLog />,
+                            }
+                        ]}
                     />
                 )}
                 {activeItem === 'Settings' && (

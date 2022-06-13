@@ -6,6 +6,12 @@ import { checkIfCan } from '../../lib/scopes';
 
 export const Changes = new Mongo.Collection('changes');
 
+Changes.deny({
+    insert() { return true; },
+    update() { return true; },
+    remove() { return true; },
+});
+
 if (Meteor.isServer) {
     Meteor.publish('changes', function (projectId) {
         try {
