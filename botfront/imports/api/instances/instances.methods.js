@@ -558,7 +558,7 @@ if (Meteor.isServer) {
                 results = replaceMongoReservedChars({
                     intent_evaluation: results.data.intent_evaluation || {},
                     entity_evaluation:
-                        results.data.entity_evaluation.DIETClassifier || {},
+                        results.data.entity_evaluation?.DIETClassifier || {},
                 });
 
                 const evaluations = Evaluations.findOne(
