@@ -31,7 +31,7 @@ Cypress.Commands.add('setVideo', (url, n = 0) => {
     cy.dataCy('video-url-input').find('input').type(`${url}{enter}`);
     cy.dataCy('video-container').eq(n)
         .find('img').should('have.attr', 'src')
-        .and('include.text', 'youtube');
+        .and('contain', 'youtube');
 });
 
 Cypress.Commands.add('setTitleAndSubtitle', (title, subtitle, n = 0) => {
@@ -86,16 +86,11 @@ Cypress.Commands.add('addButtonOrSetPayload', (title, payload, oldTitleOrPositio
     }
 });
 
-Cypress.Commands.add('setQuickReplyContent', (text, title, intent, index = 0) => {
-    cy.dataCy('response-editor').find('[data-cy=button_title]').eq(index).click({ force: true });
+Cypress.Commands.add('setQuickReplyContent', (text, title, intent, btn_index, input_index) => {
+    cy.dataCy('response-editor').find('[data-cy=button_title]').eq(btn_index).click({ force: true });
     cy.dataCy('enter-button-title').should('exist').find('input').type(title);
     cy.dataCy('intent-label').should('exist').click();
     cy.dataCy('intent-dropdown').find('input').type(`${intent}{enter}`);
     cy.dataCy('save-button').click();
-    cy.dataCy('response-editor').find('[data-cy=bot-response-input]')
-        .find('textarea')
-        .eq(index)
-        .clear()
-        .type(text)
-        .blur();
+    cy.dataCy('response-editor').find('[data-cy=bot-response-input]').find('textarea').eq(input_index).clear().type(text).blur();
 });
