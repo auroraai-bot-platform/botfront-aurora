@@ -20,7 +20,7 @@ import {
     Popup,
     Image,
 } from 'semantic-ui-react';
-import { useIntentAndEntityList } from '../components/nlu/models/hooks';
+import { useIntentAndEntityList, addStoryIntents } from '../components/nlu/models/hooks';
 import { wrapMeteorCallback } from '../components/utils/Errors';
 import ProjectSidebarComponent from '../components/project/ProjectSidebar';
 import { Projects } from '../../api/project/project.collection';
@@ -69,7 +69,7 @@ function Project(props) {
         entities: entitiesList = [],
         refetch: refreshEntitiesAndIntents,
     } = useIntentAndEntityList({ projectId, language: workingLanguage || '' });
-    
+    addStoryIntents(intentsList, projectId);
     const {
         responses,
         addResponses,
@@ -112,8 +112,8 @@ function Project(props) {
                 : {}
             : intentsList;
         return Object.keys(filtered).map(
-            i => findExactMatch(filtered[i], entities),
-        ).filter(ex => ex);
+            i => findExactMatch(filtered[i], entities) || { intent: i },
+        );
     };
 
     const parseUtterance = utterance => Meteor.callWithPromise('rasa.parse', instance, [
