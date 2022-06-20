@@ -9,6 +9,7 @@ import {
     UPDATE_EXAMPLES,
     SWITCH_CANONICAL,
 } from './graphql.js';
+import { Stories } from '../../../api/story/stories.collection';
 import { can } from '../../../../lib/scopes';
 
 export const useLazyExamples = (variables) => {
@@ -57,6 +58,18 @@ export function useExamples(variables) {
         error,
         loadMore,
         refetch,
+    };
+}
+
+export function getStoryIntents(projectId) {
+    const storiesHandler = Meteor.subscribe('stories.selected', projectId, selectedIds);
+    const stories = Stories.find({ projectId }).fetch();
+
+    debugger
+
+    return {
+        ready: storiesHandler.ready(),
+        stories,
     };
 }
 

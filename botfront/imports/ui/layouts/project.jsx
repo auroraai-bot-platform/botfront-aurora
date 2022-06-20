@@ -69,6 +69,7 @@ function Project(props) {
         entities: entitiesList = [],
         refetch: refreshEntitiesAndIntents,
     } = useIntentAndEntityList({ projectId, language: workingLanguage || '' });
+    
     const {
         responses,
         addResponses,
