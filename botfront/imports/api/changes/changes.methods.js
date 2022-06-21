@@ -1,5 +1,56 @@
 import { Meteor } from 'meteor/meteor';
+import { check, Match } from 'meteor/check';
 import { Changes } from './changes.collection';
+import { checkIfCan } from '../../lib/scopes';
+
+const maxPageSize = 100;
+
+if (Meteor.isServer) {
+    Meteor.methods(
+        {
+            async 'changes.find'(projectId, page, pageSize, sortField, sortDesc) {
+                try {
+                    checkIfCan('projects:r', projectId);
+                } catch (err) {
+                    return this.ready();
+                }
+                check(projectId, String);
+                check(page, Match.Integer);
+                check(pageSize, Match.Integer);
+                check(sortField, String);
+                check(sortDesc, Boolean);
+
+                const checkedPageSize = pageSize > maxPageSize ? maxPageSize : pageSize;
+
+                const sort = { [sortField]: sortDesc ? -1 : 1 };
+
+                // return changes and total count to show correct pagination
+                const result = await Changes.rawCollection().aggregate([
+                    {
+                        '$facet': {
+                            'data': [
+                                { '$match': { projectId } },
+                                { '$sort': sort },
+                                { '$skip': page * checkedPageSize },
+                                { '$limit': checkedPageSize }
+                            ],
+                            'meta': [
+                                { '$count': 'total' },
+                                { '$addFields': { page: page, pageSize: checkedPageSize } },
+                            ]
+                        }
+                    },
+                    { '$unwind': '$meta' },
+                ]).toArray();
+
+                console.log({ result });
+
+                return result?.[0];
+            },
+        },
+    );
+}
+
 
 export const createChanges = async (project) => {
     if (!Meteor.isServer) throw Meteor.Error(401, 'Not Authorized');
