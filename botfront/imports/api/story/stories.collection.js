@@ -39,6 +39,12 @@ if (Meteor.isServer) {
         return Stories.find({ projectId, _id: { $in: selectedIds } });
     });
 
+    Meteor.publish('stories.project', function(projectId) {
+        checkIfCan('stories:r', projectId);
+        check(projectId, String);
+        return Stories.find({ projectId });
+    });
+
     Meteor.publish('stories.light', function(projectId) {
         check(projectId, String);
         if (!checkIfCan('stories:r', projectId, null, { backupPlan: true })) {

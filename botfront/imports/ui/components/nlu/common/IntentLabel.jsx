@@ -44,12 +44,15 @@ const Intent = React.forwardRef((props, ref) => {
         ...(additionalIntentOption ? [{ intent: additionalIntentOption }] : []),
         ...getCanonicalExamples({})
             .filter((i) => {
+                if (!i) {
+                    return false;
+                }
                 if (Array.isArray(value)) {
                     return !value.includes(i.intent);
                 }
-                return i.intent !== value;
-            }),
-    ];
+                return i?.intent !== value;
+            })
+    ].sort((a, b) => ('' + a.intent).localeCompare(b.intent));
 
     useImperativeHandle(ref, () => ({
         isPopupOpen: () => popupOpen,
