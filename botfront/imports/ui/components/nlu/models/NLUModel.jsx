@@ -310,7 +310,7 @@ function NLUModel(props) {
                             },
                             {
                                 menuItem: 'Change Log',
-                                render: () => <ChangeLog />,
+                                render: () => <ChangeLog projectId={projectId} />,
                             }
                         ]}
                     />

@@ -3,33 +3,85 @@ import PropTypes from 'prop-types';
 import { withTracker } from 'meteor/react-meteor-data';
 import { connect } from 'react-redux';
 
+// import 'react-table-v6/react-table.css';
+
 import ReactTable from 'react-table-v6';
 import { Changes } from '../../../../api/changes/changes.collection';
 
 const ChangeLog = (props) => {
+    const { projectId } = props;
+
+    const defaultPageSize = 50;
+
     const columns = [
-        { Header: 'projectId', accessor: 'projectId', id: 'projectId' },
-        { Header: 'updatedAt', accessor: 'updatedAt', id: 'updatedAt' },
+        {
+            Header: 'updatedAt',
+            accessor: 'updatedAt',
+            id: 'updatedAt',
+            Cell: props => props.value.toISOString(),
+        },
+        {
+            Header: 'Item Type',
+            accessor: 'category.item_type',
+            id: 'itemType',
+        },
+        {
+            Header: 'Item Sub Type',
+            accessor: 'category.item_sub_type',
+            id: 'itemSubType',
+        },
+        {
+            Header: 'Action Type',
+            accessor: 'category.action_type',
+            id: 'actionType',
+        },
+        {
+            Header: 'Item ID',
+            accessor: 'item_id',
+            id: 'itemId',
+        },
+        {
+            Header: 'User',
+            accessor: 'user',
+            id: 'user',
+        }
     ];
 
-    const data = [
-        { projectId: 1, updatedAt: 2 },
-    ];
+    const [loading, setLoading] = React.useState(false);
+    const [pageCount, setPageCount] = React.useState(0);
 
-    const { changes } = props;
-    const data2 = changes.map(({ projectId, updatedAt }) => {
-        return { projectId, updatedAt };
-    });
-    console.log(data2);
-    console.log(data);
-    // const [changes, setChanges] = useState([]);
+    const [changeData, setChangeData] = React.useState([]);
+    const reactTable = React.useRef();
+
+    const fetchData = (state) => {
+        (async () => {
+            setLoading(true);
+
+            const [{ id, desc }] = state?.sorted?.length > 0 ? state.sorted : [{ id: 'updatedAt', desc: true }];
+            const { data, meta } = await Meteor.callWithPromise('changes.find', projectId, state.page, state.pageSize, id, desc);
+
+            setChangeData(data);
+
+            const newPageCount = Math.ceil(meta.total / meta.pageSize);
+            setPageCount(newPageCount);
+
+            setLoading(false);
+        })();
+    };
 
     return (
         <div>
             <h1>Hello World</h1>
             <ReactTable
-                data={data2}
+                ref={reactTable}
+                manual
+                onFetchData={fetchData}
+                data={changeData}
                 columns={columns}
+                pages={pageCount}
+                defaultPageSize={defaultPageSize}
+                loading={loading}
+                showPaginationTop
             />
         </div>
     );
@@ -41,12 +93,12 @@ const mapStateToProps = state => ({
     workingLanguage: state.settings.get('workingLanguage'),
 });
 
-const withTrackerChangeLog = withTracker((props) => {
-    const { projectId } = props;
-    Meteor.subscribe('changes', projectId);
-    const changes = Changes.find().fetch();
-    console.log({ changes, projectId });
-    return { changes };
-})(ChangeLog);
+// const withTrackerChangeLog = withTracker((props) => {
+//     const { projectId } = props;
+//     Meteor.subscribe('changes', projectId);
+//     const changes = Changes.find().fetch();
+//     console.log({ changes, projectId });
+//     return { changes };
+// })(ChangeLog);
 
-export default connect(mapStateToProps)(withTrackerChangeLog);
+export default connect(mapStateToProps)(ChangeLog);
