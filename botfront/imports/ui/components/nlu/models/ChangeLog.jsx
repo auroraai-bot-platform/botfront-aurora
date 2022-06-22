@@ -2,8 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { withTracker } from 'meteor/react-meteor-data';
 import { connect } from 'react-redux';
-
-// import 'react-table-v6/react-table.css';
+import 'react-table-v6/react-table.css';
 
 import ReactTable from 'react-table-v6';
 import { Changes } from '../../../../api/changes/changes.collection';
@@ -11,7 +10,7 @@ import { Changes } from '../../../../api/changes/changes.collection';
 const ChangeLog = (props) => {
     const { projectId } = props;
 
-    const defaultPageSize = 50;
+    const defaultPageSize = 10;
 
     const columns = [
         {
@@ -44,7 +43,7 @@ const ChangeLog = (props) => {
             Header: 'User',
             accessor: 'user',
             id: 'user',
-        }
+        },
     ];
 
     const [loading, setLoading] = React.useState(false);
@@ -73,6 +72,7 @@ const ChangeLog = (props) => {
         <div>
             <h1>Hello World</h1>
             <ReactTable
+                style={{ height: 'calc(100vh - 200px)' }}
                 ref={reactTable}
                 manual
                 onFetchData={fetchData}
