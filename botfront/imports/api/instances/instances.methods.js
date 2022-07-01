@@ -420,7 +420,7 @@ if (Meteor.isServer) {
                             if (Array.isArray(element[key])) {
                                 if (element[key].length > 0) {
                                     // keep element key value if it is not an empty list
-                                    new_element[key] = element[key][0];
+                                    new_element[key] = element[key];
                                 }
                             } else {
                                 new_element[key] = element[key];
