@@ -227,7 +227,7 @@ const addRequestedSlot = async (slots, projectId) => {
         projectId,
         type: 'categorical',
         categories: [...new Set(requestedSlotCategories)],
-        influenceConversation: existingRequestedSlot.influenceConversation,
+        influenceConversation: true,
     };
 
     newSlots.push(requestedSlot);
