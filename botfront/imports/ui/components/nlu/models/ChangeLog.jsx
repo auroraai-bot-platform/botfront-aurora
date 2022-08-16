@@ -21,22 +21,22 @@ const ChangeLog = (props) => {
         },
         {
             Header: 'Item Type',
-            accessor: 'category.item_type',
+            accessor: 'itemType',
             id: 'itemType',
         },
         {
             Header: 'Item Sub Type',
-            accessor: 'category.item_sub_type',
+            accessor: 'itemSubType',
             id: 'itemSubType',
         },
         {
             Header: 'Action Type',
-            accessor: 'category.action_type',
+            accessor: 'actionType',
             id: 'actionType',
         },
         {
             Header: 'Item ID',
-            accessor: 'item_id',
+            accessor: 'itemId',
             id: 'itemId',
         },
         {
@@ -57,7 +57,7 @@ const ChangeLog = (props) => {
             setLoading(true);
 
             const [{ id, desc }] = state?.sorted?.length > 0 ? state.sorted : [{ id: 'updatedAt', desc: true }];
-            const { data, meta } = await Meteor.callWithPromise('changes.find', projectId, state.page, state.pageSize, id, desc);
+            const { data, meta } = await Meteor.callWithPromise('changes.find', projectId, state.page, state.pageSize, id, desc, state.filtered);
 
             setChangeData(data);
 
@@ -82,6 +82,7 @@ const ChangeLog = (props) => {
                 defaultPageSize={defaultPageSize}
                 loading={loading}
                 showPaginationTop
+                filterable
             />
         </div>
     );

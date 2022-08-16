@@ -16,11 +16,23 @@ export const ChangesSchema = new SimpleSchema({
         type: String,
         optional: true,
     },
-    category: Object,
-    'category.item_type': { type: String, optional: true },
-    'category.item_sub_type': { type: String, optional: true },
-    'category.action_type': { type: String, optional: true },
-    item_id: {
+    itemType: {
+        type: String,
+        optional: true,
+    },
+    itemSubType: {
+        type: String,
+        optional: true,
+    },
+    actionType: {
+        type: String,
+        optional: true,
+    },
+    itemId: {
+        type: String,
+        optional: true,
+    },
+    itemName: {
         type: String,
         optional: true,
     },

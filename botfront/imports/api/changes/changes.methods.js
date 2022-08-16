@@ -8,7 +8,7 @@ const maxPageSize = 100;
 if (Meteor.isServer) {
     Meteor.methods(
         {
-            async 'changes.find'(projectId, page, pageSize, sortField, sortDesc) {
+            async 'changes.find'(projectId, page, pageSize, sortField, sortDesc, filters) {
                 try {
                     checkIfCan('projects:r', projectId);
                 } catch (err) {
@@ -19,17 +19,25 @@ if (Meteor.isServer) {
                 check(pageSize, Match.Integer);
                 check(sortField, String);
                 check(sortDesc, Boolean);
+                check(filters, Array);
 
                 const checkedPageSize = pageSize > maxPageSize ? maxPageSize : pageSize;
 
                 const sort = { [sortField]: sortDesc ? -1 : 1 };
+                // debugger;
+                const findQuery = filters.reduce((acc, curr) => {
+                    acc[curr.id] = { $regex: `^${curr.value}.+` };
+                    return acc;
+                }, { projectId });
+
+
 
                 // return changes and total count to show correct pagination
                 const result = await Changes.rawCollection().aggregate([
                     {
                         '$facet': {
                             'data': [
-                                { '$match': { projectId } },
+                                { '$match': findQuery },
                                 { '$sort': sort },
                                 { '$skip': page * checkedPageSize },
                                 { '$limit': checkedPageSize }
@@ -60,12 +68,10 @@ export const createChanges = async (project) => {
         environment: '',
         projectId: project._id,
         user: '',
-        category: {
-            item_type: 'project',
-            item_sub_type: '',
-            action_type: 'initialization',
-        },
-        item_id: '',
+        itemType: 'project',
+        itemSubType: '',
+        actionType: 'initialization',
+        itemId: '',
         before: '',
         after: '',
     });
@@ -80,103 +86,104 @@ export const insertChanges = (env, projectId, user, category, itemId, before, af
         updatedAt: new Date(),
         environment: env,
         category: categoryHit,
-        item_id: itemId,
+        itemId,
         user,
         projectId,
         before,
         after,
+        ...categoryHit,
     });
 };
 
 const Categories = {
     example_add: {
-        item_type: 'nlu',
-        item_sub_type: 'examples',
-        action_type: 'add',
+        itemType: 'nlu',
+        itemSubType: 'examples',
+        actionType: 'add',
     },
     example_delete: {
-        item_type: 'nlu',
-        item_sub_type: 'examples',
-        action_type: 'delete',
+        itemType: 'nlu',
+        itemSubType: 'examples',
+        actionType: 'delete',
     },
     example_update: {
-        item_type: 'nlu',
-        item_sub_type: 'examples',
-        action_type: 'update',
+        itemType: 'nlu',
+        itemSubType: 'examples',
+        actionType: 'update',
     },
     entity_synonym_add: {
-        item_type: 'nlu',
-        item_sub_type: 'entity_synonym',
-        action_type: 'add',
+        itemType: 'nlu',
+        itemSubType: 'entity_synonym',
+        actionType: 'add',
     },
     entity_synonym_delete: {
-        item_type: 'nlu',
-        item_sub_type: 'entity_synonym',
-        action_type: 'delete',
+        itemType: 'nlu',
+        itemSubType: 'entity_synonym',
+        actionType: 'delete',
     },
     entity_synonym_update: {
-        item_type: 'nlu',
-        item_sub_type: 'entity_synonym',
-        action_type: 'update',
+        itemType: 'nlu',
+        itemSubType: 'entity_synonym',
+        actionType: 'update',
     },
     entity_gazette_add: {
-        item_type: 'nlu',
-        item_sub_type: 'entity_gazette',
-        action_type: 'add',
+        itemType: 'nlu',
+        itemSubType: 'entity_gazette',
+        actionType: 'add',
     },
     entity_gazette_delete: {
-        item_type: 'nlu',
-        item_sub_type: 'entity_gazette',
-        action_type: 'delete',
+        itemType: 'nlu',
+        itemSubType: 'entity_gazette',
+        actionType: 'delete',
     },
     entity_gazette_update: {
-        item_type: 'nlu',
-        item_sub_type: 'entity_gazette',
-        action_type: 'update',
+        itemType: 'nlu',
+        itemSubType: 'entity_gazette',
+        actionType: 'update',
     },
     regex_feature_add: {
-        item_type: 'nlu',
-        item_sub_type: 'regex_feature',
-        action_type: 'add',
+        itemType: 'nlu',
+        itemSubType: 'regex_feature',
+        actionType: 'add',
     },
     regex_feature_delete: {
-        item_type: 'nlu',
-        item_sub_type: 'regex_feature',
-        action_type: 'delete',
+        itemType: 'nlu',
+        itemSubType: 'regex_feature',
+        actionType: 'delete',
     },
     regex_feature_update: {
-        item_type: 'nlu',
-        item_sub_type: 'regex_feature',
-        action_type: 'update',
+        itemType: 'nlu',
+        itemSubType: 'regex_feature',
+        actionType: 'update',
     },
     story_add: {
-        item_type: 'dialogue',
-        item_sub_type: 'story',
-        action_type: 'add',
+        itemType: 'dialogue',
+        itemSubType: 'story',
+        actionType: 'add',
     },
     story_delete: {
-        item_type: 'dialogue',
-        item_sub_type: 'story',
-        action_type: 'delete',
+        itemType: 'dialogue',
+        itemSubType: 'story',
+        actionType: 'delete',
     },
     story_update: {
-        item_type: 'dialogue',
-        item_sub_type: 'story',
-        action_type: 'update',
+        itemType: 'dialogue',
+        itemSubType: 'story',
+        actionType: 'update',
     },
     story_group_add: {
-        item_type: 'dialogue',
-        item_sub_type: 'story_group',
-        action_type: 'add',
+        itemType: 'dialogue',
+        itemSubType: 'story_group',
+        actionType: 'add',
     },
     story_group_delete: {
-        item_type: 'dialogue',
-        item_sub_type: 'story_group',
-        action_type: 'delete',
+        itemType: 'dialogue',
+        itemSubType: 'story_group',
+        actionType: 'delete',
     },
     story_group_update: {
-        item_type: 'dialogue',
-        item_sub_type: 'story_group',
-        action_type: 'update',
+        itemType: 'dialogue',
+        itemSubType: 'story_group',
+        actionType: 'update',
     },
 };
