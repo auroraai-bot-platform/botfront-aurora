@@ -21,12 +21,27 @@ if (Meteor.isServer) {
                 check(sortDesc, Boolean);
                 check(filters, Array);
 
+                // custom filter functions, e.g. for date ranges
+                const filterFunctions = {
+                    updatedAt: (value) => {
+                        try {
+                            const { start, end } = JSON.parse(value);
+                            return { $gte: new Date(start), $lte: new Date(end) };
+                        } catch {
+                            return {};
+                        }
+                    },
+                    default: (value) => {
+                        return { $regex: `^${value}.+` };
+                    },
+                };
+
                 const checkedPageSize = pageSize > maxPageSize ? maxPageSize : pageSize;
 
                 const sort = { [sortField]: sortDesc ? -1 : 1 };
-                // debugger;
+                debugger;
                 const findQuery = filters.reduce((acc, curr) => {
-                    acc[curr.id] = { $regex: `^${curr.value}.+` };
+                    acc[curr.id] = filterFunctions[curr.id] ? filterFunctions[curr.id](curr.value) : filterFunctions.default(curr.value);
                     return acc;
                 }, { projectId });
 
@@ -40,7 +55,17 @@ if (Meteor.isServer) {
                                 { '$match': findQuery },
                                 { '$sort': sort },
                                 { '$skip': page * checkedPageSize },
-                                { '$limit': checkedPageSize }
+                                { '$limit': checkedPageSize },
+                                {
+                                    '$addFields': {
+                                        updatedAt: {
+                                            "$dateToString": {
+                                                "format": "%Y-%m-%d %H:%M:%S",
+                                                "date": "$updatedAt"
+                                            }
+                                        }
+                                    }
+                                },
                             ],
                             'meta': [
                                 { '$count': 'total' },

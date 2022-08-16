@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import { withTracker } from 'meteor/react-meteor-data';
 import { connect } from 'react-redux';
 import 'react-table-v6/react-table.css';
-
 import ReactTable from 'react-table-v6';
-import { Changes } from '../../../../api/changes/changes.collection';
+import DatePicker from '../../common/DatePicker';
+import moment from 'moment';
 
 const ChangeLog = (props) => {
     const { projectId } = props;
@@ -17,7 +17,14 @@ const ChangeLog = (props) => {
             Header: 'updatedAt',
             accessor: 'updatedAt',
             id: 'updatedAt',
-            Cell: props => props.value.toISOString(),
+            Filter: ({ filter, onChange }) => (
+                <DatePicker
+                    onConfirm={(newStart, newEnd) => {
+                        const data = { start: newStart.toISOString(), end: newEnd.toISOString() };
+                        onChange(JSON.stringify(data));
+                    }}
+                />
+            )
         },
         {
             Header: 'Item Type',
