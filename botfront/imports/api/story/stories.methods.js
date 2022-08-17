@@ -58,7 +58,7 @@ Meteor.methods({
             result = [Stories.insert({ ...story, ...indexStory(story) })];
             storyGroups[story.storyGroupId] = result;
         }
-        insertChanges('dev', projectId, Meteor.user()['emails'][0]['address'], 'story_add', story._id, 'none', JSON.stringify(story));
+        insertChanges('dev', projectId, Meteor.user()['emails'][0]['address'], 'story_add', story._id, story.title, 'none', JSON.stringify(story));
         auditLogIfOnServer('Stories created', {
             user: Meteor.user(),
             type: 'created',
@@ -170,7 +170,7 @@ Meteor.methods({
         );
         Stories.remove(story);
         await deleteResponsesRemovedFromStories(storyInDb.events, story.projectId, Meteor.user());
-        insertChanges('dev', story.projectId, Meteor.user()['emails'][0]['address'], 'story_delete', story._id, JSON.stringify(storyInDb), 'none');
+        insertChanges('dev', story.projectId, Meteor.user()['emails'][0]['address'], 'story_delete', story._id, storyInDb.title, JSON.stringify(storyInDb), 'none');
         auditLogIfOnServer('Story deleted', {
             resId: story._id,
             user: Meteor.user(),

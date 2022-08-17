@@ -42,7 +42,12 @@ const ChangeLog = (props) => {
             id: 'actionType',
         },
         {
-            Header: 'Item ID',
+            Header: 'Item Name',
+            accessor: 'itemName',
+            id: 'itemName',
+        },
+        {
+            Header: 'Item Id',
             accessor: 'itemId',
             id: 'itemId',
         },

@@ -132,7 +132,7 @@ Meteor.methods({
         Forms.deleteMany({ groupId: storyGroup._id }).exec();
         const result = Stories.remove({ storyGroupId: storyGroup._id });
         await deleteResponsesRemovedFromStories(eventstoRemove, storyGroup.projectId, Meteor.user());
-        insertChanges('dev', storyGroup.projectId, Meteor.user()['emails'][0]['address'], 'story_group_delete', storyGroup._id, JSON.stringify(storyGroup), 'none');
+        insertChanges('dev', storyGroup.projectId, Meteor.user()['emails'][0]['address'], 'story_group_delete', storyGroup._id, storyGroup.name, JSON.stringify(storyGroup), 'none');
         auditLogIfOnServer('Story group deleted', {
             resId: storyGroup._id,
             user: Meteor.user(),
@@ -162,7 +162,7 @@ Meteor.methods({
                 { _id: projectId },
                 { $push: { storyGroups: { $each: [id], $position } } },
             );
-            insertChanges('dev', storyGroup.projectId, Meteor.user()['emails'][0]['address'], 'story_group_add', id, 'none', JSON.stringify(storyGroup));
+            insertChanges('dev', storyGroup.projectId, Meteor.user()['emails'][0]['address'], 'story_group_add', id, storyGroup.name, 'none', JSON.stringify(storyGroup));
             auditLogIfOnServer('Created a story group', {
                 resId: id,
                 user: Meteor.user(),
@@ -192,7 +192,7 @@ Meteor.methods({
                     { $set: { storyGroups: children } },
                 );
             }
-            insertChanges('dev', storyGroup.projectId, Meteor.user()['emails'][0]['address'], 'story_group_update', storyGroup._id, JSON.stringify(storyGroupBefore), JSON.stringify(storyGroup));
+            insertChanges('dev', storyGroup.projectId, Meteor.user()['emails'][0]['address'], 'story_group_update', storyGroup._id, storyGroupBefore.name, JSON.stringify(storyGroupBefore), JSON.stringify(storyGroup));
             auditLogIfOnServer('Updated a story group', {
                 resId: storyGroup._id,
                 user: Meteor.user(),

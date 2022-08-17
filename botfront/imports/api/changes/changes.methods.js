@@ -8,6 +8,8 @@ const maxPageSize = 100;
 if (Meteor.isServer) {
     Meteor.methods(
         {
+            // method to fetch change log data
+            // includes sorting, filtering and pagination
             async 'changes.find'(projectId, page, pageSize, sortField, sortDesc, filters) {
                 try {
                     checkIfCan('projects:r', projectId);
@@ -39,7 +41,7 @@ if (Meteor.isServer) {
                 const checkedPageSize = pageSize > maxPageSize ? maxPageSize : pageSize;
 
                 const sort = { [sortField]: sortDesc ? -1 : 1 };
-                debugger;
+
                 const findQuery = filters.reduce((acc, curr) => {
                     acc[curr.id] = filterFunctions[curr.id] ? filterFunctions[curr.id](curr.value) : filterFunctions.default(curr.value);
                     return acc;
@@ -48,37 +50,50 @@ if (Meteor.isServer) {
 
 
                 // return changes and total count to show correct pagination
-                const result = await Changes.rawCollection().aggregate([
-                    {
-                        '$facet': {
-                            'data': [
-                                { '$match': findQuery },
-                                { '$sort': sort },
-                                { '$skip': page * checkedPageSize },
-                                { '$limit': checkedPageSize },
-                                {
-                                    '$addFields': {
-                                        updatedAt: {
-                                            "$dateToString": {
-                                                "format": "%Y-%m-%d %H:%M:%S",
-                                                "date": "$updatedAt"
-                                            }
-                                        }
-                                    }
-                                },
-                            ],
-                            'meta': [
-                                { '$count': 'total' },
-                                { '$addFields': { page: page, pageSize: checkedPageSize } },
-                            ]
-                        }
+                try {
+                    const result = await Changes.rawCollection().aggregate([
+                        {
+                            '$facet': {
+                                'data': [
+                                    { '$match': findQuery },
+                                    { '$sort': sort },
+                                    { '$skip': page * checkedPageSize },
+                                    { '$limit': checkedPageSize },
+                                    {
+                                        '$addFields': {
+                                            updatedAt: {
+                                                '$dateToString': {
+                                                    'format': '%Y-%m-%d %H:%M:%S',
+                                                    'date': '$updatedAt',
+                                                },
+                                            },
+                                        },
+                                    },
+                                ],
+                                'meta': [
+                                    { '$count': 'total' },
+                                    { '$addFields': { page: page, pageSize: checkedPageSize } },
+                                ],
+                            },
+                        },
+                        { '$unwind': '$meta' },
+                    ]).toArray();
+
+                    if (result?.[0]) {
+                        return result?.[0];
+                    }
+                } catch (error) {
+                    console.error({ error });
+                }
+
+                return {
+                    data: [],
+                    meta: {
+                        count: 0,
+                        page: 0,
+                        pageSize: checkedPageSize,
                     },
-                    { '$unwind': '$meta' },
-                ]).toArray();
-
-                console.log({ result });
-
-                return result?.[0];
+                };
             },
         },
     );
@@ -103,7 +118,7 @@ export const createChanges = async (project) => {
 };
 
 
-export const insertChanges = (env, projectId, user, category, itemId, before, after) => {
+export const insertChanges = (env, projectId, user, category, itemId, itemName, before, after) => {
     const hit = category;
     const categoryHit = Categories[hit];
 
@@ -112,6 +127,7 @@ export const insertChanges = (env, projectId, user, category, itemId, before, af
         environment: env,
         category: categoryHit,
         itemId,
+        itemName,
         user,
         projectId,
         before,
