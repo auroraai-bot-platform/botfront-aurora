@@ -1,31 +1,26 @@
-/* global cy:true */
+describe('Project instances', () => {
+    beforeEach(() => {
+        cy.login()
+        cy.deleteProject('bf')
+        cy.createProject('bf', 'My Project', 'fr')
+        cy.visit('/project/bf/settings')
+    })
 
-describe('Project Instances', function() {
-    beforeEach(function() {
-        cy.createProject('bf', 'My Project', 'fr');
-        cy.login();
-    });
+    afterEach(() => {
+        cy.deleteProject('bf')
+    })
 
-    afterEach(function() {
-        cy.deleteProject('bf');
-        cy.logout();
-    });
+    it('edit already created instances', () => {
+        cy.contains('Instance').click()
+        cy.get('[data-cy=save-instance]').click()
+        cy.get('.s-alert-success').should('be.visible')
+    })
 
-    describe('Instances', function() {
-        it('should be able to edit already created instances', function() {
-            cy.visit('/project/bf/settings');
-            cy.contains('Instance').click();
-            cy.get('[data-cy=save-instance]').click();
-            cy.get('.s-alert-success').should('be.visible');
-        });
-
-        it('should be able to edit instance token', function() {
-            cy.visit('/project/bf/settings/instance');
-            cy.dataCy('token-field').find('input').type('testtoken');
-            cy.get('[data-cy=save-instance]').click();
-            cy.get('.s-alert-success').should('be.visible');
-            cy.reload();
-            cy.dataCy('token-field').find('input').should('have.value', 'testtoken');
-        });
-    });
-});
+    it('edit instance token', () => {
+        cy.contains('Instance').click()
+        cy.dataCy('token-field').find('input').type('testtoken')
+        cy.get('[data-cy=save-instance]').click()
+        cy.get('.s-alert-success').should('be.visible')
+        cy.dataCy('token-field').find('input').should('have.value', 'testtoken')
+    })
+})

@@ -1,37 +1,31 @@
-/* global cy:true */
+describe('Project endpoints', () => {
+    beforeEach(() => {
+        cy.login()
+        cy.deleteProject('bf')
+        cy.createProject('bf', 'My Project', 'fr')
+        cy.visit('/project/bf/settings')
+    })
 
-describe('Project Endpoints', function() {
-    beforeEach(function() {
-        cy.createProject('bf', 'My Project', 'fr').then(() => cy.login());
-    });
+    afterEach(() => {
+        cy.deleteProject('bf')
+    })
 
-    afterEach(function() {
-        cy.logout();
-        cy.deleteProject('bf');
-    });
+    it('can be saved', () => {
+        cy.contains('Endpoints').click()
+        cy.get('[data-cy=save-button]').click()
+        cy.get('[data-cy=changes-saved]').should('be.visible')
+    })
 
-    describe('Endpoints', function() {
-        it('Can be saved', function() {
-            cy.visit('/project/bf/settings');
-            cy.contains('Endpoints').click();
-            cy.get('[data-cy=save-button]').click();
-            cy.get('[data-cy=changes-saved]').should('be.visible');
-        });
+    it('menu tabs should not be exists with one env', () => {
+        cy.contains('Endpoints').click()
+        cy.dataCy('endpoints-environment-menu').should('not.have.class', 'menu')
+    })
 
-        it('should not have menu tabs with one env', function() {
-            cy.visit('/project/bf/settings');
-            cy.contains('Endpoints').click();
-            cy.dataCy('endpoints-environment-menu').should('not.have.class', 'menu');
-        });
-
-        it('should have menu tabs with mutiple env', function() {
-            cy.visit('/project/bf/settings');
-            cy.get('[data-cy=deployment-environments]')
-                .children().contains('production').click();
-            cy.get('[data-cy=save-changes]').click();
-            cy.visit('/project/bf/settings');
-            cy.contains('Endpoints').click();
-            cy.dataCy('endpoints-environment-menu').should('have.class', 'menu');
-        });
-    });
-});
+    it('menu tabs should be exists with mutiple env', () => {
+        cy.get('[data-cy=deployment-environments]').children().contains('production').click()
+        cy.get('[data-cy=save-changes]').click()
+        cy.visit('/project/bf/settings')
+        cy.contains('Endpoints').click()
+        cy.dataCy('endpoints-environment-menu').should('have.class', 'menu')
+    })
+})
