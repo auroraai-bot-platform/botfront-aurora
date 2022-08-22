@@ -4,13 +4,21 @@ import { withTracker } from 'meteor/react-meteor-data';
 import { connect } from 'react-redux';
 import 'react-table-v6/react-table.css';
 import ReactTable from 'react-table-v6';
-import DatePicker from '../../common/DatePicker';
 import moment from 'moment';
+import DatePicker from '../../common/DatePicker';
 
 const ChangeLog = (props) => {
     const { projectId } = props;
 
     const defaultPageSize = 10;
+
+    const prettifyJson = (data) => {
+        try {
+            return JSON.stringify(JSON.parse(data), null, 2);
+        } catch (error) {
+            return data;
+        }
+    };
 
     const columns = [
         {
@@ -24,7 +32,17 @@ const ChangeLog = (props) => {
                         onChange(JSON.stringify(data));
                     }}
                 />
-            )
+            ),
+        },
+        {
+            Header: 'Item Name',
+            accessor: 'itemName',
+            id: 'itemName',
+        },
+        {
+            Header: 'Item Id',
+            accessor: 'itemId',
+            id: 'itemId',
         },
         {
             Header: 'Item Type',
@@ -42,19 +60,32 @@ const ChangeLog = (props) => {
             id: 'actionType',
         },
         {
-            Header: 'Item Name',
-            accessor: 'itemName',
-            id: 'itemName',
-        },
-        {
-            Header: 'Item Id',
-            accessor: 'itemId',
-            id: 'itemId',
-        },
-        {
             Header: 'User',
             accessor: 'user',
             id: 'user',
+        },
+    ];
+
+    const subColumns = [
+        {
+            Header: 'Before',
+            accessor: 'before',
+            id: 'before',
+            Cell: row => (
+                <pre>
+                    {prettifyJson(row.value)}
+                </pre>
+            ),
+        },
+        {
+            Header: 'After',
+            accessor: 'after',
+            id: 'after',
+            Cell: row => (
+                <pre>
+                    {prettifyJson(row.value)}
+                </pre>
+            ),
         },
     ];
 
@@ -80,6 +111,8 @@ const ChangeLog = (props) => {
         })();
     };
 
+    const printJson = data => JSON.stringify(data, null, '<br />');
+
     return (
         <div>
             <h1>Hello World</h1>
@@ -95,6 +128,18 @@ const ChangeLog = (props) => {
                 loading={loading}
                 showPaginationTop
                 filterable
+                SubComponent={row => (
+                    <div style={{ padding: '20px' }}>
+                        <ReactTable
+                            columns={subColumns}
+                            data={[row?.original]}
+                            defaultPageSize={1}
+                            pages={0}
+                            showPagination={false}
+                            sortable={false}
+                        />
+                    </div>
+                )}
             />
         </div>
     );
