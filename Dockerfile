@@ -29,7 +29,6 @@ RUN apk --update --no-cache add \
     libstdc++ \
     alpine-sdk \
 		make \
-		python2 \
     python3 \
 		curl \
     coreutils \
