@@ -6,6 +6,11 @@ import { checkIfCan } from '../../lib/scopes';
 
 export const Changes = new Mongo.Collection('changes');
 
+const expireAfter30days = 60 * 60 * 24 * 30;
+
+Changes.createIndex({ updatedAt: 1 }, { expireAfterSeconds: expireAfter30days });
+Changes.createIndex({ projectId: 1 });
+
 Changes.deny({
     insert() { return true; },
     update() { return true; },
