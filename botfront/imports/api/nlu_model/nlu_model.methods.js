@@ -87,7 +87,7 @@ Meteor.methods({
         if (item._id) {
             const synonymBefore = NLUModels.findOne({ _id: modelId, 'training_data.entity_synonyms._id': item._id }, { fields: { 'training_data.entity_synonyms.$': 1 } });
             const properSynonym = get(synonymBefore, 'training_data.entity_synonyms[0]');
-            insertChanges('dev', projectId, Meteor.user()['emails'][0]['address'], 'entity_synonym_update', item._id, '', JSON.stringify(properSynonym), JSON.stringify(item));
+            insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'entity_synonym_update', item._id, '', JSON.stringify(properSynonym), JSON.stringify(item));
             auditLogIfOnServer('Updated entity synonym ', {
                 user: Meteor.user(),
                 resId: item._id,
@@ -102,7 +102,7 @@ Meteor.methods({
         }
 
         const newId = uuidv4();
-        insertChanges('dev', projectId, Meteor.user()['emails'][0]['address'], 'entity_synonym_add', newId, '', 'none', JSON.stringify(item));
+        insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'entity_synonym_add', newId, '', 'none', JSON.stringify(item));
         auditLogIfOnServer('Created entity synonym', {
             user: Meteor.user(),
             resId: newId,
@@ -122,7 +122,7 @@ Meteor.methods({
         check(itemId, String);
         const synonymBefore = NLUModels.findOne({ _id: modelId, 'training_data.entity_synonyms._id': itemId }, { fields: { 'training_data.entity_synonyms.$': 1 } });
         const properSynonym = get(synonymBefore, 'training_data.entity_synonyms[0]');
-        insertChanges('dev', projectId, Meteor.user()['emails'][0]['address'], 'entity_synonym_delete', itemId, '', JSON.stringify(properSynonym), 'none');
+        insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'entity_synonym_delete', itemId, '', JSON.stringify(properSynonym), 'none');
         auditLogIfOnServer('Deleted entity synonym', {
             user: Meteor.user(),
             resId: itemId,
@@ -144,7 +144,7 @@ Meteor.methods({
         if (item._id) {
             const gazetteBefore = NLUModels.findOne({ _id: modelId, 'training_data.fuzzy_gazette._id': item._id }, { fields: { 'training_data.fuzzy_gazette.$': 1 } });
             const properGazette = get(gazetteBefore, 'training_data.fuzzy_gazette[0]');
-            insertChanges('dev', projectId, Meteor.user()['emails'][0]['address'], 'entity_gazette_update', item._id, JSON.stringify(properGazette), JSON.stringify(item));
+            insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'entity_gazette_update', item._id, JSON.stringify(properGazette), JSON.stringify(item));
             auditLogIfOnServer('Updated entity gazette', {
                 user: Meteor.user(),
                 resId: modelId,
@@ -160,7 +160,7 @@ Meteor.methods({
         }
 
         const gazette = { _id: uuidv4(), ...gazetteDefaults, ...item };
-        insertChanges('dev', projectId, Meteor.user()['emails'][0]['address'], 'entity_gazette_add', gazette._id, '', 'none', JSON.stringify(gazette));
+        insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'entity_gazette_add', gazette._id, '', 'none', JSON.stringify(gazette));
         auditLogIfOnServer('Created entity gazette', {
             user: Meteor.user(),
             resId: gazette._id,
@@ -180,7 +180,7 @@ Meteor.methods({
         check(itemId, String);
         const gazetteBefore = NLUModels.findOne({ _id: modelId, 'training_data.fuzzy_gazette._id': itemId }, { fields: { 'training_data.fuzzy_gazette.$': 1 } });
         const properGazette = get(gazetteBefore, 'training_data.fuzzy_gazette[0]');
-        insertChanges('dev', projectId, Meteor.user()['emails'][0]['address'], 'entity_gazette_delete', itemId, '', JSON.stringify(properGazette), 'none');
+        insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'entity_gazette_delete', itemId, '', JSON.stringify(properGazette), 'none');
         auditLogIfOnServer('Deleted entity gazette', {
             user: Meteor.user(),
             resId: modelId,
@@ -202,7 +202,7 @@ Meteor.methods({
             throw new Meteor.Error(`invalid regular expression: ${item.pattern}`);
         }
         if (item._id) {
-            insertChanges('dev', 'none', Meteor.user()['emails'][0]['address'], 'regex_feature_update', item._id, '', 'none', JSON.stringify(item));
+            insertChanges('none', Meteor.user()?.emails?.[0]?.address, 'regex_feature_update', item._id, '', 'none', JSON.stringify(item));
             return NLUModels.update(
                 { _id: modelId, 'training_data.regex_features._id': item._id },
                 {
@@ -214,7 +214,7 @@ Meteor.methods({
         }
 
         const regexFeature = { ...item, _id: uuidv4() };
-        insertChanges('dev', 'none', Meteor.user()['emails'][0]['address'], 'regex_feature_add', item._id, '', 'none', JSON.stringify(regexFeature));
+        insertChanges('none', Meteor.user()?.emails?.[0]?.address, 'regex_feature_add', item._id, '', 'none', JSON.stringify(regexFeature));
         return NLUModels.update(
             { _id: modelId },
             { $push: { 'training_data.regex_features': regexFeature } },
@@ -224,7 +224,7 @@ Meteor.methods({
     'nlu.deleteRegexFeature'(modelId, itemId) {
         check(modelId, String);
         check(itemId, String);
-        insertChanges('dev', 'none', Meteor.user()['emails'][0]['address'], 'regex_feature_delete', '', itemId, 'none', 'none');
+        insertChanges('none', Meteor.user()?.emails?.[0]?.address, 'regex_feature_delete', '', itemId, 'none', 'none');
         return NLUModels.update(
             { _id: modelId },
             { $pull: { 'training_data.regex_features': { _id: itemId } } },

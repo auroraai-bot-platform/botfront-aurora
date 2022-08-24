@@ -5,10 +5,6 @@ export const ChangesSchema = new SimpleSchema({
         type: Date,
         optional: true,
     },
-    environment: {
-        type: String,
-        optional: true,
-    },
     projectId: {
         type: String,
     },

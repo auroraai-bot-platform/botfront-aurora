@@ -70,7 +70,7 @@ export default {
         async updateExamples(_, args, context) {
             checkIfCan('nlu-data:w', args.projectId, context.user._id);
             const response = await updateExamples(args);
-            insertChanges('dev', args.projectId, context.user.emails[0].address, 'example_update', args['examples'][0]['_id'], '', 'none', JSON.stringify(response[0]));
+            insertChanges(args.projectId, context?.user?.emails?.[0]?.address, 'example_update', args?.examples?.[0]?._id, '', 'none', JSON.stringify(response[0]));
             auditLog('updated examples', {
                 user: context.user,
                 type: 'updated',
@@ -87,7 +87,7 @@ export default {
         async insertExamples(_, { autoAssignCanonical, overwriteOnSameText, ...args }, context) {
             checkIfCan('nlu-data:w', args.projectId, context.user._id);
             const response = await insertExamples({ ...args, options: { autoAssignCanonical, overwriteOnSameText } });
-            insertChanges('dev', args.projectId, context.user.emails[0].address, 'example_add', response[0]['_id'], '', 'none', JSON.stringify(response[0]));
+            insertChanges(args.projectId, context?.user?.emails?.[0]?.address, 'example_add', response?.[0]?._id, '', 'none', JSON.stringify(response[0]));
             auditLog('inserted examples', {
                 user: context.user,
                 type: 'inserted',
@@ -106,7 +106,7 @@ export default {
         async deleteExamples(_, args, context) {
             checkIfCan('nlu-data:w', args.projectId, context.user._id);
             const response = await deleteExamples(args);
-            insertChanges('dev', args.projectId, context.user.emails[0].address, 'example_delete', response[0], '', 'none', 'none');
+            insertChanges(args.projectId, context?.user.emails?.[0]?.address, 'example_delete', response?.[0], '', 'none', 'none');
             auditLog('deleted examples', {
                 user: context.user,
                 type: 'deleted',

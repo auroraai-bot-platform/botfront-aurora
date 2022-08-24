@@ -118,13 +118,12 @@ export const createChanges = async (project) => {
 };
 
 
-export const insertChanges = (env, projectId, user, category, itemId, itemName, before, after) => {
+export const insertChanges = (projectId, user, category, itemId, itemName, before, after) => {
     const hit = category;
     const categoryHit = Categories[hit];
 
     Changes.insert({
         updatedAt: new Date(),
-        environment: env,
         category: categoryHit,
         itemId,
         itemName,
