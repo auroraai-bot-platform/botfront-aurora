@@ -111,11 +111,8 @@ const ChangeLog = (props) => {
         })();
     };
 
-    const printJson = data => JSON.stringify(data, null, '<br />');
-
     return (
         <div>
-            <h1>Hello World</h1>
             <ReactTable
                 style={{ height: 'calc(100vh - 200px)' }}
                 ref={reactTable}
