@@ -34,7 +34,7 @@ if (Meteor.isServer) {
                         }
                     },
                     default: (value) => {
-                        return { $regex: `^${value}.+` };
+                        return { $regex: `^${value}.*` };
                     },
                 };
 
