@@ -8,8 +8,6 @@ export const Changes = new Mongo.Collection('changes');
 
 const expireAfter30days = 60 * 60 * 24 * 30;
 
-Changes.createIndex({ updatedAt: 1 }, { expireAfterSeconds: expireAfter30days });
-Changes.createIndex({ projectId: 1 });
 
 Changes.deny({
     insert() { return true; },
@@ -18,6 +16,9 @@ Changes.deny({
 });
 
 if (Meteor.isServer) {
+    Changes.createIndex({ updatedAt: 1 }, { expireAfterSeconds: expireAfter30days });
+    Changes.createIndex({ projectId: 1 });
+
     Meteor.publish('changes', function (projectId) {
         try {
             checkIfCan('projects:r', projectId);
