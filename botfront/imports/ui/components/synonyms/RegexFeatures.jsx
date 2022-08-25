@@ -17,7 +17,7 @@ class RegexFeatures extends React.Component {
     };
 
     render() {
-        const { model } = this.props;
+        const { model, projectId } = this.props;
         return (
             <LookupTable
                 data={model.training_data.regex_features}
@@ -30,12 +30,14 @@ class RegexFeatures extends React.Component {
                 valuePlaceholder='name'
                 listPlaceholder='Enter a regular expression'
                 multiple={false}
+                projectId={projectId}
             />
         );
     }
 }
 
 RegexFeatures.propTypes = {
+    projectId: PropTypes.string.isRequired,
     model: PropTypes.object.isRequired,
 };
 

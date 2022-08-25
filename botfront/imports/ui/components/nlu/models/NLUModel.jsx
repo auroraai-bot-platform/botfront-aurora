@@ -245,11 +245,21 @@ function NLUModel(props) {
                             },
                             {
                                 menuItem: 'Synonyms',
-                                render: () => <Synonyms model={model} />,
+                                render: () => (
+                                    <Synonyms
+                                        model={model}
+                                        projectId={projectId}
+                                    />
+                                ),
                             },
                             {
                                 menuItem: 'Gazette',
-                                render: () => <Gazette model={model} />,
+                                render: () => (
+                                    <Gazette
+                                        model={model}
+                                        projectId={projectId}
+                                    />
+                                ),
                             },
                             {
                                 menuItem: 'Out Of Scope',
@@ -257,7 +267,12 @@ function NLUModel(props) {
                             },
                             {
                                 menuItem: 'Regex',
-                                render: () => <RegexFeatures model={model} />,
+                                render: () => (
+                                    <RegexFeatures
+                                        model={model}
+                                        projectId={projectId}
+                                    />
+                                ),
                             },
                             {
                                 menuItem: 'API',
