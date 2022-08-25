@@ -9,6 +9,7 @@ import {
 import { checkIfCan } from '../../../lib/scopes';
 import { auditLog } from '../../../../server/logger';
 import { addMeteorUserToCall } from '../utils/index';
+import { insertChanges } from '../../changes/changes.methods';
 
 const { PubSub, withFilter } = require('apollo-server-express');
 
@@ -71,6 +72,12 @@ export default {
                     after: value,
                     resType: 'form',
                 });
+                if (key !== 'formsCreated') {
+                    insertChanges(args.form.projectId, context.user, 'forms_add', 'none', value.name, 'none', 'none');
+                };
+                if (key !== 'formsModified') {
+                    insertChanges(args.form.projectId, context.user, 'forms_update', 'none', value.name, 'none', 'none');
+                };
                 pubsub.publish(publication, {
                     projectId: args.form.projectId,
                     [key]: value,
@@ -91,6 +98,7 @@ export default {
                 before: { forms: result },
                 resType: 'form',
             });
+            insertChanges(args.projectId, context.user, 'forms_delete', 'none', 'none', 'none', 'none');
             pubsub.publish(FORMS_DELETED, {
                 projectId: args.projectId,
                 formsDeleted: result,

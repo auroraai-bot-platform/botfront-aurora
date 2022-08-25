@@ -226,4 +226,34 @@ const Categories = {
         itemSubType: 'story_group',
         actionType: 'update',
     },
+    slots_add: {
+        itemType: 'dialogue',
+        itemSubType: 'slot',
+        actionType: 'add',
+    },
+    slots_delete: {
+        itemType: 'dialogue',
+        itemSubType: 'slot',
+        actionType: 'delete',
+    },
+    slots_update: {
+        itemType: 'dialogue',
+        itemSubType: 'slot',
+        actionType: 'update',
+    },
+    forms_add: {
+        itemType: 'dialogue',
+        itemSubType: 'form',
+        actionType: 'add',
+    },
+    forms_delete: {
+        itemType: 'dialogue',
+        itemSubType: 'form',
+        actionType: 'delete',
+    },
+    forms_update: {
+        itemType: 'dialogue',
+        itemSubType: 'form',
+        actionType: 'update',
+    },    
 };
