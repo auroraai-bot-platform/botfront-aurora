@@ -72,11 +72,12 @@ export default {
                     after: value,
                     resType: 'form',
                 });
-                if (key !== 'formsCreated') {
-                    insertChanges(args.form.projectId, context.user, 'forms_add', 'none', value.name, 'none', 'none');
+                const included = ({name, collect_in_botfront, pinned, slots} = value, {name, collect_in_botfront, pinned, slots});
+                if (key == 'formsCreated') {
+                    insertChanges(args.form.projectId, context.user.emails[0].address, 'forms_add', 'none', value.name, 'none', JSON.stringify(included));
                 };
-                if (key !== 'formsModified') {
-                    insertChanges(args.form.projectId, context.user, 'forms_update', 'none', value.name, 'none', 'none');
+                if (key == 'formsModified') {
+                    insertChanges(args.form.projectId, context.user.emails[0].address, 'forms_update', 'none', value.name, 'none', JSON.stringify(included));
                 };
                 pubsub.publish(publication, {
                     projectId: args.form.projectId,
@@ -98,7 +99,10 @@ export default {
                 before: { forms: result },
                 resType: 'form',
             });
-            insertChanges(args.projectId, context.user, 'forms_delete', 'none', 'none', 'none', 'none');
+            result.forEach((item) => {
+                insertChanges(args.projectId, context.user.emails[0].address, 'forms_delete', 'none', item.name, 'none', 'none');
+            });
+            
             pubsub.publish(FORMS_DELETED, {
                 projectId: args.projectId,
                 formsDeleted: result,

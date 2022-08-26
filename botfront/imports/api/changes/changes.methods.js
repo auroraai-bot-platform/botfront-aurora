@@ -255,5 +255,20 @@ const Categories = {
         itemType: 'dialogue',
         itemSubType: 'form',
         actionType: 'update',
-    },    
+    }, 
+    responses_add: {
+        itemType: 'responses',
+        itemSubType: 'bot_responses',
+        actionType: 'add',
+    },
+    responses_delete: {
+        itemType: 'responses',
+        itemSubType: 'bot_responses',
+        actionType: 'delete',
+    },
+    responses_update: {
+        itemType: 'responses',
+        itemSubType: 'bot_responses',
+        actionType: 'update',
+    },       
 };
