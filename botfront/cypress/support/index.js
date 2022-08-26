@@ -26,7 +26,11 @@ import './conversation.commands';
 import './form.commands';
 import './slot.commands';
 
+
 const axios = require('axios');
+const dayjs = require('dayjs');
+
+Cypress.dayjs = dayjs
 
 Cypress.on('uncaught:exception', () => false);
 
