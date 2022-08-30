@@ -14,9 +14,6 @@ describe('Form usage', () => {
         cy.deleteProject('bf')
         cy.createProject('bf', 'My Project', 'en')
         cy.visit('project/bf/dialogue')
-/*         .then(() => {
-            cy.fixture('lite-policies.yaml').then(policies => cy.setPolicies('bf', `${policies}\n    - name: FormPolicy`))
-        }) */
     })
 
     afterEach(() => {
@@ -24,7 +21,7 @@ describe('Form usage', () => {
         cy.deleteProject('bf')
     })
 
-    it('Create a form, use it and view the result', () => {        
+    it('create a form, use it and view the result', () => {        
         cy.meteorAddSlot('bool_slot', 'bool')
         cy.createStoryGroup()
         cy.createFragmentInGroup({ type: 'form' })

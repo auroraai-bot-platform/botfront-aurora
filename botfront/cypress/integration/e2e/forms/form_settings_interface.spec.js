@@ -84,7 +84,7 @@ describe('Main form editor interface usage', () => {
         cy.dataCy('confirm-response-type-change').click()
     }
 
-    it('Edit the form name, description, slots, and collect in botfront status', () => {        
+    it('edit the form name, description, slots, and collect in botfront status', () => {        
         cy.createStoryGroup()
         cy.createFragmentInGroup({ type: 'form' })
         cy.createFragmentInGroup({ type: 'form' })
@@ -107,7 +107,7 @@ describe('Main form editor interface usage', () => {
         cy.dataCy('side-questions').should('have.class', 'checked')
     })
 
-    it('Change the response type via the dropdown', () => {       
+    it('change the response type via the dropdown', () => {       
         cy.createCustomStoryGroup('bf', 'test_group_A', 'group A')
         cy.createForm('bf', 'test1_form', form)        
         cy.get('.loader').should('not.exist')
@@ -153,7 +153,7 @@ describe('Main form editor interface usage', () => {
         cy.dataCy('slot-node-wrapper-slot1').find('[data-cy=bot-response-input]').find('textarea').should('have.text', 'categorical slot')
     })
 
-    it('Create, edit and delete a set slot node', () => {      
+    it('create, edit and delete a set slot node', () => {      
         cy.createStoryGroup()
         cy.createFragmentInGroup({ type: 'form' })
         cy.createFragmentInGroup({ type: 'form' })
@@ -191,7 +191,7 @@ describe('Main form editor interface usage', () => {
         cy.dataCy('slot-set-node').should('not.exist')
     })
 
-    it('Change the response languages', () => {
+    it('change the response languages', () => {
         cy.createNLUModelProgramatically('bf', '', 'fr')       
         cy.meteorAddSlot('bool_slot', 'bool')
         cy.createStoryGroup()
@@ -213,7 +213,7 @@ describe('Main form editor interface usage', () => {
         cy.get('[data-cy=bot-response-input] > div >textarea').should('have.value', 'test')
     })
 
-    it('Set all slot types', () => {       
+    it('set all slot types', () => {       
         cy.import('bf', 'nlu_entity_sample.json', 'en')
         cy.meteorAddSlot('catSlot', 'categorical')
         cy.createForm('bf', 'test1_form', {
