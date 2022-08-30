@@ -92,7 +92,7 @@ export const deleteUnusedSlots = async (formId, projectId, newSlots) => {
             before: { slot },
             resType: 'slots',
         });
-        insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'slots_delete', slot?._id, slot?.name, JSON.stringify(slot), 'none');
+        insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'slots_delete', slot._id, slot.name, JSON.stringify(slot), 'none');
     });
 
     const responseKeys = [];

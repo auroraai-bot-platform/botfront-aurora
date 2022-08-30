@@ -74,7 +74,7 @@ export default {
                 before: { response: botResponseDeleted },
                 resType: 'response',
             });
-            insertChanges(args.projectId, auth?.user?.emails[0]?.address, 'responses_delete', botResponseDeleted?._id, botResponseDeleted?.key, JSON.stringify(botResponseDeleted), 'none');
+            insertChanges(args.projectId, auth.user?.emails[0]?.address, 'responses_delete', botResponseDeleted._id, botResponseDeleted.key, JSON.stringify(botResponseDeleted), 'none');
             pubsub.publish(RESPONSE_DELETED, {
                 projectId: args.projectId,
                 botResponseDeleted,
@@ -101,7 +101,7 @@ export default {
                 after: { response: args.response },
                 resType: 'response',
             });
-            insertChanges(args.projectId, auth?.user?.emails[0]?.address, 'responses_update', response._id, args?.response?.key, JSON.stringify(responseBefore), JSON.stringify(args.response));
+            insertChanges(args.projectId, auth.user?.emails[0]?.address, 'responses_update', response._id, args.response.key, JSON.stringify(responseBefore), JSON.stringify(args.response));
             const { _id } = response;
             pubsub.publish(RESPONSES_MODIFIED, {
                 projectId: args.projectId,
@@ -147,7 +147,7 @@ export default {
                     resType: 'response',
                 });
             }
-            insertChanges(args.projectId, auth?.user?.emails[0]?.address, 'responses_update', response._id, response?.key, JSON.stringify(responseBefore), JSON.stringify(response));
+            insertChanges(args.projectId, auth.user?.emails[0]?.address, 'responses_update', response._id, response.key, JSON.stringify(responseBefore), JSON.stringify(response));
             return response;
         },
         async createResponses(_, args, auth) {
