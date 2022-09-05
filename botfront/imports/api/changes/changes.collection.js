@@ -6,7 +6,7 @@ import { checkIfCan } from '../../lib/scopes';
 
 export const Changes = new Mongo.Collection('changes');
 
-const expireAfter30days = 60 * 60 * 24 * 30;
+const expireAfter30days = 60 * 60 * 24 * 14;
 
 
 Changes.deny({
