@@ -10,6 +10,7 @@ import { formatError } from '../../lib/utils';
 import { CorePolicies, createPolicies } from '../core_policies';
 import { createEndpoints } from '../endpoints/endpoints.methods';
 import { Endpoints } from '../endpoints/endpoints.collection';
+import { createChanges } from '../changes/changes.methods';
 import { Credentials, createCredentials } from '../credentials';
 import { checkIfCan, can } from '../../lib/scopes';
 import { Conversations } from '../conversations';
@@ -46,6 +47,7 @@ if (Meteor.isServer) {
                 _id = createProject(item);
                 AnalyticsDashboards.create(defaultDashboard({ _id, ...item }));
                 createEndpoints({ _id, ...item });
+                createChanges({ _id, ...item });
                 createCredentials({ _id, ...item });
                 createPolicies({ _id, ...item });
                 createStoriesWithTriggersGroup(_id);

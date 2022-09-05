@@ -16,6 +16,7 @@ import { deleteResponsesRemovedFromStories } from '../graphql/botResponses/mongo
 
 import { getTriggerIntents } from '../graphql/story/mongo/stories';
 import { convertTrackerToStory } from '../../lib/test_case.utils';
+import { insertChanges } from '../changes/changes.methods';
 
 
 import { langFromCode } from '../../lib/languages';
@@ -57,6 +58,7 @@ Meteor.methods({
             result = [Stories.insert({ ...story, ...indexStory(story) })];
             storyGroups[story.storyGroupId] = result;
         }
+        insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'story_add', story._id, story.title, 'none', JSON.stringify(story));
         auditLogIfOnServer('Stories created', {
             user: Meteor.user(),
             type: 'created',
@@ -100,6 +102,13 @@ Meteor.methods({
             if (story.some(s => s.projectId !== projectId)) throw new Error(); // ensure homegeneous set
             const originStories = Stories.find({ _id: { $in: story.map(({ _id }) => _id) } }).fetch();
             logStoryUpdate(story, projectId, originStories);
+
+            // insert change log for each story separately
+            story.forEach((item) => {
+                const originItem = originStories.find(({ _id }) => _id === item._id);
+                insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'story_update', item._id, originItem.title, JSON.stringify(originItem), JSON.stringify(story));
+            });
+
             return story.map(({ _id, ...rest }) => Stories.update(
                 { _id },
                 {
@@ -116,6 +125,9 @@ Meteor.methods({
 
         if (!path) {
             logStoryUpdate(story, projectId, originStory);
+
+            insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'story_update', _id, originStory.title, JSON.stringify(originStory), JSON.stringify(story));
+            
             return Stories.update({ _id }, {
                 $set: {
                     ...rest,
@@ -168,6 +180,7 @@ Meteor.methods({
         );
         Stories.remove(story);
         await deleteResponsesRemovedFromStories(storyInDb.events, story.projectId, Meteor.user());
+        insertChanges(story.projectId, Meteor.user()?.emails?.[0]?.address, 'story_delete', story._id, storyInDb.title, JSON.stringify(storyInDb), 'none');
         auditLogIfOnServer('Story deleted', {
             resId: story._id,
             user: Meteor.user(),
@@ -381,13 +394,13 @@ if (Meteor.isServer) {
             ...(language ? { language } : {}),
         };
         const testCases = Stories.find({ ...query }, { fields: { _id: 1, steps: 1, language: 1 } })
-        .map(({
-            _id, steps, language: testLanguage,
-        }) => ({
-            _id,
-            steps,
-            language: testLanguage,
-        }));
+            .map(({
+                _id, steps, language: testLanguage,
+            }) => ({
+                _id,
+                steps,
+                language: testLanguage,
+            }));
         if (testCases?.length < 1) {
             return { passing: 0, failing: 0 }
         }
@@ -452,9 +465,9 @@ if (Meteor.isServer) {
                 if (e?.isAxiosError) {
                     throw new Meteor.Error(
                         e?.response?.status
-                            || 500,
+                        || 500,
                         e?.response?.statusText
-                            || 'An unexpected error occured',
+                        || 'An unexpected error occured',
                     );
                 }
                 throw formatError(e);

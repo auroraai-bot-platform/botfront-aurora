@@ -6,7 +6,7 @@ import { Slots } from '../../../slots/slots.collection';
 import { auditLogIfOnServer } from '../../../../lib/utils';
 import { combineSearches } from '../../story/mongo/stories';
 import { deleteResponsesRemovedFromStories } from '../../botResponses/mongo/botResponses';
-
+import { insertChanges } from '../../../changes/changes.methods';
 export const getForms = async (projectId, ids = null) => {
     if (!ids) return Forms.find({ projectId }, {}, { sort: { name: 1 } }).lean();
     return Forms.find({ projectId, _id: { $in: ids } }, {}, { sort: { name: 1 } }).lean();
@@ -36,6 +36,7 @@ const addNewSlots = async (projectId, slots) => {
                 after: { slot: { _id: newId, ...slotData } },
                 resType: 'slots',
             });
+            insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'slots_add', newId, name, 'none', JSON.stringify(slotData));
         } catch (e) {
             // ignore duplicate key error
             if (e.code !== 11000) throw e;
@@ -91,6 +92,7 @@ export const deleteUnusedSlots = async (formId, projectId, newSlots) => {
             before: { slot },
             resType: 'slots',
         });
+        insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'slots_delete', slot._id, slot.name, JSON.stringify(slot), 'none');
     });
 
     const responseKeys = [];

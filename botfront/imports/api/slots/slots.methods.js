@@ -5,6 +5,7 @@ import { Slots } from './slots.collection';
 import { checkIfCan } from '../../lib/scopes';
 import { auditLogIfOnServer } from '../../lib/utils';
 import { slotSchemas } from './slots.schema';
+import { insertChanges } from '../changes/changes.methods';
 
 function validateSchema(slot) {
     if (slot.type in slotSchemas) {
@@ -37,6 +38,7 @@ Meteor.methods({
                 after: { slot },
                 resType: 'slots',
             });
+            insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'slots_add', 'none', slot.name, 'none', JSON.stringify(slot));
             return Slots.insert(slot);
         } catch (e) {
             return handleError(e);
@@ -87,6 +89,7 @@ Meteor.methods({
                 before: { slot: slotBefore },
                 resType: 'slots',
             });
+            insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'slots_update', 'none', slot.name, JSON.stringify(slotBefore), JSON.stringify(slot));
             return Slots.update({ _id: slot._id }, { $set: slot });
         } catch (e) {
             return handleError(e);
@@ -107,6 +110,7 @@ Meteor.methods({
             before: { slot },
             resType: 'slots',
         });
+        insertChanges(projectId, Meteor.user()?.emails?.[0]?.address, 'slots_delete', 'none', slot.name, JSON.stringify(slot), 'none');
         return Slots.remove(slot);
     },
 

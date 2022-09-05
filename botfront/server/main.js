@@ -37,6 +37,10 @@ import '../imports/api/graphql/activity/activity.model';
 import '../imports/api/graphql/forms/forms.model';
 import '../imports/api/roles/roles.publication';
 import '../imports/api/roles/roles';
+import '../imports/api/changes/changes.schema';
+import '../imports/api/changes/changes.collection';
+import '../imports/api/changes/changes.methods';
+
 
 import '../imports/api/rest';
 
