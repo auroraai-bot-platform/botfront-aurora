@@ -1,44 +1,35 @@
-/* global cy:true */
+describe('Project credentials', () => {
+    before(() => {
+        cy.login()
+        cy.deleteProject('bf')
+        cy.createProject('bf', 'My Project', 'fr')
+    })
 
-describe('Project Credentials', function() {
-    before(function() {
-        cy.createProject('bf', 'My Project', 'fr');
-    });
+    after(() => {
+        cy.deleteProject('bf')
+    })
 
-    after(function() {
-        cy.deleteProject('bf');
-    });
+    beforeEach(() => {
+        cy.login()
+        cy.visit('/project/bf/settings')
+    })
 
-    beforeEach(function() {
-        cy.login();
-    });
+    it('can be saved', () => {
+        cy.contains('Credentials').click()
+        cy.get('[data-cy=save-button]').click()
+        cy.get('[data-cy=changes-saved]').should('be.visible')
+    })
 
-    afterEach(function() {
-        cy.logout();
-    });
+    it('menu tabs should not be exists with one env', () => {
+        cy.contains('Credentials').click()
+        cy.dataCy('credentials-environment-menu').should('not.have.class', 'menu')
+    })
 
-    describe('Credentials', function() {
-        it('Can be saved', function() {
-            cy.visit('/project/bf/settings');
-            cy.contains('Credentials').click();
-            cy.get('[data-cy=save-button]').click();
-            cy.get('[data-cy=changes-saved]').should('be.visible');
-        });
-
-        it('should not have menu tabs with one env', function() {
-            cy.visit('/project/bf/settings');
-            cy.contains('Credentials').click();
-            cy.dataCy('credentials-environment-menu').should('not.have.class', 'menu');
-        });
-
-        it('should have menu tabs with mutiple env', function() {
-            cy.visit('/project/bf/settings');
-            cy.dataCy('deployment-environments')
-                .children().contains('production').click();
-            cy.dataCy('save-changes').click();
-            cy.visit('/project/bf/settings');
-            cy.contains('Credentials').click();
-            cy.dataCy('credentials-environment-menu').should('have.class', 'menu');
-        });
-    });
-});
+    it('menu tabs should be exists with mutiple env', () => {
+        cy.dataCy('deployment-environments').children().contains('production').click()
+        cy.dataCy('save-changes').click()
+        cy.visit('/project/bf/settings')
+        cy.contains('Credentials').click()
+        cy.dataCy('credentials-environment-menu').should('have.class', 'menu')
+    })
+})
