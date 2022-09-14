@@ -14,8 +14,8 @@
     "viewportWidth": 1800,
     "ignoreTestFiles":["**/roles-example.spec.js"],
     "retries": {
-        "runMode": 0,
-        "openMode": 0
+        "runMode": 2,
+        "openMode": 2
     },
     "env": {
         "RASA_URL": "http://localhost:5005",
