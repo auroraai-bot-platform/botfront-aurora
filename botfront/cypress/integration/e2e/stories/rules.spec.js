@@ -6,10 +6,11 @@ describe('Rule-specific behavior', function () {
     });
 
     beforeEach(function () {
+        cy.login();
+        cy.deleteProject('bf');
         cy.createProject('bf', 'My Project', 'en').then(
             () => cy.createNLUModelProgramatically('bf', '', 'de'),
         );
-        cy.login();
         cy.visit('/project/bf/dialogue');
         cy.browseToStory('Greetings');
     });

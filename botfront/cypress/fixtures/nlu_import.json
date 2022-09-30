@@ -22,12 +22,27 @@
         }]
       },
       {
+        "text": "Je suis Matthieu",
+        "intent": "chitchat.presentation",
+        "entities": [{
+          "start": 8,
+          "end": 16,
+          "value": "Matthieu",
+          "entity": "name"
+        }]
+      },
+      {
         "text": "tu es terrible",
         "intent": "chitchat.you_are_worthless",
         "entities": []
       },
       {
         "text": "tu n'es pas très bon",
+        "intent": "chitchat.you_are_worthless",
+        "entities": []
+      },
+      {
+        "text": "vous êtes stupide",
         "intent": "chitchat.you_are_worthless",
         "entities": []
       }

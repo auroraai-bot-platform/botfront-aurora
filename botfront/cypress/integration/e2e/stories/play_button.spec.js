@@ -3,9 +3,9 @@
 
 describe('Story play button', function() {
     beforeEach(function() {
-        cy.createProject('bf', 'My Project', 'en').then(() => {
-            cy.login();
-        });
+        cy.login();
+        cy.deleteProject('bf');
+        cy.createProject('bf', 'My Project', 'en')
         cy.MeteorCall('storyGroups.insert', [
             {
                 _id: 'PLAY_BUTTON',
@@ -31,7 +31,6 @@ describe('Story play button', function() {
 
     afterEach(function() {
         cy.deleteProject('bf');
-        cy.logout();
     });
 
     it('should open and start a new story in the chat when the play button is pressed', () => {

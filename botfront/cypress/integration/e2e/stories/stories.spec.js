@@ -2,12 +2,13 @@
 
 describe('stories', function() {
     afterEach(function() {
-        cy.logout();
         cy.deleteProject('bf');
     });
 
     beforeEach(function() {
-        cy.createProject('bf', 'My Project', 'fr').then(() => cy.login());
+        cy.login();
+        cy.deleteProject('bf');
+        cy.createProject('bf', 'My Project', 'fr')
     });
     
     it('should autosave stories as you edit them', function() {
