@@ -61,6 +61,16 @@
           "entities": []
         },
         {
+          "text": "howdy",
+          "intent": "hi",
+          "entities": []
+        },
+        {
+          "text": "hi",
+          "intent": "hi",
+          "entities": []
+        },
+        {
             "text": "I'm going shopping",
             "intent": "shopping",
             "entities": []

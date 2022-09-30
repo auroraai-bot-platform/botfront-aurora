@@ -2,9 +2,9 @@
 
 describe('rename responses in the visual editor', () => {
     beforeEach(() => {
-        cy.createProject('bf', 'trial', 'en').then(() => {
-            cy.login();
-        });
+        cy.login();
+        cy.deleteProject('bf');
+        cy.createProject('bf', 'My Project', 'en')
         cy.visit('project/bf/dialogue');
         cy.createStoryGroup();
         cy.dataCy('toggle-yaml').click({ force: true });

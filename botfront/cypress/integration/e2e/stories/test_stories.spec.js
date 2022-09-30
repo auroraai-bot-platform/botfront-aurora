@@ -1,7 +1,9 @@
 /* global cy:true */
 describe('adding test cases', () => {
     beforeEach(() => {
-        cy.createProject('bf', 'My Project', 'en').then(() => cy.login());
+        cy.login();
+        cy.deleteProject('bf');
+        cy.createProject('bf', 'My Project', 'en')
         cy.visit('/project/bf/dialogue');
         cy.createStoryGroup();
         cy.createFragmentInGroup();
@@ -10,8 +12,8 @@ describe('adding test cases', () => {
         cy.import('bf', 'nlu_import.json', 'en');
     });
     afterEach(() => {
+        cy.login();
         cy.deleteProject('bf');
-        cy.logout();
     });
 
     it('should have a conversation and save it as a test case', () => {
@@ -32,7 +34,7 @@ describe('adding test cases', () => {
         // save test story from conversations
         cy.visit('/project/bf/incoming');
         cy.dataCy('conversations').click();
-        cy.dataCy('conversation-item').should('have.length', 1);
+        cy.dataCy('conversation-item').should('have.length', 2);
         cy.dataCy('conversation-item').first().click({ force: true });
         cy.dataCy('save-as-test').click();
         // we check that the story is here.

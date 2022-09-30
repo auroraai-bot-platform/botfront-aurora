@@ -3,16 +3,14 @@
 const slotName = 'slotOne';
 
 describe('slots', function() {
-    before(function() {
-        cy.deleteProject('bf');
-    });
-
     afterEach(function() {
         cy.deleteProject('bf');
     });
 
     beforeEach(function() {
-        cy.createProject('bf', 'My Project', 'fr').then(() => cy.login());
+        cy.login();
+        cy.deleteProject('bf');
+        cy.createProject('bf', 'My Project', 'fr')
     });
 
     function createSlot() {
