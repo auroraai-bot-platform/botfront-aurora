@@ -17,6 +17,11 @@ The objectives of our Botfront fork are:
 * Enable newer versions of Rasa to be supported by Botfront
 * Add some functionalities needed by the AuroraAI programme
 
+**Note!** Botfront is not directly compatible with the official Rasa
+version, but small changes have been required to Rasa too. The
+supported version of Rasa is maintained in the Github repo
+[auroraai-bot-platform/rasa](https://github.com/auroraai-bot-platform/rasa).
+
 ## AuroraAI Programme
 
 AuroraAI is a Finnish artificial intelligence programme coordinated by
