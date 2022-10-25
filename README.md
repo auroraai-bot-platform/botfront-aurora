@@ -1,109 +1,43 @@
-# Documentation
+# AuroraAI Botfront
 
-The [official documentation](https://botfront.io/docs/getting-started/setup) of Botfront is hosted on [botfront.io](https://botfront.io/docs/getting-started/setup). It is automatically built and updated on every new release. Once you've installed the cli you can also use `botfront docs` to open it.
+*AuroraAI fork of Botfront, an open-source platform for developing
+chatbots.*
 
-**We welcome contributions!** It can be as easy as clicking on the "Edit page on Github" link at the bottom of every documentation pages.
+## Background
 
-# Development
+Botfront is an open-source platform for developing Rasa-based
+chatbots. The original Botfront was developed and maintained in Github
+repository [botfront/botfront](https://github.com/botfront/botfront)
+by the Botfront team until Botfront was acquired in spring 2021 and in
+may 2021 the original Github repository was archived. Since further
+changes to the repository were not possible anymore, we have forked
+the Botfront repository and continued development.
 
-### Installation
+The objectives of our Botfront fork are:
+* Enable newer versions of Rasa to be supported by Botfront
+* Add some functionalities needed by the AuroraAI programme
 
-**!!Development version of Botfront doesn't seem to run on Windows so continue the process below with Linux or Mac!!**
+## AuroraAI Programme
 
-1. Botfront is a Meteor app, so the first step is to [install Meteor](https://www.meteor.com/install)
-2. Then clone this repo and install the dependencies:
-```bash
-git clone git@github.com:auroraai-bot-platform/botfront-private.git
-cd botfront/botfront
-meteor npm install
-```
-3. Install the CLI from the source code:
-```bash
-# if you installed Botfront CLI from npm uninstall it.
-npm uninstall -g botfront
-# Install the cli from the source code
-cd cli && npm link
-```
-Botfront needs to be connected to other services, especially Rasa. To do this, you need to create a regular project, and start Botfront with a dedicated configuration:
+AuroraAI is a Finnish artificial intelligence programme coordinated by
+the Ministry of Finance. The aim of the programme is to offer citizens
+personalised services at the right time in different life situations
+and events.
 
-- Create a Botfront project with `botfront init` (somewhere else, not in the repo)
-- Start your project with `botfront up -e botfront`. This will run all services except the Botfront app, since you are going to run it with Meteor locally
-- Go back to the botfront checkout `cd botfront/botfront` and run Botfront with `meteor npm run start:docker-compose.dev`. Botfront will be available at [http://localhost:3000](http://localhost:3000) so open your browser and happy editing :smile_cat:
-- Go to back to the botfront app directory. Open `./.botfront/botfront.yml` and add the correct projectId and change the bf_url. Otherwise the rasa instance cannot
-connect to botfront.
-```shell
-bf_project_id: '<PROJECT-ID>'
-bf_url: 'http://host.docker.internal:3000/graphql'
-```
-- If on Linux go open `docker-compose-template.yml` and add to the rasa service definition to give access to the host
-```shell
-extra_hosts:
-      - "host.docker.internal:host-gateway"
-```
-    
-### TroubleShooting
+More information about the AuroraAI programme:
+* [AuroraAI national artificial intelligence programme, DigiFinland](https://digifinland.fi/en/our-operations/aurora-ai-national-artificial-intelligence-programme/)
+* [National Artificial Intelligence Programme AuroraAI, Ministry of Finance Finland](https://vm.fi/en/national-artificial-intelligence-programme-auroraai)
 
-Some [botfront cli](https://github.com/botfront/botfront/blob/master/cli/src/cli.js) commands that may help if you run into problems:
+## Installation
 
-```shell
-botfront init     # create a new botfront project
-botfront logs     # show the logs!
-botfront killall  # stop all docker services
-botfront down     # stop all botfront services
-botfront up       # restart botfront
-botfront docs     # open the docs in your browser
-```
+AuroraAI Botfront is part of chatbot platform
+[auroraai-bot-platform/platform](https://github.com/auroraai-bot-platform/platform). See
+the platform documentation for the detailed instructions for
+* Running the platform
+* Putting up a development environment
+* Contributing to the project
 
-Note that these should be run from the same directory as your botfront project
-
-### Contribute
-
-We ❤️ contributions of all size and sorts. If you find a typo, if you want to improve a section of the documentation or if you want to help with a bug or a feature, here are the steps:
-
-1. Fork the repo and create a new branch, say `fix-botfront-typo-1`
-2. Fix/improve the codebase
-3. Commit the changes. **Commit message must follow [the naming convention](#commit-messages-naming-convention)**, say `fix(conversation builder): display story groups in alphabetical order`
-4. Make a pull request. **Pull request name must follow [the naming convention](#commit-messages-naming-convention)**. It can simply be one of your commit messages, just copy paste it, e.g. `fix(readme): improve the readability and move sections`
-5. Submit your pull request and wait for all checks passed (up to an hour)
-6. Request reviews from one of the developers from our core team.
-7. Get a 👍 and PR gets merged.
-
-Well done! Once a PR gets merged, here are the things happened next:
-- all Docker images tagged with `branch-master` will be automatically updated in an hour. You may check the status on the [Actions](https://github.com/botfront/botfront/actions) tab.
-- your contribution and commits will be included in [our release note](https://github.com/botfront/botfront/blob/master/CHANGELOG.md).
-
-### Commit messages naming convention
-
-To help everyone with understanding the commit history of Botfront, we employ [`commitlint`](https://commitlint.js.org/#/) to enforce the commit styles:
-
-```text
-type(scope?): subject
-```
-
-where `type` is one of the following:
-
-- build
-- ci
-- chore
-- docs
-- feat
-- fix
-- perf
-- refactor
-- revert
-- style
-- test
-
-`scope` is optional, represents the module your commit working on.
-
-`subject` explains the commit.
-
-As an example, a commit that improved the documentation:
-```text
-docs(conversation builder): update slots manager screenshot.
-```
-
-# Testing
+## Testing
 
 ## Unit & Integration Testing
 Unit tests are running through the meteor mocha package `meteortesting:mocha`.
@@ -133,8 +67,6 @@ password: aaaaaaaa00
 ### Installation
 * install `mongo` client as the first testcase will drop the whole database via the mongo client
 * run `meteor npm install` inside `botfront/cypress` to install the cypress plugins
-
-
 
 ### Run all tests
 * run `meteor npm run start:docker-compose.dev` to run botfront in dev mode
