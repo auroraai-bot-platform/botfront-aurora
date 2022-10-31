@@ -3,20 +3,15 @@ describe('User management', function () {
         cy.login()
         cy.deleteProject('bf');
         cy.createProject('bf', 'My Project', 'en')
-        cy.deleteUser('test_users@bf.com');
-        cy.deleteUser('test@test.test');
-//        cy.createDummyRoleAndUser({ permission: ['global-admin'] });
-        cy.createUser('Tester', 'test@test.test', 'global-admin', 'bf')
     })
 
     beforeEach(function () {
+        cy.log('Before each test, this is done')
         cy.login();
         cy.visit('/admin/users')
     });
 
     after(function () {
-        cy.deleteUser('test_users@bf.com');
-        cy.deleteUser('test@test.test');
         cy.deleteProject('bf');
     });
 
@@ -24,7 +19,7 @@ describe('User management', function () {
         cy.dataCy('new-user').should('exist');
         cy.dataCy('new-user').click();
         cy.get('input[name="profile.firstName"]').type('Testing');
-        cy.get('input[name="profile.lastName"]').type('Users');
+        cy.get('input[name="profile.lastName"]').type('Tester');
         cy.get('input[name="email"]').type('test_users@bf.com');
         cy.dataCy('preferred-language').click();
         cy.dataCy('preferred-language').find('.item').contains('English').click();
@@ -36,7 +31,7 @@ describe('User management', function () {
         cy.get('.ui.form').find('.ui.primary.button').click();
     });
 
-    it.only('Edit user', function () {
+    it('Edit user', function () {
         cy.wait(2000)
         cy.get('.rt-td').contains('a', 'Tester').should('exist');
         cy.dataCy('edit-user').last().click();
@@ -52,6 +47,6 @@ describe('User management', function () {
         cy.contains('User deletion').click();
         cy.get('.negative.button').click();
         cy.get('.ui.primary.button').contains('OK').click()
-        cy.get('.rt-td').contains('DeleteTester').should('not.exist');
+        cy.get('.rt-td').contains('EditTester').should('not.exist');
     });
 });
