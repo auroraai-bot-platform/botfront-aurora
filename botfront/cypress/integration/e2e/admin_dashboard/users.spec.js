@@ -6,7 +6,6 @@ describe('User management', function () {
     })
 
     beforeEach(function () {
-        cy.log('Before each test, this is done')
         cy.login();
         cy.visit('/admin/users')
     });
