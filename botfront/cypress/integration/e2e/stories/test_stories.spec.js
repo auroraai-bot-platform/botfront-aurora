@@ -9,7 +9,7 @@ describe('adding test cases', () => {
         cy.createFragmentInGroup();
         cy.browseToStory();
         cy.addUtteranceLine({ intent: 'shopping' });
-        cy.import('bf', 'nlu_import.json', 'en');
+        cy.import('bf', 'nlu_import.yml', 'en');
     });
     afterEach(() => {
         cy.login();

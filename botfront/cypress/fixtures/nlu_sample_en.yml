@@ -1,0 +1,22 @@
+nlu:
+- intent: chitchat.bye
+  examples: |
+    - bye
+    - good bye
+    - bye bye
+
+- intent: chitchat.greet
+  examples: |
+    - hello
+    - hi
+    - apple
+    - kiwi
+    - banana
+
+- intent: get_started
+  examples: |
+    - Let's get started!
+    - I'm chatbot. Let's get started!
+    - How can I help you?
+    - kiwi
+    - banana

@@ -1,0 +1,12 @@
+nlu:
+- intent: chitchat.presentation
+  examples: |
+    - c'est moi [Matthieu](name)
+    - Je m'appelle [Matthieu](name)
+    - Je suis [Matthieu](name)
+
+- intent: chitchat.you_are_worthless
+  examples: |
+    - tu es terrible
+    - tu n'es pas très bon
+    - vous êtes stupide
