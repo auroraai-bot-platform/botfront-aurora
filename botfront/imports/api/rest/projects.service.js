@@ -17,6 +17,8 @@ import { getUser } from './utilities.service';
 
 import { importFilesMutation } from '../../ui/components/settings/graphql';
 import { adminEmail } from './index';
+import { GlobalSettings } from '../globalSettings/globalSettings.collection';
+import { NLUModels } from '../nlu_model/nlu_model.collection';
 
 const TOKEN_EXPIRATION = 1000 * 60 * 60;
 
@@ -60,6 +62,8 @@ export function createProject(project) {
     createCredentials(_id, project.baseUrl, project.prodBaseUrl, project.hasProd);
     createPolicies({ _id, ...item });
     createNLUInstance({ _id, ...item }, project.host, project.token);
+    createNLUModel(_id);
+
     auditLog('Created project', {
         user: getUser(),
         resId: _id,
@@ -69,7 +73,22 @@ export function createProject(project) {
         resType: 'project',
     });
     return _id;
+}
 
+function createNLUModel(projectId) {
+    const {
+        settings: {
+            public: { defaultNLUConfig },
+        },
+    } = GlobalSettings.findOne(
+        {},
+        { fields: { 'settings.public.defaultNLUConfig': 1 } },
+    );
+    const config = defaultNLUConfig;
+    NLUModels.insert({ 
+        projectId, 
+        language: defaultLanguage, 
+        config});
 }
 
 export async function importProject(zipFile, projectId) {
