@@ -9,7 +9,7 @@ describe('adding test cases', () => {
         cy.createFragmentInGroup();
         cy.browseToStory();
         cy.addUtteranceLine({ intent: 'shopping' });
-        cy.import('bf', 'nlu_import.json', 'en');
+        cy.import('bf', 'nlu_import.yml', 'en');
     });
     afterEach(() => {
         cy.login();
@@ -20,8 +20,10 @@ describe('adding test cases', () => {
         cy.visit('/project/bf/dialogue');
         cy.train();
 
-        cy.dataCy('open-chat');
-        cy.newChatSesh();
+        cy.dataCy('open-chat').click();
+        // Enable new chat session below if get_started is not triggered by default.
+        // Depending on that, there will be 2 or 1 items in incoming conversations! 
+        //cy.newChatSesh(); 
         cy.typeChatMessage('Je m\'appelle Matthieu');
         cy.wait(1111);
         // save test story from chat
@@ -34,7 +36,7 @@ describe('adding test cases', () => {
         // save test story from conversations
         cy.visit('/project/bf/incoming');
         cy.dataCy('conversations').click();
-        cy.dataCy('conversation-item').should('have.length', 2);
+        cy.dataCy('conversation-item').should('have.length', 1);
         cy.dataCy('conversation-item').first().click({ force: true });
         cy.dataCy('save-as-test').click();
         // we check that the story is here.
