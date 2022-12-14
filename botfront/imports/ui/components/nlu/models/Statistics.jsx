@@ -251,7 +251,7 @@ const StatisticsWithStoryCount = withTracker((props) => {
     return {
         ready: storiesHandler.ready(),
         examples,
-        storyCount: StoriesCollection.find().count(),
+        storyCount: StoriesCollection.find({'projectId': projectId}).count(),
     };
 })(Statistics);
 
