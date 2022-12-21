@@ -2,8 +2,8 @@
 
 Botfront is an application for creating and maintaining rasa-based
 chat bots. This repository contains a Botfront version modified to
-meed the needs of the AuroraAI programme. The original (currently
-archived) Botfront repository is
+meet the needs of the AuroraAI programme. The original (currently
+archived) Botfront repository is located at
 [botfront/botfront](https://github.com/botfront/botfront).
 
 # Development
