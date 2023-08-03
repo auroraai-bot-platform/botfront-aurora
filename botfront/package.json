@@ -148,7 +148,7 @@
     "chromedriver": "^115.0.0",
     "commitizen": "^4.2.4",
     "core-js": "^3.31.1",
-    "cypress": "^12.17.2",
+    "cypress": "^9.7.0",
     "enzyme": "^3.10.0",
     "enzyme-adapter-react-16": "^1.15.1",
     "eslint": "^8.20.0",
