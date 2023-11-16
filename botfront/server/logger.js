@@ -3,9 +3,7 @@ import { cloneDeep } from 'lodash';
 
 const { LoggingWinston } = require('@google-cloud/logging-winston');
 
-const {
-    combine, timestamp: timestampfn, printf, colorize,
-} = format;
+const { combine, timestamp: timestampfn, printf, colorize } = format;
 
 const {
     APPLICATION_LOG_LEVEL = 'info',
@@ -46,9 +44,10 @@ const allowdKeysAudit = [
     'resType',
 ];
 
-const spaceBeforeIfExist = prop => (prop ? ` ${prop}` : '');
+const spaceBeforeIfExist = (prop) => (prop ? ` ${prop}` : '');
 
-const formatUser = user => (`${user.profile.firstName} ${user.profile.lastName} ${user.emails[0].address}`);
+const formatUser = (user) =>
+    `${user.profile.firstName} ${user.profile.lastName} ${user.emails[0].address}`;
 
 const auditFormat = printf((arg) => {
     Object.keys(arg).forEach((key) => {
@@ -57,15 +56,28 @@ const auditFormat = printf((arg) => {
         }
     });
     const {
-        message, user, type, resId, resType, operation, timestamp, projectId, after, before,
+        message,
+        user,
+        type,
+        resId,
+        resType,
+        operation,
+        timestamp,
+        projectId,
+        after,
+        before,
     } = arg;
 
     let additionalInfo = '';
     if (before) additionalInfo = `before: ${JSON.stringify(before)} - `;
     if (after) additionalInfo = additionalInfo.concat(` after: ${JSON.stringify(after)}`);
-    return `${timestamp} [${type}]: ${message} ${user ? `- user: ${formatUser(user)}` : ''
-    }${projectId ? ` - projectId: ${projectId}` : ''
-    } - ressource id: ${resId} - ressource type: ${resType} - operation: ${operation} - ${spaceBeforeIfExist(additionalInfo)} `;
+    return `${timestamp} [${type}]: ${message} ${
+        user ? `- user: ${formatUser(user)}` : ''
+    }${
+        projectId ? ` - projectId: ${projectId}` : ''
+    } - ressource id: ${resId} - ressource type: ${resType} - operation: ${operation} - ${spaceBeforeIfExist(
+        additionalInfo
+    )} `;
 });
 
 const checkDataType = (dataType, data) => {
@@ -92,7 +104,8 @@ const appLogToString = (arg) => {
     } = arg;
     let loggedData = data;
     if (data && data.mimeType) loggedData = checkDataType(data.mimeType, data);
-    if (loggedData && JSON.stringify(loggedData).length > MAX_LOGGED_DATA_LENGTH) loggedData = 'Too much data.';
+    if (loggedData && JSON.stringify(loggedData).length > MAX_LOGGED_DATA_LENGTH)
+        loggedData = 'Too much data.';
     // the log is from a method
     if (method && args) {
         return `${timestamp} [${level}] : ${message} ${
@@ -103,7 +116,7 @@ const appLogToString = (arg) => {
             loggedData ? `data: ${JSON.stringify(loggedData)}` : ''
         } ${error ? `error: ${error}` : ''}`;
     }
-    
+
     // if it's not from a method it's at the file level
     return `${timestamp} [${level}] : ${message} ${file}`;
 };
@@ -115,7 +128,6 @@ const appFormat = printf((arg) => {
         }
     });
 
-   
     if (arg.args && /info/.test(arg.level) && APPLICATION_LOG_LEVEL === 'info') {
         const argLite = cloneDeep(arg);
         Object.keys(argLite.args).forEach((key) => {
@@ -143,7 +155,7 @@ if (!!APPLICATION_LOG_TRANSPORT) {
         appLogTransport.push(
             new winston.transports.Console({
                 format: combine(timestampfn(), colorize(), appFormat),
-            }),
+            })
         );
     }
     if (APPLICATION_LOG_TRANSPORT.includes('stackdriver')) {
@@ -153,7 +165,7 @@ if (!!APPLICATION_LOG_TRANSPORT) {
     appLogTransport.push(
         new winston.transports.Console({
             format: combine(timestampfn(), colorize(), appFormat),
-        }),
+        })
     );
 }
 
@@ -181,12 +193,10 @@ const auditLogger = winston.createLogger({
     transports: auditLogTransport,
 });
 
-export const getAppLoggerForFile = filename => appLogger.child({ file: filename });
+export const getAppLoggerForFile = (filename) => appLogger.child({ file: filename });
 
 export const auditLog = (message, metadata) => {
-    const {
-        user, type, resId, resType, projectId,
-    } = metadata;
+    const { user, type, resId, resType, projectId } = metadata;
     let email = '';
     try {
         email = user.emails[0].address;
@@ -199,9 +209,11 @@ export const auditLog = (message, metadata) => {
     });
 };
 
-export const getAppLoggerForMethod = (fileLogger, method, userId, args) => fileLogger.child({ method, userId, args });
+export const getAppLoggerForMethod = (fileLogger, method, userId, args) =>
+    fileLogger.child({ method, userId, args });
 
-export const getAuditLoggerForMethod = (fileLogger, type, userId) => fileLogger.child({ type, userId });
+export const getAuditLoggerForMethod = (fileLogger, type, userId) =>
+    fileLogger.child({ type, userId });
 
 const logBeforeApiCall = (logger, text, meta) => {
     const { url } = meta;
@@ -230,9 +242,7 @@ export const addLoggingInterceptors = (axios, logger) => {
     */
     axios.interceptors.request.use(
         (config) => {
-            const {
-                baseURL, url, data = null, method, params,
-            } = config;
+            const { baseURL, url, data = null, method, params } = config;
             dataType = data && data.mimeType;
             logBeforeApiCall(logger, `${method.toUpperCase()} at ${url}`, {
                 url: getProperUrl(baseURL, url),
@@ -242,9 +252,7 @@ export const addLoggingInterceptors = (axios, logger) => {
             return config;
         },
         (error) => {
-            const {
-                url, baseURL, data = null, method, params,
-            } = error;
+            const { url, baseURL, data = null, method, params } = error;
             logger.error(`${method} at ${url} failed at request time`, {
                 error,
                 data,
@@ -252,7 +260,7 @@ export const addLoggingInterceptors = (axios, logger) => {
                 params,
             });
             return Promise.reject(error);
-        },
+        }
     );
 
     /* Sometimes the content headers are set to json
@@ -268,7 +276,7 @@ export const addLoggingInterceptors = (axios, logger) => {
             logAfterSuccessApiCall(
                 logger,
                 `${config.method.toUpperCase()} at ${url} succeeded`,
-                { status, data: loggedData, url },
+                { status, data: loggedData, url }
             );
 
             return response;
@@ -276,9 +284,7 @@ export const addLoggingInterceptors = (axios, logger) => {
         (error) => {
             if (Object.keys(error).length > 0) {
                 const { config } = error;
-                const {
-                    data, status, url, method,
-                } = config;
+                const { data, status, url, method } = config;
                 const loggedData = checkDataType(dataType, data);
                 logger.error(
                     `${method.toUpperCase()} at ${url} failed at response time`,
@@ -287,12 +293,12 @@ export const addLoggingInterceptors = (axios, logger) => {
                         status,
                         error,
                         url,
-                    },
+                    }
                 );
             } else {
                 logger.error(error.toString());
             }
             return Promise.reject(error);
-        },
+        }
     );
 };
