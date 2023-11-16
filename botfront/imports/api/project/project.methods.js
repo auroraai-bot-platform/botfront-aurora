@@ -71,13 +71,22 @@ if (Meteor.isServer) {
         },
 
         'project.update'(item) {
-            checkIfCan(['projects:w', 'import:x', 'git-credentials:w'], item._id, undefined);
+            checkIfCan(
+                ['projects:w', 'import:x', 'git-credentials:w'],
+                item._id,
+                undefined
+            );
             check(item, Match.ObjectIncluding({ _id: String }));
             try {
                 // eslint-disable-next-line no-param-reassign
                 const projectBefore = Projects.findOne({ _id: item._id });
-                if (projectBefore && 'deploymentEnvironments' in item
-                    && !isEqual(projectBefore.deploymentEnvironments, item.deploymentEnvironments)
+                if (
+                    projectBefore &&
+                    'deploymentEnvironments' in item &&
+                    !isEqual(
+                        projectBefore.deploymentEnvironments,
+                        item.deploymentEnvironments
+                    )
                 ) {
                     checkIfCan('resources:w', item._id);
                 }
@@ -88,10 +97,12 @@ if (Meteor.isServer) {
                 const sanitizedBefore = JSON.parse(JSON.stringify(projectBefore)); // deep copy so won't affect the original in later Projects.update()
                 const sanitizedAfter = JSON.parse(JSON.stringify(update)); // deep copy so won't affect the original in later Projects.update()
                 if (sanitizedBefore?.gitSettings?.privateSshKey) {
-                    sanitizedBefore.gitSettings.privateSshKey = sanitizedBefore.gitSettings.privateSshKey !== '' ? 'XXX' : '';
+                    sanitizedBefore.gitSettings.privateSshKey =
+                        sanitizedBefore.gitSettings.privateSshKey !== '' ? 'XXX' : '';
                 }
                 if (sanitizedAfter?.gitSettings?.privateSshKey) {
-                    sanitizedAfter.gitSettings.privateSshKey = sanitizedAfter.gitSettings.privateSshKey !== '' ? 'XXX' : '';
+                    sanitizedAfter.gitSettings.privateSshKey =
+                        sanitizedAfter.gitSettings.privateSshKey !== '' ? 'XXX' : '';
                 }
                 auditLog('Updated project', {
                     user: Meteor.user(),
@@ -110,16 +121,13 @@ if (Meteor.isServer) {
         },
         async 'project.delete'(
             projectId,
-            options = { failSilently: false, bypassWithCI: false },
+            options = { failSilently: false, bypassWithCI: false }
         ) {
             checkIfCan('projects:w', null, null, options);
             check(projectId, String);
             check(options, Object);
             const { failSilently } = options;
-            const project = Projects.findOne(
-                { _id: projectId },
-                { fields: { _id: 1 } },
-            );
+            const project = Projects.findOne({ _id: projectId }, { fields: { _id: 1 } });
 
             try {
                 if (!project) throw new Meteor.Error('Project not found');
@@ -139,13 +147,15 @@ if (Meteor.isServer) {
                 const projectUsers = Meteor.users
                     .find(
                         { [`roles.${project._id}`]: { $exists: true } },
-                        { fields: { roles: 1 } },
+                        { fields: { roles: 1 } }
                     )
                     .fetch();
-                projectUsers.forEach(u => Meteor.users.update(
-                    { _id: u._id },
-                    { $unset: { [`roles.${project._id}`]: '' } },
-                )); // Roles.removeUsersFromRoles doesn't seem to work so we unset manually
+                projectUsers.forEach((u) =>
+                    Meteor.users.update(
+                        { _id: u._id },
+                        { $unset: { [`roles.${project._id}`]: '' } }
+                    )
+                ); // Roles.removeUsersFromRoles doesn't seem to work so we unset manually
                 auditLog('Deleted project, all related data has been deleted', {
                     user: Meteor.user(),
                     resId: projectId,
@@ -178,7 +188,7 @@ if (Meteor.isServer) {
                                 startTime: new Date(),
                             },
                         },
-                    },
+                    }
                 );
                 const projectAfter = Projects.findOne({ _id: projectId });
                 auditLog('Marked trainning as started', {
@@ -239,7 +249,7 @@ if (Meteor.isServer) {
             try {
                 const { defaultLanguage } = Projects.findOne(
                     { _id: projectId },
-                    { fields: { defaultLanguage: 1 } },
+                    { fields: { defaultLanguage: 1 } }
                 );
                 return defaultLanguage;
             } catch (error) {
@@ -253,7 +263,7 @@ if (Meteor.isServer) {
             try {
                 const project = Projects.findOne(
                     { _id: projectId },
-                    { fields: { allowContextualQuestions: 1 } },
+                    { fields: { allowContextualQuestions: 1 } }
                 );
                 const { allowContextualQuestions } = project;
                 return !!allowContextualQuestions;
@@ -269,12 +279,12 @@ if (Meteor.isServer) {
             try {
                 const project = Projects.findOne(
                     { _id: projectId },
-                    { fields: { allowContextualQuestions: 1 } },
+                    { fields: { allowContextualQuestions: 1 } }
                 );
                 const { allowContextualQuestions: aCQBefore } = project;
                 const result = Projects.update(
                     { _id: projectId },
-                    { $set: { allowContextualQuestions } },
+                    { $set: { allowContextualQuestions } }
                 );
                 auditLog('Setting allow contextual questions', {
                     user: Meteor.user(),
@@ -299,7 +309,7 @@ if (Meteor.isServer) {
 
             const project = Projects.findOne(
                 { _id: projectId },
-                { fields: { allowContextualQuestions: 1 } },
+                { fields: { allowContextualQuestions: 1 } }
             );
             const { allowContextualQuestions } = project;
 
@@ -310,7 +320,7 @@ if (Meteor.isServer) {
 
             bfForms.forEach((form) => {
                 requestedSlotCategories = requestedSlotCategories.concat(
-                    form.slots.map(slot => slot.name),
+                    form.slots.map((slot) => slot.name)
                 );
             });
 
@@ -348,7 +358,7 @@ if (Meteor.isServer) {
                     name: 1,
                     defaultLanguage: 1,
                     languages: 1,
-                },
+                }
             ) || {};
 
             if (!projectName) {
@@ -357,30 +367,34 @@ if (Meteor.isServer) {
             if (!enableSharing) {
                 throw new Meteor.Error(
                     403,
-                    `Sharing not enabled for project '${projectName}'.`,
+                    `Sharing not enabled for project '${projectName}'.`
                 );
             }
 
-            const query = !environment || environment === 'development'
-                ? {
-                    $or: [
-                        { projectId, environment: { $exists: false } },
-                        { projectId, environment: 'development' },
-                    ],
-                }
-                : { projectId, environment };
-            let { credentials = '' } = Credentials.findOne(query, { credentials: 1 }) || {};
+            const query =
+                !environment || environment === 'development'
+                    ? {
+                          $or: [
+                              { projectId, environment: { $exists: false } },
+                              { projectId, environment: 'development' },
+                          ],
+                      }
+                    : { projectId, environment };
+            let { credentials = '' } =
+                Credentials.findOne(query, { credentials: 1 }) || {};
             credentials = yamlLoad(credentials);
-            const channel = Object.keys(credentials).find(k => ['WebchatInput', 'WebchatPlusInput'].some(c => k.includes(c)));
+            const channel = Object.keys(credentials).find((k) =>
+                ['WebchatInput', 'WebchatPlusInput'].some((c) => k.includes(c))
+            );
             if (!channel) {
                 throw new Meteor.Error(
                     404,
-                    `No credentials found for project '${projectName}'.`,
+                    `No credentials found for project '${projectName}'.`
                 );
             }
             const { base_url: socketUrl, socket_path: socketPath } = credentials[channel];
 
-            const languages = langs.map(value => ({
+            const languages = langs.map((value) => ({
                 text: languageOptions[value].name,
                 value,
             }));
@@ -388,7 +402,7 @@ if (Meteor.isServer) {
             if (!languages.length) {
                 throw new Meteor.Error(
                     404,
-                    `No languages found for project '${projectName}'.`,
+                    `No languages found for project '${projectName}'.`
                 );
             }
 
@@ -404,19 +418,54 @@ if (Meteor.isServer) {
 
         async 'project.getDeploymentEnvironments'(projectId) {
             check(projectId, String);
-            return Projects.findOne({ _id: projectId }, { fields: { deploymentEnvironments: 1 } });
+            return Projects.findOne(
+                { _id: projectId },
+                { fields: { deploymentEnvironments: 1 } }
+            );
         },
 
         async 'project.getLogo'(projectId) {
             check(projectId, String);
-            const settings = GlobalSettings.findOne({}, {
-                fields: { 'settings.public.logoUrl': 1, 'settings.public.smallLogoUrl': 1 },
-            });
-            const project = await Projects.findOne({ _id: projectId }, { fields: { logoUrl: 1, smallLogoUrl: 1 } });
+            const settings = GlobalSettings.findOne(
+                {},
+                {
+                    fields: {
+                        'settings.public.logoUrl': 1,
+                        'settings.public.smallLogoUrl': 1,
+                    },
+                }
+            );
+            const project = await Projects.findOne(
+                { _id: projectId },
+                { fields: { logoUrl: 1, smallLogoUrl: 1 } }
+            );
             return {
                 logoUrl: project?.logoUrl || settings?.settings?.public?.logoUrl,
-                smallLogoUrl: project?.smallLogoUrl || settings?.settings?.public?.smallLogoUrl,
+                smallLogoUrl:
+                    project?.smallLogoUrl || settings?.settings?.public?.smallLogoUrl,
             };
+        },
+
+        async 'project.logLoginAttempt'(email, err) {
+            check(email, String);
+            const message = err
+                ? 'Login error: ' + err.message
+                : 'Logged in successfully';
+            check(message, String);
+            try {
+                auditLog('Login attempt detected from email: ' + email, {
+                    user: Meteor.user(),
+                    resId: 'login attempt',
+                    type: 'login',
+                    projectId: 'none',
+                    operation: 'User tried to login',
+                    before: { email, message },
+                    after: { email, message },
+                    resType: '',
+                });
+            } catch (error) {
+                throw error;
+            }
         },
     });
 }

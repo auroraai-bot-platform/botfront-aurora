@@ -57,6 +57,7 @@ class LoginComponent extends React.Component {
             password,
             wrapMeteorCallback((err) => {
                 this.setState({ loggingIn: false, reCaptcha: null });
+                Meteor.call('project.logLoginAttempt',email, err);
                 if (this.reCaptchaRef) this.reCaptchaRef.reset();
                 if (!err) {
                     const { location } = this.props;
